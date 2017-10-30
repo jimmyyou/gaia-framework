@@ -1,0 +1,108 @@
+syntax = "proto2";
+
+option java_package = "gaiasim.gaiaprotos";
+option java_outer_classname = "GaiaMessageProtos";
+
+//service GAIA {
+//    rpc controlFlow(stream FlowUpdate) returns (stream StatusUpdate) {}
+//}
+//
+//service PAReport {
+//    rpc getFlowRules(PAM_REQ) returns (stream PAMessage) {}
+//}
+
+service SendingAgentService {
+//    rpc StartFlow (FlowUpdate) returns (stream StatusReport) {}
+    rpc PrepareConnections (PAM_REQ) returns (stream PAMessage) {}
+    rpc ChangeFlow (stream FlowUpdate) returns (FUM_ACK) {}
+    rpc ControlExperiment (Exp_CTRL) returns (Exp_CTRL_ACK) {}
+}
+
+service MasterService {
+    rpc UpdateFlowStatus (stream FlowStatusReport) returns (FlowStatus_ACK) {}
+    rpc UpdatePathStatus (PathStatusReport) returns (PathStatus_ACK) {}
+//    rpc StreamUpdatePathStatus (stream PathStatusReport) returns (PathStatus_ACK) {}
+}
+
+message FlowStatusReport {
+    message FlowStatus {
+        required string id = 1;
+        required double transmitted = 2;
+        required bool finished = 3;
+    }
+
+    repeated FlowStatus status = 1;
+}
+
+message PathStatusReport {
+//    message PathStatus {
+        required string saID = 1;
+        required string raID = 2;
+        required int32 pathID = 3;
+        required bool isBroken = 4;
+//    }
+
+//    repeated PathStatus pathStatus = 1;
+}
+
+message FlowUpdate {
+
+    message PathRateEntry {
+        required int32 pathID = 1;
+        required double rate = 2;
+    }
+
+    message FlowUpdateEntry {
+        required double remainingVolume = 1;
+        required string flowID = 2;
+        enum Operation{
+            START = 0;
+            CHANGE = 1;
+            PAUSE = 2;
+        }
+        required Operation op = 3;
+        // path to rate mapping
+        repeated PathRateEntry pathToRate = 4;
+//        map <int32, double> pathToRate = 3;
+    }
+    
+    message RAUpdateEntry {
+        required string raID = 1;
+        repeated FlowUpdateEntry fges = 2;
+    }
+
+    repeated RAUpdateEntry RAUpdate = 1;
+    // Collectors.groupingBy() should enforce that multiple RAUEntry all have different raID
+}
+
+
+message PAMessage {
+    required string sa_id = 1;
+    required string ra_id = 2;
+    required int32 path_id = 3;
+    required int32 port_no = 4;
+}
+
+message PAM_REQ {
+//    bool finished = 1;
+}
+
+message FUM_ACK {}
+
+message FlowStatus_ACK {}
+
+message PathStatus_ACK {}
+
+message Exp_CTRL{
+    enum CTRL_Operation{
+        START = 0;
+        STOP = 1;
+    }
+
+    required CTRL_Operation op = 1;
+    required string ExpName = 2;
+}
+
+message Exp_CTRL_ACK{}
+
+
