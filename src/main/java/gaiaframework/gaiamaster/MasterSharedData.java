@@ -41,7 +41,7 @@ public class MasterSharedData {
             // use the get and set method, to make sure that:
             // 1. the value is false before we send COFLOW_FIN
             // 2. the value must be set to true, after whatever we do.
-            if( coflowPool.containsKey(coflowID) && !coflowPool.get(coflowID).getAndSetFinished(true) ){
+            if( coflowPool.containsKey(coflowID) && !coflowPool.get(coflowID).finish(true) ){
 
                 this.flag_CF_FIN = true;
 

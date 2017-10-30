@@ -9,6 +9,7 @@ import gaiaframework.network.NetGraph;
 import gaiaframework.network.Pathway;
 import gaiaframework.scheduler.CoflowScheduler;
 import gaiaframework.spark.YARNMessages;
+import gaiaframework.spark.YARNServer;
 import gaiaframework.util.Configuration;
 import gaiaframework.util.Constants;
 import org.apache.logging.log4j.LogManager;
@@ -39,7 +40,7 @@ public class Master {
     MasterSharedData masterSharedData = new MasterSharedData();
 
     // SubModules of Master
-    protected Thread yarnEmulator;
+    protected YARNServer yarnServer = new YARNServer(Constants.DEFAULT_YARN_PORT);
     protected Thread coflowListener;
 //    protected Thread agentController; // This is similar to the Manager eventloop in old version. // maybe multiple threads?
     protected final ScheduledExecutorService mainExec; // For periodic call of schedule()
@@ -105,7 +106,7 @@ public class Master {
 
         // setting up interface with YARN.
         this.coflowEventQueue = new LinkedBlockingQueue<Coflow>();
-//        this.yarnEmulator = new Thread(new YARNEmulator(trace_file , netGraph , masterSharedData.yarnEventQueue , coflowEventQueue, outdir, isRunningOnList));
+//        this.yarnServer = new Thread(new YARNEmulator(trace_file , netGraph , masterSharedData.yarnEventQueue , coflowEventQueue, outdir, isRunningOnList));
         this.coflowListener = new Thread( new CoflowListener() );
 
         // setting up the scheduler
@@ -206,7 +207,11 @@ public class Master {
 
 
         // Start the input
-        yarnEmulator.start();
+        try {
+            yarnServer.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         logger.info("Master init finished, block the main thread");
         try {

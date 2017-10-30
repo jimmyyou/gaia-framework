@@ -17,17 +17,17 @@ public class YARNMessages {
     public String coflow_ID;
 
     // DAG for DAG_ARRIVAL
-    public DAG arrivedDAG;
+//    public DAG arrivedDAG;
 
     // default msg: END_OF_INCOMING_JOBS
     public YARNMessages(){
         this.type = Type.END_OF_INCOMING_JOBS;
     }
 
-    public YARNMessages(DAG arrivedDAG){
-        this.type = Type.DAG_ARRIVAL;
-        this.arrivedDAG = arrivedDAG;
-    }
+//    public YARNMessages(DAG arrivedDAG){
+//        this.type = Type.DAG_ARRIVAL;
+//        this.arrivedDAG = arrivedDAG;
+//    }
 
     public YARNMessages(String FIN_coflow_ID){
         this.type = Type.COFLOW_FIN;

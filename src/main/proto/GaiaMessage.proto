@@ -16,6 +16,7 @@ service SendingAgentService {
     rpc PrepareConnections (PAM_REQ) returns (stream PAMessage) {}
     rpc ChangeFlow (stream FlowUpdate) returns (FUM_ACK) {}
     rpc ControlExperiment (Exp_CTRL) returns (Exp_CTRL_ACK) {}
+    rpc GetShuffleSize(ShuffleInfoReq) returns (ShuffleFiles) {}
 }
 
 service MasterService {
@@ -105,4 +106,18 @@ message Exp_CTRL{
 
 message Exp_CTRL_ACK{}
 
+message ShuffleInfoReq{
+
+    message ReducerInfo {
+        string reducerID = 1;
+        string reducerIP = 2;
+    }
+
+    string jobID = 1;
+    string username = 2;
+
+    repeated ReducerInfo reducers = 3;
+}
+
+message ShuffleFiles{}
 

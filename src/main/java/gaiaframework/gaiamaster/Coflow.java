@@ -10,12 +10,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Coflow {
     // final fields
     private final String id;
-
+    CountDownLatch isDoneLatch = new CountDownLatch(1);
 
     // list of flowgroups: final? ArrayList or ConcurrentHashMap?
     private HashMap<String , FlowGroup> flowGroups;
@@ -78,10 +79,22 @@ public class Coflow {
 
     public boolean getFinished() { return finished.get(); }
 
+//    public void setFinished(boolean value) { this.finished.set(value); }
 
-    public void setFinished(boolean value) { this.finished.set(value); }
+    public boolean finish(boolean newValue) {
 
-    public boolean getAndSetFinished(boolean newValue) { return this.finished.getAndSet(newValue); }
+        if (isDoneLatch.getCount() != 0 ){
+            isDoneLatch.countDown();
+        }
+
+        return this.finished.getAndSet(newValue);
+    }
+
+    public void blockTillFinish() throws InterruptedException {
+        isDoneLatch.await();
+    }
+
+//    public boolean getAndSetFinished(boolean newValue) { return this.finished.getAndSet(newValue); }
 
     //    private int state;
 //    private String owningClient;
