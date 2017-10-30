@@ -1,6 +1,6 @@
-syntax = "proto2";
+syntax = "proto3";
 
-option java_package = "gaiasim.gaiaprotos";
+option java_package = "gaiaframework.gaiaprotos";
 option java_outer_classname = "GaiaMessageProtos";
 
 //service GAIA {
@@ -12,7 +12,7 @@ option java_outer_classname = "GaiaMessageProtos";
 //}
 
 service SendingAgentService {
-//    rpc StartFlow (FlowUpdate) returns (stream StatusReport) {}
+    //    rpc StartFlow (FlowUpdate) returns (stream StatusReport) {}
     rpc PrepareConnections (PAM_REQ) returns (stream PAMessage) {}
     rpc ChangeFlow (stream FlowUpdate) returns (FUM_ACK) {}
     rpc ControlExperiment (Exp_CTRL) returns (Exp_CTRL_ACK) {}
@@ -21,53 +21,53 @@ service SendingAgentService {
 service MasterService {
     rpc UpdateFlowStatus (stream FlowStatusReport) returns (FlowStatus_ACK) {}
     rpc UpdatePathStatus (PathStatusReport) returns (PathStatus_ACK) {}
-//    rpc StreamUpdatePathStatus (stream PathStatusReport) returns (PathStatus_ACK) {}
+    //    rpc StreamUpdatePathStatus (stream PathStatusReport) returns (PathStatus_ACK) {}
 }
 
 message FlowStatusReport {
     message FlowStatus {
-        required string id = 1;
-        required double transmitted = 2;
-        required bool finished = 3;
+        string id = 1;
+        double transmitted = 2;
+        bool finished = 3;
     }
 
     repeated FlowStatus status = 1;
 }
 
 message PathStatusReport {
-//    message PathStatus {
-        required string saID = 1;
-        required string raID = 2;
-        required int32 pathID = 3;
-        required bool isBroken = 4;
-//    }
+    //    message PathStatus {
+    string saID = 1;
+    string raID = 2;
+    int32 pathID = 3;
+    bool isBroken = 4;
+    //    }
 
-//    repeated PathStatus pathStatus = 1;
+    //    repeated PathStatus pathStatus = 1;
 }
 
 message FlowUpdate {
 
     message PathRateEntry {
-        required int32 pathID = 1;
-        required double rate = 2;
+        int32 pathID = 1;
+        double rate = 2;
     }
 
     message FlowUpdateEntry {
-        required double remainingVolume = 1;
-        required string flowID = 2;
+        double remainingVolume = 1;
+        string flowID = 2;
         enum Operation{
             START = 0;
             CHANGE = 1;
             PAUSE = 2;
         }
-        required Operation op = 3;
+        Operation op = 3;
         // path to rate mapping
         repeated PathRateEntry pathToRate = 4;
-//        map <int32, double> pathToRate = 3;
+        //        map <int32, double> pathToRate = 3;
     }
-    
+
     message RAUpdateEntry {
-        required string raID = 1;
+        string raID = 1;
         repeated FlowUpdateEntry fges = 2;
     }
 
@@ -77,14 +77,14 @@ message FlowUpdate {
 
 
 message PAMessage {
-    required string sa_id = 1;
-    required string ra_id = 2;
-    required int32 path_id = 3;
-    required int32 port_no = 4;
+    string sa_id = 1;
+    string ra_id = 2;
+    int32 path_id = 3;
+    int32 port_no = 4;
 }
 
 message PAM_REQ {
-//    bool finished = 1;
+    //    bool finished = 1;
 }
 
 message FUM_ACK {}
@@ -99,8 +99,8 @@ message Exp_CTRL{
         STOP = 1;
     }
 
-    required CTRL_Operation op = 1;
-    required string ExpName = 2;
+    CTRL_Operation op = 1;
+    string ExpName = 2;
 }
 
 message Exp_CTRL_ACK{}
