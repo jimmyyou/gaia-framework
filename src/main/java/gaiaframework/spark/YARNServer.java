@@ -8,13 +8,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class YARNServer extends GaiaAbstractServer{
 
     private static final Logger logger = LogManager.getLogger();
+    LinkedBlockingQueue<Coflow> cfQueue;
 
-    public YARNServer(int port) {
+    public YARNServer(int port, LinkedBlockingQueue<Coflow> coflowQueue) {
         super(port);
+        this.cfQueue = coflowQueue;
     }
 
     @Override
@@ -28,7 +31,17 @@ public class YARNServer extends GaiaAbstractServer{
 
         Coflow cf = new Coflow(cfID, flowGroups);
 
-        // TODO submit coflow
+        try {
+            cfQueue.put(cf);
+
+            logger.info("Coflow submitted, Trapping into waiting for coflow to finish");
+            cf.blockTillFinish();
+//            ShuffleTask st = new ShuffleTask(cf);
+//            st.run(); // wait for it to finish
+        } catch (InterruptedException e) {
+            logger.error("ERROR occurred while submitting coflow");
+            e.printStackTrace();
+        }
 
     }
 

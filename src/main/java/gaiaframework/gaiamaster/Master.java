@@ -40,7 +40,6 @@ public class Master {
     MasterSharedData masterSharedData = new MasterSharedData();
 
     // SubModules of Master
-    protected YARNServer yarnServer = new YARNServer(Constants.DEFAULT_YARN_PORT);
     protected Thread coflowListener;
 //    protected Thread agentController; // This is similar to the Manager eventloop in old version. // maybe multiple threads?
     protected final ScheduledExecutorService mainExec; // For periodic call of schedule()
@@ -48,6 +47,7 @@ public class Master {
     protected final ExecutorService saControlExec;
 
     protected LinkedBlockingQueue<Coflow> coflowEventQueue;
+    protected YARNServer yarnServer;
 
 //    protected LinkedBlockingQueue<AgentMessage> agentEventQueue = new LinkedBlockingQueue<>();
 
@@ -205,8 +205,8 @@ public class Master {
         final Runnable runSchedule = () -> schedule();
         ScheduledFuture<?> mainHandler = mainExec.scheduleAtFixedRate(runSchedule, 0, Constants.SCHEDULE_INTERVAL_MS, MILLISECONDS);
 
-
         // Start the input
+        yarnServer = new YARNServer(Constants.DEFAULT_YARN_PORT, coflowEventQueue);
         try {
             yarnServer.start();
         } catch (IOException e) {
