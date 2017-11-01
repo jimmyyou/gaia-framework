@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class YARNServer extends GaiaAbstractServer{
+public class YARNServer extends GaiaAbstractServer {
 
     private static final Logger logger = LogManager.getLogger();
     LinkedBlockingQueue<Coflow> cfQueue;
@@ -34,7 +34,7 @@ public class YARNServer extends GaiaAbstractServer{
         // Create the CF and submit it.
         String cfID = req.getUsername() + ":" + req.getJobID();
 
-        HashMap<String, FlowGroup> flowGroups = removeRedundantFlowGroups(  generateFlowGroups(cfID, req) );
+        HashMap<String, FlowGroup> flowGroups = removeRedundantFlowGroups(generateFlowGroups(cfID, req));
 
         Coflow cf = new Coflow(cfID, flowGroups);
 
@@ -62,10 +62,10 @@ public class YARNServer extends GaiaAbstractServer{
 
     // FIXME combine the flowgroups with same mapID and same reduceLoc
     private HashMap<String, FlowGroup> generateFlowGroups(String cfID, ShuffleInfo req) {
-        HashMap<String , FlowGroup> flowGroups = new HashMap<>();
+        HashMap<String, FlowGroup> flowGroups = new HashMap<>();
 
 
-        for ( ShuffleInfo.FlowInfo flowInfo : req.getFlowsList()){
+        for (ShuffleInfo.FlowInfo flowInfo : req.getFlowsList()) {
 
             String mapID = flowInfo.getMapAttemptID();
             String redID = flowInfo.getReduceAttemptID();
@@ -74,32 +74,34 @@ public class YARNServer extends GaiaAbstractServer{
             String dstLoc = getLocation(redID, req);
 
             String fgID = cfID + ":" + mapID + ":" + redID + ":" + srcLoc + '-' + dstLoc;
-            FlowGroup fg = new FlowGroup( fgID, srcLoc, dstLoc, cfID, flowInfo.getFlowSize(),
+            // We need MB as the unit for Gaia, so we divide by 1024 and 1024
+            long flowVolume = flowInfo.getFlowSize() / 1024 / 1024;
+            if (flowVolume == 0) flowVolume = 1;
+            FlowGroup fg = new FlowGroup(fgID, srcLoc, dstLoc, cfID, flowVolume,
                     flowInfo.getDataFilename(), mapID, redID);
 
             flowGroups.put(fgID, fg);
         }
 
-
         return flowGroups;
     }
 
     // TODO need to change this mechanism in the future // if same mapID and same dstLoc -> redundant
-    private HashMap<String, FlowGroup> removeRedundantFlowGroups(HashMap<String, FlowGroup> inFlowGroups){
-        HashMap<String , FlowGroup> ret = new HashMap<>();
+    private HashMap<String, FlowGroup> removeRedundantFlowGroups(HashMap<String, FlowGroup> inFlowGroups) {
+        HashMap<String, FlowGroup> ret = new HashMap<>();
 
-        for (Map.Entry<String , FlowGroup> fe : inFlowGroups.entrySet()){
+        for (Map.Entry<String, FlowGroup> fe : inFlowGroups.entrySet()) {
 
             boolean reduandant = false;
-            for (Map.Entry<String , FlowGroup> rete : ret.entrySet()){
+            for (Map.Entry<String, FlowGroup> rete : ret.entrySet()) {
                 if (rete.getValue().getDstLocation().equals(fe.getValue().getDstLocation()) &&
-                        rete.getValue().getMapID().equals(fe.getValue().getMapID())){
+                        rete.getValue().getMapID().equals(fe.getValue().getMapID())) {
                     reduandant = true;
                 }
             }
             // check if this fe needs to be put in ret
 
-            if (! reduandant){
+            if (!reduandant) {
                 ret.put(fe.getKey(), fe.getValue());
             }
         }
