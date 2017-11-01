@@ -67,7 +67,7 @@ public class Coflow {
 
         return ret;
     }
-    public Coflow (Coflow_Old cfo){
+/*    public Coflow (Coflow_Old cfo){
         this.id = cfo.id;
         this.flowGroups = new HashMap<String , FlowGroup>();
         for(Map.Entry<String, FlowGroup_Old> entry : cfo.flows.entrySet()){
@@ -75,7 +75,7 @@ public class Coflow {
             flowGroups.put( fg.getId() , fg);
         }
 
-    }
+    }*/
 
     public boolean getFinished() { return finished.get(); }
 

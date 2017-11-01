@@ -206,7 +206,7 @@ public class Master {
         ScheduledFuture<?> mainHandler = mainExec.scheduleAtFixedRate(runSchedule, 0, Constants.SCHEDULE_INTERVAL_MS, MILLISECONDS);
 
         // Start the input
-        yarnServer = new YARNServer(Constants.DEFAULT_YARN_PORT, coflowEventQueue);
+        yarnServer = new YARNServer(config, Constants.DEFAULT_YARN_PORT, coflowEventQueue);
         try {
             yarnServer.start();
         } catch (IOException e) {

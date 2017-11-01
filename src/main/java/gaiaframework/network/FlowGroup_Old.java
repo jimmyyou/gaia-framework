@@ -20,12 +20,18 @@ public class FlowGroup_Old {
 //    private boolean started_sending = false; // whether the flow has started to be sent
                                              // by a sending agent (only used by baseline)
 
+    private String filename;
+
     // the state of this flow
     public enum FlowState{
         INIT,
         STARTING,
         PAUSING,
         CHANGING
+    }
+
+    public String getFilename() {
+        return filename;
     }
 
     private FlowState flowState;
@@ -40,6 +46,19 @@ public class FlowGroup_Old {
         this.rate = (double)0.0;
         this.transmitted_volume = (double)0.0;
         this.flowState = FlowState.INIT;
+    }
+
+    public FlowGroup_Old(String id, int int_id, String coflow_id, String src_loc, String dst_loc, double volume, String filename) {
+        this.id = id;
+        this.int_id = int_id;
+        this.coflow_id = coflow_id;
+        this.src_loc = src_loc;
+        this.dst_loc = dst_loc;
+        this.volume = volume;
+        this.rate = (double)0.0;
+        this.transmitted_volume = (double)0.0;
+        this.flowState = FlowState.INIT;
+        this.filename = filename;
     }
 
     public double remaining_volume() {

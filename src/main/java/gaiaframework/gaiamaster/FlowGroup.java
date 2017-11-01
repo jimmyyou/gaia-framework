@@ -26,6 +26,10 @@ public class FlowGroup {
     // make this field volatile! Or maybe atomic?
     private volatile double transmitted;
 
+    String filename = null;
+    String mapID;
+    String redID;
+
     // the state of this flow
     public enum FlowState{
         NEW,
@@ -39,6 +43,18 @@ public class FlowGroup {
     // The subflow info, is essientially immutable data? Nope.
     private ArrayList<Pathway> paths = new ArrayList<Pathway>();
 
+    public String getFilename() {
+        return filename;
+    }
+
+    public String getMapID() {
+        return mapID;
+    }
+
+    public String getRedID() {
+        return redID;
+    }
+
     public FlowGroup(String id, String srcLocation, String dstLocation, String owningCoflowID, double totalVolume) {
         this.id = id;
         this.srcLocation = srcLocation;
@@ -46,6 +62,18 @@ public class FlowGroup {
         this.owningCoflowID = owningCoflowID;
         this.totalVolume = totalVolume;
         this.flowState = FlowState.NEW;
+    }
+
+    public FlowGroup(String id, String srcLocation, String dstLocation, String owningCoflowID, double totalVolume, String filename, String mapID, String redID) {
+        this.id = id;
+        this.srcLocation = srcLocation;
+        this.dstLocation = dstLocation;
+        this.owningCoflowID = owningCoflowID;
+        this.totalVolume = totalVolume;
+        this.flowState = FlowState.NEW;
+        this.filename = filename;
+        this.mapID = mapID;
+        this.redID = redID;
     }
 
     // This method is called upon receiving Status Update, this method must be call if a Flow is finishing
@@ -86,7 +114,7 @@ public class FlowGroup {
     // TODO check the two converters
     public static FlowGroup_Old toFlowGroup_Old(FlowGroup fg , int intID ){
         FlowGroup_Old fgo = new FlowGroup_Old(fg.getId() , intID ,
-                fg.getOwningCoflowID() , fg.getSrcLocation(), fg.getDstLocation() , fg.getTotalVolume()-fg.getTransmitted());
+                fg.getOwningCoflowID() , fg.getSrcLocation(), fg.getDstLocation() , fg.getTotalVolume()-fg.getTransmitted(), fg.filename);
 
 //        fgo.setVolume( fg.getTotalVolume()-fg.getTransmitted() );
 

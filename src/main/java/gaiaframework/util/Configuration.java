@@ -23,13 +23,14 @@ public class Configuration {
     protected int numRA;
     protected String configFilePath;
 
-    protected String [] SAIPs;
-    protected String [] RAIPs;
+    protected String[] SAIPs;
+    protected String[] RAIPs;
 
-    protected int [] SAPorts;
+    protected int[] SAPorts;
 
-    protected int [] RAPorts;
-    public Configuration(int numSA , int numRA){
+    protected int[] RAPorts;
+
+    public Configuration(int numSA, int numRA) {
         this.numRA = numRA;
         this.numSA = numSA;
         this.SAIPs = new String[numSA];
@@ -40,7 +41,7 @@ public class Configuration {
         createDefaultConfig();
     }
 
-    public Configuration(int numSA, int numRA , String configFile){
+    public Configuration(int numSA, int numRA, String configFile) {
         this.numRA = numRA;
         this.numSA = numSA;
 
@@ -68,41 +69,41 @@ public class Configuration {
         createDefaultConfig();
     }
 
-    public void createDefaultConfig(){
-        for (int i = 0 ; i < numSA ; i++){
-            SAIPs[i] = Constants.AGENT_ADDR_PREFIX + String.valueOf(i+1); // starting from 10.0.0.1 !!!
+    public void createDefaultConfig() {
+        for (int i = 0; i < numSA; i++) {
+            SAIPs[i] = Constants.AGENT_ADDR_PREFIX + String.valueOf(i + 1); // starting from 10.0.0.1 !!!
             SAPorts[i] = Constants.SENDING_AGENT_PORT;
         }
 
-        for (int i = 0 ; i < numRA ; i++){
-            RAIPs[i] = Constants.AGENT_ADDR_PREFIX + String.valueOf(i+1);
+        for (int i = 0; i < numRA; i++) {
+            RAIPs[i] = Constants.AGENT_ADDR_PREFIX + String.valueOf(i + 1);
             RAPorts[i] = Constants.RECEIVING_AGENT_PORT;
         }
 
         masterPort = Constants.DEFAULT_MASTER_PORT;
-        masterIP = Constants.AGENT_ADDR_PREFIX + String.valueOf(numRA+1);
+        masterIP = Constants.AGENT_ADDR_PREFIX + String.valueOf(numRA + 1);
 
     }
 
-    public boolean parseConfigFile(String configFilePath){
+    public boolean parseConfigFile(String configFilePath) {
         System.out.println("Loading config from " + configFilePath);
-        try{
+        try {
             FileReader fr = new FileReader(configFilePath);
             BufferedReader br = new BufferedReader(fr);
 
             int cnt = 0;
             String line;
-            int state = 0 ; // 0 - reading master; 1 - #SA; 2 - SAIPs; 3 - #RA; 4 - RAIPs
+            int state = 0; // 0 - reading master; 1 - #SA; 2 - SAIPs; 3 - #RA; 4 - RAIPs
             while ((line = br.readLine()) != null) {
                 // Ignore comments
                 if (line.charAt(0) == '#') {
                     continue;
                 }
 
-                switch (state){
+                switch (state) {
                     case 0:
                         // first line for master
-                        String [] splits = line.split(" ");
+                        String[] splits = line.split(" ");
                         masterIP = splits[0];
                         masterPort = Integer.parseInt(splits[1]);
                         System.out.println("MS " + masterIP + ":" + masterPort);
@@ -120,10 +121,9 @@ public class Configuration {
                             return false;
                         }*/
 
-                        if(numSA == 0){
+                        if (numSA == 0) {
                             state += 2; // skip the next state
-                        }
-                        else {
+                        } else {
                             cnt = 0;
                             state++;
                         }
@@ -139,7 +139,7 @@ public class Configuration {
                         System.out.println("SA " + cnt + ' ' + SAIPs[cnt] + ":" + SAPorts[cnt]);
                         cnt++;
 
-                        if (cnt == numSA){
+                        if (cnt == numSA) {
                             cnt = 0;
                             state++;
                         }
@@ -155,10 +155,9 @@ public class Configuration {
                             return false;
                         }*/
 
-                        if (numRA == 0){
+                        if (numRA == 0) {
                             return true;
-                        }
-                        else {
+                        } else {
                             cnt = 0;
                             state++;
                         }
@@ -174,7 +173,7 @@ public class Configuration {
                         System.out.println("RA " + cnt + ' ' + RAIPs[cnt] + ":" + RAPorts[cnt]);
                         cnt++;
 
-                        if (cnt == numRA){
+                        if (cnt == numRA) {
                             return true;
                         }
 
@@ -193,31 +192,60 @@ public class Configuration {
         return false;
     }
 
-    public String getSAIP(int i){
-        assert (i>=0 && i<numSA);
+    public String getSAIP(int i) {
+        assert (i >= 0 && i < numSA);
         return SAIPs[i];
     }
 
-    public int getSAPort(int i){
-        assert (i>=0 && i<numSA);
+    public int getSAPort(int i) {
+        assert (i >= 0 && i < numSA);
         return SAPorts[i];
     }
 
-    public String getRAIP(int i){
-        assert (i>=0 && i<numRA);
+    public String getRAIP(int i) {
+        assert (i >= 0 && i < numRA);
         return RAIPs[i];
     }
 
-    public int getRAPort(int i){
-        assert (i>=0 && i<numRA);
+    public int getRAPort(int i) {
+        assert (i >= 0 && i < numRA);
         return RAPorts[i];
     }
 
-    public int getMasterPort() { return masterPort; }
+    public int getMasterPort() {
+        return masterPort;
+    }
 
-    public String getMasterIP() { return masterIP; }
+    public String getMasterIP() {
+        return masterIP;
+    }
 
-    public int getNumSA() { return numSA; }
+    public int getNumSA() {
+        return numSA;
+    }
 
-    public int getNumRA() { return numRA; }
+    public int getNumRA() {
+        return numRA;
+    }
+
+    public String findRAIDbyIP(String reducerIP) {
+
+        for (int i = 0; i < RAIPs.length; i++) {
+            if (RAIPs[i].equals(reducerIP)){
+                return String.valueOf(i);
+            }
+        }
+
+        return null;
+    }
+
+    public String findSAIDbyIP(String mapperIP) {
+        for (int i = 0; i < SAIPs.length; i++) {
+            if (SAIPs[i].equals(mapperIP)){
+                return String.valueOf(i);
+            }
+        }
+
+        return null;
+    }
 }

@@ -126,6 +126,7 @@ public class MasterRPCClient {
 
                     if (fgo.getFlowState() == FlowGroup_Old.FlowState.STARTING) {
                         fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.START);
+                        fueBuilder.setFilename(fgo.getFilename()); // set the filename only for the start message
                     } else {
                         fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.CHANGE);
                     }
