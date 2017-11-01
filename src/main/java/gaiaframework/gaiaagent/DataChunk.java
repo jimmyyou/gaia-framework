@@ -2,17 +2,15 @@ package gaiaframework.gaiaagent;
 
 // Data Chunk to be transferred by agents
 
-import gaiaframework.util.Constants;
-
 import java.io.Serializable;
 
 public class DataChunk implements Serializable {
     String filename;
-    int startIndex;
-    int chunkLength;
+    long startIndex;
+    long chunkLength;
     byte[] data;
 
-    public DataChunk(String filename, int startIndex, int chunkLength, byte[] data) {
+    public DataChunk(String filename, long startIndex, long chunkLength, byte[] data) {
         this.filename = filename;
         this.startIndex = startIndex;
         this.chunkLength = chunkLength;
@@ -23,11 +21,11 @@ public class DataChunk implements Serializable {
         return filename;
     }
 
-    public int getStartIndex() {
+    public long getStartIndex() {
         return startIndex;
     }
 
-    public int getChunkLength() {
+    public long getChunkLength() {
         return chunkLength;
     }
 
@@ -35,9 +33,8 @@ public class DataChunk implements Serializable {
         return data;
     }
 
-    public DataChunk(String filename) {
+/*    public DataChunk(String filename) {
         this.filename = filename;
-
-    }
+    }*/
 
 }

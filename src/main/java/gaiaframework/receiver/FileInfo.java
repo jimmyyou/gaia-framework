@@ -5,6 +5,7 @@ package gaiaframework.receiver;
 
 // VER 1.0 we copy the whole map output file over the net, but only copy once for co-located Reducers (i.e. combine the flowgroups)
 
+import gaiaframework.gaiaagent.DataChunk;
 import gaiaframework.util.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,11 +26,14 @@ public class FileInfo {
     }
 
     FileState fileState = FileState.NULL;
-    RandomAccessFile randomAccessFile;
+    RandomAccessFile dataFile;
     String filename;
 
     long totalChunks; // does not include the first and the last DataChunk
     long totalSize_bytes;
+
+    // TODO use HashTable etc. to track the progress? in case of retransmission. And report the progress back to GAIA controller
+    long receivedChunks = 0;
 
     public FileInfo(String filename, long totalSize_bytes) {
         this.filename = filename;
@@ -39,12 +43,11 @@ public class FileInfo {
 
         logger.info("Created FileInfo for {}, size: {}, chunks: [}", filename, totalSize_bytes, totalChunks);
 
-        // TODO create the RAF
-
+        // create the RAF
         try {
-            randomAccessFile = new RandomAccessFile(filename, "rw");
+            dataFile = new RandomAccessFile(filename, "rw");
 
-            randomAccessFile.setLength(totalSize_bytes);
+            dataFile.setLength(totalSize_bytes);
 
             fileState = FileState.WRITING;
             logger.info("Created RAF {}", filename);
@@ -58,8 +61,40 @@ public class FileInfo {
     }
 
 
+    public boolean writeDataAndCheck(DataChunk dataChunk) {
 
+        // first write the data, then check if it is finished
 
+        long startIndex = dataChunk.getStartIndex();
+        long chunkLength = dataChunk.getChunkLength();
+
+//        logger.info("Writing data to {}, [{}:{}]", filename, startIndex, chunkLength);
+
+        // FIXME how to support files larger than 2GB?
+        try {
+            dataFile.write(dataChunk.getData(), (int) startIndex, (int) chunkLength);
+
+            // check the overall progress for this file.
+            receivedChunks++;
+
+            logger.info("File {}, progress {} / {}", filename, receivedChunks, totalChunks);
+
+            if(receivedChunks >= totalChunks) {
+                finishAndClose();
+                return true;
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+
+    }
+
+    private void finishAndClose() throws IOException {
+        dataFile.close();
+    }
 
 
 /*    class BlockInfo {

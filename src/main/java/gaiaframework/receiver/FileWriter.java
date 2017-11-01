@@ -3,19 +3,18 @@ package gaiaframework.receiver;
 // A thread that writes the received data into files
 // maintains a pool of RandomAccessFile to write into
 
+// TODO use multiple threads to parallelly handle I/O
+
 import gaiaframework.gaiaagent.DataChunk;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class FileWriter implements Runnable{
     private static final Logger logger = LogManager.getLogger();
-
-    RandomAccessFile randomAccessFile;
 
     LinkedBlockingQueue<DataChunk> dataQueue;
 
@@ -53,16 +52,19 @@ public class FileWriter implements Runnable{
         if (dataChunk.getStartIndex() == -1){
             createFileandIndex(dataChunk);
         }
-        else if (dataChunk.getChunkLength() == 0){
-            closeFile();
-
+        else {
+            writeToFile(dataChunk);
+        }
+/*        else if (dataChunk.getChunkLength() == 0){
+            closeFile(dataChunk);
         }
         else {
-            writeToFile();
-        }
+            writeToFile(dataChunk);
+        }*/
 
     }
 
+    // upon receiving the first chunk, create and write to index file, also create data file.
     private void createFileandIndex(DataChunk dataChunk) {
         // first check if file exists
         String filename = dataChunk.getFilename();
@@ -86,15 +88,41 @@ public class FileWriter implements Runnable{
 
         activeFiles.put(filename, fileInfo);
 
+        // create and write to the index file
 
+        try {
+            FileOutputStream fos = new FileOutputStream(filename + ".index");
+
+            fos.write(dataChunk.getData());
+            fos.flush();
+            fos.close();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 
-    private void writeToFile() {
+    private void writeToFile(DataChunk dataChunk) {
+        String filename = dataChunk.getFilename();
+        FileInfo fileInfo = activeFiles.get(filename);
+
+        if (fileInfo != null) {
+            boolean isFinished = fileInfo.writeDataAndCheck(dataChunk);
+
+            if (isFinished) {
+                logger.info("File {} finished", filename);
+
+                activeFiles.remove(filename);
+            }
+
+        }
+        else {
+            logger.error("Received dataChunk for inactive file {}", dataChunk.getFilename());
+        }
 
     }
 
-    private void closeFile() {
-
-    }
 }
