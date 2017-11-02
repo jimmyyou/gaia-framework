@@ -126,7 +126,7 @@ public class AgentRPCServer {
                         responseObserver.onNext(reply);
 
                         // Start the worker Thread TODO: handle thread failure/PConn failure
-                        Thread wt = new Thread( new WorkerThread(conn_id, ra_id , i , queues[i] , sharedData,
+                        Thread wt = new Thread( new WorkerThread_New(conn_id, ra_id , i , queues[i] , sharedData,
                                 config.getRAIP(raID) , config.getRAPort(raID), port ) );
                         wt.start();
 
