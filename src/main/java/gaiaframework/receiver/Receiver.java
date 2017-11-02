@@ -31,7 +31,7 @@ public class Receiver implements Runnable {
 
                 DataChunk dataChunk = (DataChunk) in_.readObject();
 
-                dataQueue.put(dataChunk);
+                if (dataChunk != null) dataQueue.put(dataChunk);
 
 ////                num_recv = in_.read(buffer);
 //                if (num_recv < 0) {
@@ -41,6 +41,7 @@ public class Receiver implements Runnable {
             }
             catch (java.io.IOException e) {
                 logger.error("IOException caught");
+                e.printStackTrace();
                 break;
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
