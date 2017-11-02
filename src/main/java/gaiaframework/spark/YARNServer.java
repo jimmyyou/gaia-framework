@@ -114,16 +114,18 @@ public class YARNServer extends GaiaAbstractServer {
         for (ShuffleInfo.MapperInfo mapperInfo : req.getMappersList()) {
             if (taskID.equals(mapperInfo.getMapperID())) {
 
-                String ip = configuration.findSAIDbyIP(mapperInfo.getMapperIP());
-                if (ip != null) return ip;
+                String ip_raw = mapperInfo.getMapperIP();
+
+                String id = configuration.findSAIDbyIP(ip_raw.split(":")[0]);
+                if (id != null) return id;
             }
         }
 
         for (ShuffleInfo.ReducerInfo reducerInfo : req.getReducersList()) {
             if (taskID.equals(reducerInfo.getReducerID())) {
 
-                String ip = configuration.findRAIDbyIP(reducerInfo.getReducerIP());
-                if (ip != null) return ip;
+                String id = configuration.findRAIDbyIP(reducerInfo.getReducerIP().split(":")[0]);
+                if (id != null) return id;
             }
         }
 
