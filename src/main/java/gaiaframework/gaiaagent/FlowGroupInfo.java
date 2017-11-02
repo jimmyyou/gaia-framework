@@ -9,6 +9,7 @@ import gaiaframework.util.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class FlowGroupInfo {
 
@@ -21,6 +22,14 @@ public class FlowGroupInfo {
     volatile FlowState flowState = FlowState.INIT;
 
     List<WorkerInfo> workerInfoList = new ArrayList<>();
+
+    public LinkedBlockingQueue<DataChunk> getDataQueue() {
+        return dataQueue;
+    }
+
+    LinkedBlockingQueue<DataChunk> dataQueue;
+
+    Thread fileReader;
 
     public enum FlowState{
         INIT,
@@ -47,6 +56,14 @@ public class FlowGroupInfo {
         this.ID = ID;
         this.volume = volume;
         this.finished = false;
+    }
+
+    public FlowGroupInfo(String ID, double volume, String fileName) {
+        this.ID = ID;
+        this.volume = volume;
+        this.finished = false;
+        this.dataQueue = new LinkedBlockingQueue<>();
+        this.fileReader = new Thread( new FileReader(fileName, dataQueue, (long) (volume * 1024 * 1024)));
     }
 
     public void addWorkerInfo(String raID, int pathID){

@@ -45,12 +45,13 @@ public class Constants {
 
     public static final int BUFFER_SIZE = 64 * 1024 * 1024;
 
-    public static final int DEFAULT_TOKEN_RATE = 40;
+    public static final int DEFAULT_TOKEN_RATE = 400;
     public static final long EXPERIMENT_INTERVAL = 60000; // 60s between experiments
     public static final long SOCKET_RETRY_MILLIS = 5000;
     public static final int DEFAULT_SOCKET_TIMEOUT = 10000;
     public static final long HEARTBEAT_INTERVAL_MILLIS = 2000; // 2s heartbeat
     public static final int CHUNK_SIZE_KB = 64;
+    public static final int SENDER_QUEUE_LENGTH = 1000;
 
     public static HashMap<String, String> node_id_to_trace_id;
 
