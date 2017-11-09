@@ -13,15 +13,18 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class FileWriter implements Runnable{
+public class FileWriter implements Runnable {
     private static final Logger logger = LogManager.getLogger();
 
     LinkedBlockingQueue<DataChunk> dataQueue;
 
-    HashMap <String, FileInfo> activeFiles = new HashMap<String, FileInfo>();
+    HashMap<String, FileInfo> activeFiles = new HashMap<String, FileInfo>();
 
-    public FileWriter(LinkedBlockingQueue<DataChunk> dataQueue) {
+    boolean isOutputEnabled = true;
+
+    public FileWriter(LinkedBlockingQueue<DataChunk> dataQueue, boolean isOutputEnabled) {
         this.dataQueue = dataQueue;
+        this.isOutputEnabled = isOutputEnabled;
     }
 
     @Override
@@ -45,14 +48,20 @@ public class FileWriter implements Runnable{
 
     /**
      * process the dataChunk, if startOffset == -1, the start index is the total size of the file
+     *
      * @param dataChunk
      */
     private void processData(DataChunk dataChunk) {
 
-        if (dataChunk.getStartIndex() == -1){
-            createFileandIndex(dataChunk);
+        // DEBUG purpose, No Op when debugging on single host
+        if (!isOutputEnabled) {
+            // TODO verbose
+            return;
         }
-        else {
+
+        if (dataChunk.getStartIndex() == -1) {
+            createFileandIndex(dataChunk);
+        } else {
             writeToFile(dataChunk);
         }
 /*        else if (dataChunk.getChunkLength() == 0){
@@ -118,8 +127,7 @@ public class FileWriter implements Runnable{
                 activeFiles.remove(filename);
             }
 
-        }
-        else {
+        } else {
             logger.error("Received dataChunk for inactive file {}", dataChunk.getFilename());
         }
 
