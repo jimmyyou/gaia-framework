@@ -182,9 +182,22 @@ public class WorkerThread_New implements Runnable {
 
         for (Map.Entry<String, SubscriptionInfo> se : subscribers.entrySet()) {
 
-            DataChunk data = se.getValue().fgi.getDataQueue().remove();
+            try {
+                DataChunk dataChunk = se.getValue().fgi.getDataQueue().remove();
+                oos.writeObject(dataChunk);
 
-            if ( data != null){
+//                data.getStartIndex() + data.getChunkLength() >= se.getValue().fgi.
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (NoSuchElementException e){
+                // TODO use a better way to tell it is finished
+//                e.printStackTrace();
+                logger.info("Finished sending for flow {}", se.getValue().fgi.ID);
+                to_remove.add(se.getValue());
+            }
+
+/*            if ( data != null){
                 try {
                     oos.writeObject(data);
                 } catch (IOException e) {
@@ -192,10 +205,10 @@ public class WorkerThread_New implements Runnable {
                 }
             }
             else {
-                // TODO trigger finish event
+
                 to_remove.add(se.getValue());
 
-            }
+            }*/
 
         }
 

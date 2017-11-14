@@ -17,11 +17,11 @@ import java.io.RandomAccessFile;
 public class FileInfo {
     private static final Logger logger = LogManager.getLogger();
 
-    public enum FileState{
+    public enum FileState {
         NULL,
-//        NEW,
+        //        NEW,
         WRITING,
-//        PAUSED,
+        //        PAUSED,
         FIN
     }
 
@@ -39,9 +39,9 @@ public class FileInfo {
         this.filename = filename;
         this.totalSize_bytes = totalSize_bytes;
 
-        totalChunks = 1 + totalSize_bytes / (Constants.CHUNK_SIZE_KB * 1024);
+        totalChunks = totalSize_bytes / (Constants.CHUNK_SIZE_KB * 1024) + ((totalSize_bytes % (Constants.CHUNK_SIZE_KB * 1024)) > 0 ? 1 : 0);
 
-        logger.info("Created FileInfo for {}, size: {}, chunks: [}", filename, totalSize_bytes, totalChunks);
+        logger.info("Created FileInfo for {}, size: {}, chunks: {}", filename, totalSize_bytes, totalChunks);
 
         // create the RAF
         try {
@@ -72,14 +72,16 @@ public class FileInfo {
 
         // FIXME how to support files larger than 2GB?
         try {
-            dataFile.write(dataChunk.getData(), (int) startIndex, (int) chunkLength);
+            dataFile.seek(startIndex);
+            dataFile.write(dataChunk.getData(), 0, (int) chunkLength);
+//            dataFile.write(dataChunk.getData(), (int) startIndex, (int) chunkLength);
 
             // check the overall progress for this file.
             receivedChunks++;
 
-            logger.info("File {}, progress {} / {}", filename, receivedChunks, totalChunks);
+            logger.info("File {}, progress {} / {} ({})", filename, receivedChunks, totalChunks, startIndex);
 
-            if(receivedChunks >= totalChunks) {
+            if (receivedChunks >= totalChunks) {
                 finishAndClose();
                 return true;
             }

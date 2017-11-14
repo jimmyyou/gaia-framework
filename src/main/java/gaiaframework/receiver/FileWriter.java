@@ -53,10 +53,15 @@ public class FileWriter implements Runnable {
      */
     private void processData(DataChunk dataChunk) {
 
+//        logger.info("Processing data {} {} {}\n{} {}", dataChunk.getFilename(), dataChunk.getStartIndex(),
+//                dataChunk.getChunkLength(), (int) dataChunk.getData()[0], (int) dataChunk.getData()[1]);
+
         // DEBUG purpose, No Op when debugging on single host
         if (!isOutputEnabled) {
-            // TODO verbose
-            return;
+
+            // append .dbg to file name
+            dataChunk.appendToFilename(".dbg"); // TODO verify
+//            return;
         }
 
         if (dataChunk.getStartIndex() == -1) {
@@ -93,6 +98,8 @@ public class FileWriter implements Runnable {
         // continue to create the File, and put into the map
         logger.info("Creating file and index for {}", filename);
 
+
+        // TODO WRONG ChunkLength
         FileInfo fileInfo = new FileInfo(filename, dataChunk.getChunkLength());
 
         activeFiles.put(filename, fileInfo);

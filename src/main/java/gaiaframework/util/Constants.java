@@ -52,6 +52,7 @@ public class Constants {
     public static final long HEARTBEAT_INTERVAL_MILLIS = 2000; // 2s heartbeat
     public static final int CHUNK_SIZE_KB = 64;
     public static final int SENDER_QUEUE_LENGTH = 1000;
+    public static final String SCHEDULER_NAME_GAIA = "gaia";
 
     public static HashMap<String, String> node_id_to_trace_id;
 

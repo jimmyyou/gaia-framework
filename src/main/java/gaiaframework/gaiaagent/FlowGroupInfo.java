@@ -64,6 +64,7 @@ public class FlowGroupInfo {
         this.finished = false;
         this.dataQueue = new LinkedBlockingQueue<>();
         this.fileReader = new Thread( new FileReader(fileName, dataQueue, (long) (volume * 1024 * 1024)));
+        fileReader.start();
     }
 
     public void addWorkerInfo(String raID, int pathID){

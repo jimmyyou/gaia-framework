@@ -118,7 +118,7 @@ public class Master {
 //            scheduler = new BaselineScheduler(netGraph);
 //            enablePersistentConn = false;
         }
-        else if (scheduler_type.equals("recursive-remain-flow")) {
+        else if (scheduler_type.equals(Constants.SCHEDULER_NAME_GAIA)) {
 //            scheduler = new PoorManScheduler(netGraph);
 //            scheduler = new CoflowScheduler(netGraph);
 //            enablePersistentConn = true;

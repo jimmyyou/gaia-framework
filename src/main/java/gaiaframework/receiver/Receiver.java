@@ -31,6 +31,9 @@ public class Receiver implements Runnable {
 
                 DataChunk dataChunk = (DataChunk) in_.readObject();
 
+//                logger.info("Processing data {} {} {}\n{} {}", dataChunk.getFilename(), dataChunk.getStartIndex(),
+//                        dataChunk.getChunkLength(), (int) dataChunk.getData()[0], (int) dataChunk.getData()[1]);
+
                 if (dataChunk != null) dataQueue.put(dataChunk);
 
 ////                num_recv = in_.read(buffer);
@@ -53,6 +56,7 @@ public class Receiver implements Runnable {
         logger.info("Closing socket from {}" , sd_.getRemoteSocketAddress());
 
         try {
+            in_.close();
             sd_.close();
         }
         catch (java.io.IOException e) {

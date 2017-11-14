@@ -171,7 +171,7 @@ public class AgentSharedData {
             return;
         }
 
-        FlowGroupInfo fgi = new FlowGroupInfo(fgID, fge.getRemainingVolume()).setFlowState(FlowGroupInfo.FlowState.RUNNING);
+        FlowGroupInfo fgi = new FlowGroupInfo(fgID, fge.getRemainingVolume(), fge.getFilename()).setFlowState(FlowGroupInfo.FlowState.RUNNING);
         flowGroups.put(fgID , fgi);
 
         addAllSubscription(raID, fgID, fge, fgi);
