@@ -112,7 +112,7 @@ public class AgentRPCServer {
 
 
 //                            // Create the socket that the PersistentConnection object will use
-//                            Socket socketToRA = new Socket( config.getRAIP(raID) , config.getRAPort(raID));
+//                            Socket socketToRA = new Socket( config.getFAIP(raID) , config.getFAPort(raID));
 //                            socketToRA.setSoTimeout(0);
 //                            socketToRA.setKeepAlive(true);
 
@@ -127,7 +127,7 @@ public class AgentRPCServer {
 
                         // Start the worker Thread TODO: handle thread failure/PConn failure
                         Thread wt = new Thread( new WorkerThread_New(conn_id, ra_id , i , queues[i] , sharedData,
-                                config.getRAIP(raID) , config.getRAPort(raID), port ) );
+                                config.getFAIP(raID) , config.getFAPort(raID), port ) );
                         wt.start();
 
                     }

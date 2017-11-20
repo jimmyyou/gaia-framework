@@ -13,42 +13,61 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Configuration {
 
-    protected int masterPort;
     protected String masterIP;
+    protected int masterPort;
 
-    protected int numSA;
-    protected int numRA;
+    int numDC;
+
     protected String configFilePath;
 
-    protected String[] SAIPs;
-    protected String[] RAIPs;
+    class DataCenter {
 
-    protected int[] SAPorts;
+        String saIP;
+        String faIP;
+        int saPort;
+        int faPort;
 
-    protected int[] RAPorts;
+        int numHosts;
 
-    public Configuration(int numSA, int numRA) {
-        this.numRA = numRA;
-        this.numSA = numSA;
-        this.SAIPs = new String[numSA];
-        this.RAIPs = new String[numRA];
-        this.SAPorts = new int[numSA];
-        this.RAPorts = new int[numRA];
-        // default configuration
-        createDefaultConfig();
+        List<String> raIPs;
+        List<Integer> raPorts;
+
     }
 
-    public Configuration(int numSA, int numRA, String configFile) {
-        this.numRA = numRA;
-        this.numSA = numSA;
+    List<DataCenter> dataCenters;
 
-        // the arrays are initiated in parseConfigFile
+//    protected String[] SAIPs;
+//    protected String[] RAIPs;
+//
+//    protected int[] SAPorts;
+//
+//    protected int[] RAPorts;
 
+//    public Configuration(int numSA, int numRA) {
+//        this.numRA = numRA;
+//        this.numSA = numSA;
+//        this.SAIPs = new String[numSA];
+//        this.RAIPs = new String[numRA];
+//        this.SAPorts = new int[numSA];
+//        this.RAPorts = new int[numRA];
+//        // default configuration
+//        createDefaultConfig();
+//    }
+
+    public Configuration(int numDC, String configFile) {
+        this.numDC = numDC;
+
+        // the contents are initiated in parseConfigFile
         this.configFilePath = configFile;
         parseConfigFile(this.configFilePath);
+        assert (numDC == this.numDC);
     }
 
     // sometimes we don't know how many RA/SAs (when invoked by Agents)
@@ -59,29 +78,27 @@ public class Configuration {
 
     // create config according to default rules for maxAgents
     public Configuration(int maxAgents) {
-        this.numSA = maxAgents;
-        this.numRA = maxAgents;
-        this.SAIPs = new String[numSA];
-        this.RAIPs = new String[numRA];
-        this.SAPorts = new int[numSA];
-        this.RAPorts = new int[numRA];
+        this.numDC = maxAgents;
         // default configuration
         createDefaultConfig();
     }
 
     public void createDefaultConfig() {
-        for (int i = 0; i < numSA; i++) {
+
+        System.err.println("no default setting allowed");
+        System.exit(-1);
+/*        for (int i = 0; i < numDC; i++) {
             SAIPs[i] = Constants.AGENT_ADDR_PREFIX + String.valueOf(i + 1); // starting from 10.0.0.1 !!!
             SAPorts[i] = Constants.SENDING_AGENT_PORT;
         }
 
-        for (int i = 0; i < numRA; i++) {
+        for (int i = 0; i < numDC; i++) {
             RAIPs[i] = Constants.AGENT_ADDR_PREFIX + String.valueOf(i + 1);
             RAPorts[i] = Constants.RECEIVING_AGENT_PORT;
         }
 
         masterPort = Constants.DEFAULT_MASTER_PORT;
-        masterIP = Constants.AGENT_ADDR_PREFIX + String.valueOf(numRA + 1);
+        masterIP = Constants.AGENT_ADDR_PREFIX + String.valueOf(numDC + 1);*/
 
     }
 
@@ -90,11 +107,74 @@ public class Configuration {
         try {
             FileReader fr = new FileReader(configFilePath);
             BufferedReader br = new BufferedReader(fr);
-
-            int cnt = 0;
             String line;
-            int state = 0; // 0 - reading master; 1 - #SA; 2 - SAIPs; 3 - #RA; 4 - RAIPs
-            while ((line = br.readLine()) != null) {
+
+            // First ignore comments at the beginning, comments are only allowed at the beginning for now.
+            while ((line = br.readLine()).startsWith("#")) {
+            }
+
+            // next the first line
+
+            String[] splits = line.split(" ");
+            masterIP = splits[0];
+            masterPort = Integer.parseInt(splits[1]);
+            System.out.println("MS " + masterIP + ":" + masterPort);
+
+            // second line
+            line = br.readLine();
+            numDC = Integer.parseInt(line);
+            System.out.println("numDC = " + numDC);
+
+            dataCenters = new ArrayList<>(numDC);
+
+            // read the datacenters
+            for (int i = 0; i < numDC; i++) {
+                System.out.println("Reading from DC " + i);
+                DataCenter dc = new DataCenter();
+
+                // the first line
+                line = br.readLine();
+
+                splits = line.split(" ");
+                int DCID = Integer.parseInt(splits[0]);
+                assert (DCID == i);
+
+                dc.numHosts = Integer.parseInt(splits[1]);
+
+                // read SA
+                line = br.readLine();
+                splits = line.split(" ");
+
+                dc.saIP = splits[0];
+                dc.saPort = Integer.parseInt(splits[1]);
+                System.out.println("SA " + dc.saIP + ":" + dc.saPort);
+
+                // read FA
+                line = br.readLine();
+                splits = line.split(" ");
+
+                dc.faIP = splits[0];
+                dc.faPort = Integer.parseInt(splits[1]);
+                System.out.println("FA " + dc.faIP + ":" + dc.faPort);
+
+                dc.raIPs = new ArrayList<>(dc.numHosts);
+                dc.raPorts = new ArrayList<>(dc.numHosts);
+
+
+                // read hosts
+                for (int j = 0; j < dc.numHosts; j++) {
+                    line = br.readLine();
+                    splits = line.split(" ");
+
+                    dc.raIPs.add(splits[0]);
+                    dc.raPorts.add(Integer.parseInt(splits[1]));
+                    System.out.println("RA " + dc.raIPs.get(j) + ":" + dc.raPorts.get(j));
+
+                }
+
+                dataCenters.add(dc);
+            }
+            /*while ((line = br.readLine()) != null) {
                 // Ignore comments
                 if (line.charAt(0) == '#') {
                     continue;
@@ -116,10 +196,10 @@ public class Configuration {
                         // read numSA
                         numSA = Integer.parseInt(line);
                         System.out.println("numSA = " + numSA);
-/*                        if(numSA != Integer.parseInt(line)){
+*//*                        if(numSA != Integer.parseInt(line)){
                             System.err.println("Configuration error!");
                             return false;
-                        }*/
+                        }*//*
 
                         if (numSA == 0) {
                             state += 2; // skip the next state
@@ -150,10 +230,10 @@ public class Configuration {
                         // read numRA
                         numRA = Integer.parseInt(line);
                         System.out.println("numRA = " + numRA);
-                        /*if(numRA != Integer.parseInt(line)){
+                        *//*if(numRA != Integer.parseInt(line)){
                             System.err.println("Configuration error!");
                             return false;
-                        }*/
+                        }*//*
 
                         if (numRA == 0) {
                             return true;
@@ -180,7 +260,7 @@ public class Configuration {
                         break;
 
                 }
-            }
+            }*/
         } catch (FileNotFoundException e) {
             System.err.println("Config file path invalid, fall back to default config.");
             createDefaultConfig();
@@ -193,23 +273,27 @@ public class Configuration {
     }
 
     public String getSAIP(int i) {
-        assert (i >= 0 && i < numSA);
-        return SAIPs[i];
+        assert (i >= 0 && i < numDC);
+        return dataCenters.get(i).saIP;
+//        return SAIPs[i];
     }
 
     public int getSAPort(int i) {
-        assert (i >= 0 && i < numSA);
-        return SAPorts[i];
+        assert (i >= 0 && i < numDC);
+        return dataCenters.get(i).saPort;
+//        return SAPorts[i];
     }
 
-    public String getRAIP(int i) {
-        assert (i >= 0 && i < numRA);
-        return RAIPs[i];
+    public String getFAIP(int i) {
+        assert (i >= 0 && i < numDC);
+        return dataCenters.get(i).faIP;
+//        return RAIPs[i];
     }
 
-    public int getRAPort(int i) {
-        assert (i >= 0 && i < numRA);
-        return RAPorts[i];
+    public int getFAPort(int i) {
+        assert (i >= 0 && i < numDC);
+        return dataCenters.get(i).faPort;
+//        return RAPorts[i];
     }
 
     public int getMasterPort() {
@@ -220,18 +304,11 @@ public class Configuration {
         return masterIP;
     }
 
-    public int getNumSA() {
-        return numSA;
-    }
 
-    public int getNumRA() {
-        return numRA;
-    }
+    public String findFAIDbyIP(String reducerIP) {
 
-    public String findRAIDbyIP(String reducerIP) {
-
-        for (int i = 0; i < RAIPs.length; i++) {
-            if (RAIPs[i].equals(reducerIP)){
+        for (int i = 0; i < numDC; i++) {
+            if (dataCenters.get(i).faIP.equals(reducerIP)) {
                 return String.valueOf(i);
             }
         }
@@ -240,8 +317,8 @@ public class Configuration {
     }
 
     public String findSAIDbyIP(String mapperIP) {
-        for (int i = 0; i < SAIPs.length; i++) {
-            if (SAIPs[i].equals(mapperIP)){
+        for (int i = 0; i < numDC; i++) {
+            if (dataCenters.get(i).saIP.equals(mapperIP)) {
                 return String.valueOf(i);
             }
         }

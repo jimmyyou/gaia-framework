@@ -1,7 +1,6 @@
 package gaiaframework.spark;
 
 import edu.umich.gaialib.GaiaAbstractServer;
-import edu.umich.gaialib.TaskInfo;
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.gaiamaster.Coflow;
 import gaiaframework.gaiamaster.FlowGroup;
@@ -10,9 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class YARNServer extends GaiaAbstractServer {
@@ -124,7 +121,7 @@ public class YARNServer extends GaiaAbstractServer {
         for (ShuffleInfo.ReducerInfo reducerInfo : req.getReducersList()) {
             if (taskID.equals(reducerInfo.getReducerID())) {
 
-                String id = configuration.findRAIDbyIP(reducerInfo.getReducerIP().split(":")[0]);
+                String id = configuration.findFAIDbyIP(reducerInfo.getReducerIP().split(":")[0]);
                 if (id != null) return id;
             }
         }
