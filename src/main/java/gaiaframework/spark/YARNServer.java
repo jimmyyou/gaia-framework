@@ -31,6 +31,12 @@ public class YARNServer extends GaiaAbstractServer {
         // Create the CF and submit it.
         String cfID = req.getUsername() + ":" + req.getJobID();
 
+        // Aggregate all the flows by their Data Center location
+        // Gaia only sees Data Centers
+        // How to deal with co-located flows?
+
+
+
         HashMap<String, FlowGroup> flowGroups = removeRedundantFlowGroups(generateFlowGroups(cfID, req));
 
         Coflow cf = new Coflow(cfID, flowGroups);

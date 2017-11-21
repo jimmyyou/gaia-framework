@@ -66,6 +66,7 @@ message FlowUpdate {
         repeated PathRateEntry pathToRate = 4;
         //        map <int32, double> pathToRate = 3;
         string filename = 5;
+        string srcAddr = 6; // when used in cluster mode
     }
 
     message RAUpdateEntry {
