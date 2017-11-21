@@ -362,7 +362,8 @@ public class Master {
             for ( Map.Entry<String, FlowGroup> fge : cf.getFlowGroups().entrySet()){
                 FlowGroup fg = fge.getValue();
                 if (fg.getFlowState() == FlowGroup.FlowState.FIN){
-                    continue; // ignore finished, they shall be removed soon
+                    logger.info("find fg {} in FIN state, to be removed", fg.getId());
+                    continue; // ignore finished, they shall be removed shortly
                 }
                 else if (fg.getFlowState() == FlowGroup.FlowState.RUNNING) { // may pause/change the running flow
                     if (fgoHashMap.containsKey(fg.getId())){ // we may need to change, if the path/rate are different TODO: speculatively send change message

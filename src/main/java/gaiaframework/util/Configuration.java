@@ -13,8 +13,6 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.Inet4Address;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,8 +34,8 @@ public class Configuration {
 
         int numHosts;
 
-        List<String> raIPs;
-        List<Integer> raPorts;
+        List<String> hostIPs;
+        List<Integer> hostPorts;
 
     }
 
@@ -157,8 +155,8 @@ public class Configuration {
                 dc.faPort = Integer.parseInt(splits[1]);
                 System.out.println("FA " + dc.faIP + ":" + dc.faPort);
 
-                dc.raIPs = new ArrayList<>(dc.numHosts);
-                dc.raPorts = new ArrayList<>(dc.numHosts);
+                dc.hostIPs = new ArrayList<>(dc.numHosts);
+                dc.hostPorts = new ArrayList<>(dc.numHosts);
 
 
                 // read hosts
@@ -166,9 +164,9 @@ public class Configuration {
                     line = br.readLine();
                     splits = line.split(" ");
 
-                    dc.raIPs.add(splits[0]);
-                    dc.raPorts.add(Integer.parseInt(splits[1]));
-                    System.out.println("RA " + dc.raIPs.get(j) + ":" + dc.raPorts.get(j));
+                    dc.hostIPs.add(splits[0]);
+                    dc.hostPorts.add(Integer.parseInt(splits[1]));
+                    System.out.println("RA " + dc.hostIPs.get(j) + ":" + dc.hostPorts.get(j));
 
                 }
 
@@ -304,8 +302,39 @@ public class Configuration {
         return masterIP;
     }
 
+    public String findDCIDbyAddr(String addr) {
 
-    public String findFAIDbyIP(String reducerIP) {
+        for (int i = 0; i < numDC; i++) {
+            List<String> raIPs = dataCenters.get(i).hostIPs;
+            List<Integer> raPorts = dataCenters.get(i).hostPorts;
+            for (int j = 0; j < dataCenters.get(i).numHosts; j++) {
+
+                if ((raIPs.get(j) + ":" + raPorts.get(j)).equals(addr)) {
+                    return String.valueOf(i);
+                }
+            }
+        }
+
+        return null;
+    }
+
+/*    public String findSrcIDbyAddr(String MapAddr) {
+
+        for (int i = 0; i < numDC; i++) {
+            List<String> srcIPs = dataCenters.get(i).hostIPs;
+            List<Integer> srcPorts = dataCenters.get(i).hostPorts;
+            for (int j = 0; j < dataCenters.get(i).numHosts; j++) {
+
+                if ((IPs.get(j) + ":" + raPorts.get(j)).equals(reducerAddr)) {
+                    return String.valueOf(i);
+                }
+            }
+        }
+
+        return null;
+    }*/
+
+/*    public String findFAIDbyIP(String reducerIP) {
 
         for (int i = 0; i < numDC; i++) {
             if (dataCenters.get(i).faIP.equals(reducerIP)) {
@@ -324,5 +353,5 @@ public class Configuration {
         }
 
         return null;
-    }
+    }*/
 }

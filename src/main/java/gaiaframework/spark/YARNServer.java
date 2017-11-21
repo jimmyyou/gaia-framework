@@ -1,5 +1,6 @@
 package gaiaframework.spark;
 
+import edu.umich.gaialib.FlowInfo;
 import edu.umich.gaialib.GaiaAbstractServer;
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.gaiamaster.Coflow;
@@ -35,11 +36,17 @@ public class YARNServer extends GaiaAbstractServer {
         // Gaia only sees Data Centers
         // How to deal with co-located flows?
 
+        HashMap<String, FlowGroup> coLocatedFGs = new HashMap<>();
+        HashMap<String, FlowGroup> flowGroups = new HashMap<>();
 
+        //removeRedundantFlowGroups(generateFlowGroups(cfID, req));
 
-        HashMap<String, FlowGroup> flowGroups = removeRedundantFlowGroups(generateFlowGroups(cfID, req));
-
+        generateFlowGroups(cfID, req, coLocatedFGs, flowGroups);
         Coflow cf = new Coflow(cfID, flowGroups);
+
+        if (coLocatedFGs.size() >= 0){
+            logger.error("{} co-located FG received by Gaia", coLocatedFGs.size());
+        }
 
         try {
             cfQueue.put(cf);
@@ -62,28 +69,49 @@ public class YARNServer extends GaiaAbstractServer {
     // dst - dstLoc
     // owningCoflowID - dstStage
     // Volume - divided_data_size
+    private HashMap<String, FlowGroup> generateFlowGroups(String cfID, ShuffleInfo req, HashMap<String, FlowGroup> coLocatedFGs, HashMap<String, FlowGroup> flowGroups) {
 
-    // FIXME combine the flowgroups with same mapID and same reduceLoc
-    private HashMap<String, FlowGroup> generateFlowGroups(String cfID, ShuffleInfo req) {
-        HashMap<String, FlowGroup> flowGroups = new HashMap<>();
+        // first store all flows into flowGroups, then move the co-located ones to coLocatedFGs
 
-
+        // for each FlowInfo, first find the fgID etc.
         for (ShuffleInfo.FlowInfo flowInfo : req.getFlowsList()) {
 
             String mapID = flowInfo.getMapAttemptID();
             String redID = flowInfo.getReduceAttemptID();
 
-            String srcLoc = getLocation(mapID, req);
-            String dstLoc = getLocation(redID, req);
+            String srcLoc = getTaskLocationID(mapID, req);
+            String dstLoc = getTaskLocationID(redID, req);
 
             String fgID = cfID + ":" + mapID + ":" + redID + ":" + srcLoc + '-' + dstLoc;
-            // We need MB as the unit for Gaia, so we divide by 1024 and 1024
-            long flowVolume = flowInfo.getFlowSize() / 1024 / 1024;
-            if (flowVolume == 0) flowVolume = 1;
-            FlowGroup fg = new FlowGroup(fgID, srcLoc, dstLoc, cfID, flowVolume,
-                    flowInfo.getDataFilename(), mapID, redID);
 
-            flowGroups.put(fgID, fg);
+            // check if we already have this fg.
+            if (flowGroups.containsKey(fgID)) {
+                FlowGroup fg = flowGroups.get(fgID);
+
+                fg.flowInfos.add(flowInfo);
+                fg.addTotalVolume(flowInfo.getFlowSize());
+
+            } else {
+
+                // Gaia now uses bytes as the volume
+                long flowVolume = flowInfo.getFlowSize();
+                if (flowVolume == 0) flowVolume = 1;
+                FlowGroup fg = new FlowGroup(fgID, srcLoc, dstLoc, cfID, flowVolume,
+                        flowInfo.getDataFilename(), mapID, redID);
+                fg.flowInfos.add(flowInfo);
+
+                flowGroups.put(fgID, fg);
+
+                // when co-located
+                if (srcLoc.equals(dstLoc)) {
+                    coLocatedFGs.put(fgID, fg);
+                }
+            }
+
+        }
+
+        for(String key : coLocatedFGs.keySet()){
+            flowGroups.remove(key);
         }
 
         return flowGroups;
@@ -112,22 +140,27 @@ public class YARNServer extends GaiaAbstractServer {
         return ret;
     }
 
-    private String getLocation(String taskID, ShuffleInfo req) {
-        // first check the IP
+    // 1. find the IP for this task using ShuffleInfo (first look in MapIP, then in ReduceIP)
+    // 2. find the DCID for this IP?
+    private String getTaskLocationID(String taskID, ShuffleInfo req) {
+        // check the hostIP
         for (ShuffleInfo.MapperInfo mapperInfo : req.getMappersList()) {
             if (taskID.equals(mapperInfo.getMapperID())) {
 
                 String ip_raw = mapperInfo.getMapperIP();
 
-                String id = configuration.findSAIDbyIP(ip_raw.split(":")[0]);
+                String id = configuration.findDCIDbyAddr(ip_raw);
+//                String id = configuration.findSrcIDbyAddr(ip_raw.split(":")[0]);
                 if (id != null) return id;
             }
         }
 
+        // then check the reducerID
         for (ShuffleInfo.ReducerInfo reducerInfo : req.getReducersList()) {
             if (taskID.equals(reducerInfo.getReducerID())) {
 
-                String id = configuration.findFAIDbyIP(reducerInfo.getReducerIP().split(":")[0]);
+                String id = configuration.findDCIDbyAddr(reducerInfo.getReducerIP());
+//                String id = configuration.findDstIDbyAddr(reducerInfo.getReducerIP().split(":")[0]);
                 if (id != null) return id;
             }
         }
@@ -135,6 +168,5 @@ public class YARNServer extends GaiaAbstractServer {
         logger.error("Task Location not found for {}", taskID);
         return null;
     }
-
 
 }

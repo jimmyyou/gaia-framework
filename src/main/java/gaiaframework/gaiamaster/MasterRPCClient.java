@@ -126,7 +126,15 @@ public class MasterRPCClient {
 
                     if (fgo.getFlowState() == FlowGroup_Old.FlowState.STARTING) {
                         fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.START);
+
+                        // FIXME should not use this filename here.
+                        // This is not the list of filenames, so should not be used here.
                         fueBuilder.setFilename(fgo.getFilename()); // set the filename only for the start message
+
+                        // also send the List<FlowInfo> along with the info
+                        fueBuilder.addAllFlowInfos(fgo.flowInfos);
+
+
                     } else {
                         fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.CHANGE);
                     }

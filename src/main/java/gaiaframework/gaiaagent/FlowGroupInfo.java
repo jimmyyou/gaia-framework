@@ -63,7 +63,7 @@ public class FlowGroupInfo {
         this.volume = volume;
         this.finished = false;
         this.dataQueue = new LinkedBlockingQueue<>();
-        this.fileReader = new Thread( new FileReader(fileName, dataQueue, (long) (volume * 1024 * 1024)));
+        this.fileReader = new Thread( new LocalFileReader(fileName, dataQueue, (long) (volume * 1024 * 1024)));
         fileReader.start();
     }
 

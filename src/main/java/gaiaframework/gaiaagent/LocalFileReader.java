@@ -14,7 +14,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class FileReader implements Runnable {
+public class LocalFileReader implements Runnable {
     private static final Logger logger = LogManager.getLogger();
 
     String filename;
@@ -23,7 +23,7 @@ public class FileReader implements Runnable {
 
     long totalSize;
 
-    public FileReader(String filename, LinkedBlockingQueue<DataChunk> dataQueue, long totalFileSize) {
+    public LocalFileReader(String filename, LinkedBlockingQueue<DataChunk> dataQueue, long totalFileSize) {
         this.filename = filename;
         this.dataQueue = dataQueue;
         this.totalSize = totalFileSize;

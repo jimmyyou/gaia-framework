@@ -1,6 +1,9 @@
 package gaiaframework.network;
 
+import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
+
 import java.util.ArrayList;
+import java.util.List;
 
 // This is actually a FlowGroup, owned by a CoFlow.
 public class FlowGroup_Old {
@@ -19,6 +22,8 @@ public class FlowGroup_Old {
     private boolean updated = false; // whether the flow has had its allocation updated
 //    private boolean started_sending = false; // whether the flow has started to be sent
                                              // by a sending agent (only used by baseline)
+
+    public List<ShuffleInfo.FlowInfo> flowInfos;
 
     private String filename;
 
@@ -48,7 +53,8 @@ public class FlowGroup_Old {
         this.flowState = FlowState.INIT;
     }
 
-    public FlowGroup_Old(String id, int int_id, String coflow_id, String src_loc, String dst_loc, double volume, String filename) {
+    public FlowGroup_Old(String id, int int_id, String coflow_id, String src_loc, String dst_loc, double volume,
+                         String filename, List<ShuffleInfo.FlowInfo> flowInfos) {
         this.id = id;
         this.int_id = int_id;
         this.coflow_id = coflow_id;
@@ -59,6 +65,7 @@ public class FlowGroup_Old {
         this.transmitted_volume = (double)0.0;
         this.flowState = FlowState.INIT;
         this.filename = filename;
+        this.flowInfos = flowInfos;
     }
 
     public double remaining_volume() {

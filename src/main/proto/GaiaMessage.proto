@@ -1,4 +1,5 @@
 syntax = "proto3";
+import "AM_GaiaController.proto";
 
 option java_package = "gaiaframework.gaiaprotos";
 option java_outer_classname = "GaiaMessageProtos";
@@ -66,7 +67,9 @@ message FlowUpdate {
         repeated PathRateEntry pathToRate = 4;
         //        map <int32, double> pathToRate = 3;
         string filename = 5;
-        string srcAddr = 6; // when used in cluster mode
+
+        // TODO resolve the dependency of flowInfo in the future.
+        repeated ShuffleInfo.FlowInfo flowInfos = 6;
     }
 
     message RAUpdateEntry {
