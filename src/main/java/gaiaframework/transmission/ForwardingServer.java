@@ -4,6 +4,7 @@ import gaiaframework.util.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
@@ -54,8 +55,7 @@ public class ForwardingServer implements Runnable {
 
                         fwQueues.get(hostID).put(dataChunk);
 
-                    }
-                    else {
+                    } else {
                         logger.error("Found invalid hostID {} for IP {}", hostID, dstIP);
                     }
 
@@ -63,6 +63,9 @@ public class ForwardingServer implements Runnable {
                 } else {
                     logger.error("dataChunk == null");
                 }
+            } catch (EOFException e) {
+                logger.error("EOF Exception caught, exiting...");
+                break;
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
@@ -73,7 +76,7 @@ public class ForwardingServer implements Runnable {
         }
     }
 
-    private int findHostIDbyIP (String dstIP){
+    private int findHostIDbyIP(String dstIP) {
         for (int i = 0; i < hostIPList.size(); i++) {
             if (hostIPList.get(i).equals(dstIP)) {
                 return i;

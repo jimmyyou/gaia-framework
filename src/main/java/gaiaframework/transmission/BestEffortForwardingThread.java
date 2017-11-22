@@ -62,9 +62,9 @@ public class BestEffortForwardingThread implements Runnable {
 //                dataSocket.setSoTimeout(Constants.DEFAULT_SOCKET_TIMEOUT);
                 dataSocket.setKeepAlive(true);
 
-                logger.info("FA connected to {} : {} from port {}, keepAlive {}", raIP, raPort, dataSocket.getPort(), dataSocket.getKeepAlive());
+                logger.info("FA connected to {} : {} from port {}, keepAlive {}", raIP, raPort, dataSocket.getLocalPort(), dataSocket.getKeepAlive());
             } catch (IOException e) {
-                logger.error("Error while connecting to {} {} from port {}", raIP, raPort, dataSocket.getPort());
+                logger.error("Error while connecting to {} {} from port {}", raIP, raPort, dataSocket.getLocalPort());
                 e.printStackTrace();
 
                 // sleep for some time
