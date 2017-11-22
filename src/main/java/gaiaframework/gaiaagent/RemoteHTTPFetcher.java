@@ -108,13 +108,13 @@ public class RemoteHTTPFetcher implements Runnable {
 
 //            FetchData according to the totalRate
                 // check if 100 permits/s is enough (3200MByte/s enough?)
-                if (cur_rate < Constants.BLOCK_SIZE_MB * 8 * Constants.DEFAULT_TOKEN_RATE) {
+                if (cur_rate < Constants.BLOCK_SIZE_Bytes * 8 * Constants.DEFAULT_TOKEN_RATE) {
                     // no need to change rate , calculate the length
                     rateLimiter.setRate(Constants.DEFAULT_TOKEN_RATE);
                     data_length = (int) (cur_rate / Constants.DEFAULT_TOKEN_RATE * 1024 * 1024 / 8);
                 } else {
-                    data_length = Constants.BLOCK_SIZE_MB;
-                    double new_rate = cur_rate / 8 / Constants.BLOCK_SIZE_MB;
+                    data_length = Constants.BLOCK_SIZE_Bytes;
+                    double new_rate = cur_rate / 8 / Constants.BLOCK_SIZE_Bytes;
                     logger.error("Total rate {} too high for {}, setting new sending rate to {} / s", totalRate, srcFilename, new_rate);
                     rateLimiter.setRate(new_rate); // TODO: verify that the rate is enforced , since here we (re)set the rate for each chunk
                 }

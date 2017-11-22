@@ -41,7 +41,7 @@ public class Constants {
 //    public static final int DEFAULT_OUTPUTSTREAM_RATE = 100000;
 
     // Block is the maximum size of transmission. (64MB for GB/s level trasmission)
-    public static final int BLOCK_SIZE_MB = 64;
+    public static final int BLOCK_SIZE_Bytes = 64 * 1024 * 1024;
 
     public static final int BUFFER_SIZE = 64 * 1024 * 1024;
 
