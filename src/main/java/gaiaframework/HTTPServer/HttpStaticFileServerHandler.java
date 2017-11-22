@@ -11,21 +11,13 @@ import io.netty.channel.ChannelProgressiveFuture;
 import io.netty.channel.ChannelProgressiveFutureListener;
 import io.netty.channel.DefaultFileRegion;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.DefaultHttpResponse;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpChunkedInput;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpUtil;
-import io.netty.handler.codec.http.HttpHeaderValues;
-import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.handler.codec.http.*;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedFile;
 import io.netty.util.CharsetUtil;
 import io.netty.util.internal.SystemPropertyUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.activation.MimetypesFileTypeMap;
 import java.io.File;
@@ -34,11 +26,7 @@ import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.Locale;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import static io.netty.handler.codec.http.HttpMethod.*;
@@ -93,6 +81,8 @@ import static io.netty.handler.codec.http.HttpVersion.*;
  */
 public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
 
+    private static final Logger logger = LogManager.getLogger();
+
     public static final String HTTP_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss zzz";
     public static final String HTTP_DATE_GMT_TIMEZONE = "GMT";
     public static final int HTTP_CACHE_SECONDS = 60;
@@ -109,8 +99,35 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
             return;
         }
 
-        final String uri = request.uri();
-        final String path = sanitizeUri(uri);
+        final String uri_raw = request.uri();
+        QueryStringDecoder decoder = new QueryStringDecoder(uri_raw);
+
+        String path_raw = decoder.path();
+        System.out.println("request uri: " + uri_raw + " path: " + path_raw);
+
+        long startOffset = -1;
+        long length = -1;
+
+        List<String> startParams = decoder.parameters().get("start");
+        if (startParams != null && startParams.size() > 0) {
+
+            startOffset = Long.parseLong(startParams.get(0));
+        }
+
+        List<String> lenParams = decoder.parameters().get("len");
+        if (lenParams != null && lenParams.size() > 0) {
+
+            length = Long.parseLong(lenParams.get(0));
+        }
+
+        if (length < 0 || startOffset < 0) {
+            logger.warn("Wrong query {}", uri_raw);
+            return;
+        }
+
+        logger.info("Query has off = {}, len = {}", startOffset, length);
+
+        final String path = sanitizeUri(path_raw);
         if (path == null) {
             sendError(ctx, FORBIDDEN);
             return;
@@ -125,15 +142,14 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         // if request uri is ending with /
         if (file.isDirectory()) {
 
-            // Do nothing!
-
-/*            if (uri.endsWith("/")) {
-                sendListing(ctx, file, uri);
+            if (uri_raw.endsWith("/")) {
+                sendListing(ctx, file, uri_raw);
             } else {
-                sendRedirect(ctx, uri + '/');
-            }*/
+                sendRedirect(ctx, uri_raw + '/');
+            }
             return;
         }
+
 
         if (!file.isFile()) {
             sendError(ctx, FORBIDDEN);
@@ -165,13 +181,24 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         }
         long fileLength = raf.length();
 
-        HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
-        HttpUtil.setContentLength(response, fileLength);
-        setContentTypeHeader(response, file);
-        setDateAndCacheHeaders(response, file);
-        if (HttpUtil.isKeepAlive(request)) {
-            response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+        if (startOffset + length > fileLength){
+            logger.error("Requested size is bigger than actual size");
+            return;
         }
+
+        HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
+        HttpUtil.setContentLength(response, length);
+
+        setResponseHeader(response);
+
+//        setContentTypeHeader(response, file);
+        setDateAndCacheHeaders(response, file);
+
+        // Always keepAlive
+        response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+//        if (HttpUtil.isKeepAlive(request)) {
+//            response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+//        }
 
         // Write the initial line and the header.
         ctx.write(response);
@@ -181,12 +208,14 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         ChannelFuture lastContentFuture;
         if (ctx.pipeline().get(SslHandler.class) == null) {
             sendFileFuture =
-                    ctx.write(new DefaultFileRegion(raf.getChannel(), 0, fileLength), ctx.newProgressivePromise());
+//                    ctx.write(new DefaultFileRegion(raf.getChannel(), 0, fileLength), ctx.newProgressivePromise());
+                    ctx.write(new DefaultFileRegion(raf.getChannel(), startOffset, length), ctx.newProgressivePromise());
             // Write the end marker.
             lastContentFuture = ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
         } else {
             sendFileFuture =
-                    ctx.writeAndFlush(new HttpChunkedInput(new ChunkedFile(raf, 0, fileLength, Constants.HTTP_CHUNKSIZE)),
+//                    ctx.writeAndFlush(new HttpChunkedInput(new ChunkedFile(raf, 0, fileLength, Constants.HTTP_CHUNKSIZE)),
+                    ctx.writeAndFlush(new HttpChunkedInput(new ChunkedFile(raf, startOffset, length, Constants.HTTP_CHUNKSIZE)),
                             ctx.newProgressivePromise());
             // HttpChunkedInput will write the end marker (LastHttpContent) for us.
             lastContentFuture = sendFileFuture;
@@ -252,7 +281,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         // Convert to absolute path.
 //        return SystemPropertyUtil.get("user.dir") + File.separator + uri;
         return File.separator + uri;
-        // TODO change here?
+        // TODO limit the access to within the hadoop folder.
     }
 
     private static final Pattern ALLOWED_FILE_NAME = Pattern.compile("[^-\\._]?[^<>&\\\"]*");
@@ -366,14 +395,25 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
                 HttpHeaderNames.LAST_MODIFIED, dateFormatter.format(new Date(fileToCache.lastModified())));
     }
 
-    /**
-     * Sets the content type header for the HTTP Response
-     *
-     * @param response HTTP response
-     * @param file     file to extract content type
-     */
-    private static void setContentTypeHeader(HttpResponse response, File file) {
-        MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
-        response.headers().set(HttpHeaderNames.CONTENT_TYPE, mimeTypesMap.getContentType(file.getPath()));
+    private void setResponseHeader(HttpResponse response) {
+
+//        MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
+//        response.headers().set(HttpHeaderNames.CONTENT_TYPE, mimeTypesMap.getContentType(file.getPath()));
+
+        /*if (!connectionKeepAliveEnabled && !keepAliveParam) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Setting connection close header...");
+            }
+            response.headers().set(HttpHeader.CONNECTION.asString(),
+                    CONNECTION_CLOSE);
+        } else {
+            response.headers().set(HttpHeader.CONTENT_LENGTH.asString(),
+                    String.valueOf(contentLength));
+            response.headers().set(HttpHeader.CONNECTION.asString(),
+                    HttpHeader.KEEP_ALIVE.asString());
+            response.headers().set(HttpHeader.KEEP_ALIVE.asString(),
+                    "timeout=" + connectionKeepAliveTimeOut);
+            LOG.info("Content Length in shuffle : " + contentLength);
+        }*/
     }
 }
