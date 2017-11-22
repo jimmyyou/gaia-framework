@@ -36,7 +36,7 @@ public class ReceivingAgent {
 
         if (args.length == 0) {
             formatter.printHelp("SendingAgent -p [port] -n", options);
-            return;
+//            return;
         }
 
         CommandLineParser parser = new DefaultParser();

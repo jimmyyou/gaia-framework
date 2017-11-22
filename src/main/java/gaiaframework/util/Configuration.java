@@ -276,6 +276,22 @@ public class Configuration {
 //        return SAIPs[i];
     }
 
+    public int getNumDC() {
+        return numDC;
+    }
+
+    public List<String> getHostIPbyDCID(int i) {
+        return dataCenters.get(i).hostIPs;
+    }
+
+    public List<Integer> getHostPortbyDCID (int i) {
+        return dataCenters.get(i).hostPorts;
+    }
+
+    public int getNumHostbyDCID (int i) {
+        return dataCenters.get(i).numHosts;
+    }
+
     public int getSAPort(int i) {
         assert (i >= 0 && i < numDC);
         return dataCenters.get(i).saPort;
