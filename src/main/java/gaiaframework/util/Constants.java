@@ -15,7 +15,7 @@ public class Constants {
     public static final int RECEIVING_AGENT_PORT = 33330;
     public static final String AGENT_ADDR_PREFIX = "10.0.0.";
     public static final int DEFAULT_MASTER_PORT = 8888;
-    public static final int DEFAULT_YARN_PORT = 9999;
+    public static final int DEFAULT_YARN_PORT = 50051;
 
     // Comparison between double
     public static final double DOUBLE_EPSILON = 0.001; // to 1 kb level
