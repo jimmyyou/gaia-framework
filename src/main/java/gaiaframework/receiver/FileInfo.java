@@ -27,7 +27,10 @@ public class FileInfo {
         logger.info("Created FileInfo for {}, temporary size: {}, chunks: {}", filename, totalSize_bytes, totalChunks);
 
         try {
-            dataFile = new RandomAccessFile(filename, "w");
+
+            // first try to detect and create the folder
+
+            dataFile = new RandomAccessFile(filename, "rw");
 
             dataFile.setLength(totalSize_bytes);
 

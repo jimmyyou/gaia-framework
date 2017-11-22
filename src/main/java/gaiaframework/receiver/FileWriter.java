@@ -99,7 +99,15 @@ public class FileWriter implements Runnable {
         }
 
         // continue to create the File, and put into the map
-        logger.info("Creating file and index for {}", filename);
+        logger.info("Creating file and dir for {}", filename);
+
+        File dir = datafile.getParentFile();
+
+        if(!dir.exists()){
+
+            dir.mkdir();
+
+        }
 
         FileInfo fileInfo = new FileInfo(dataChunk);
 
