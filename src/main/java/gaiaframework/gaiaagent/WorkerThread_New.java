@@ -13,17 +13,13 @@ package gaiaframework.gaiaagent;
 // so that we can use a thread pool to process on many connections.
 
 import com.google.common.util.concurrent.RateLimiter;
-import gaiaframework.gaiaprotos.GaiaMessageProtos;
 import gaiaframework.util.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -291,7 +287,7 @@ public class WorkerThread_New implements Runnable {
 //                    logger.info("Worker {} flushed {} Bytes at rate {}", connID, data_length, total_rate);
 //                    System.out.println("Worker: Flushed Writing " + data_length + " w/ rate: " + total_rate + " Mbit/s  @ " + System.currentTimeMillis());
 
-            // distribute transmitted...
+            // distribute transmitted_agg...
             double tx_ed = (double) data_length * 8 / 1024 / 1024;
 
             distribute_transmitted(tx_ed);
@@ -541,7 +537,7 @@ public class WorkerThread_New implements Runnable {
             double flow_rate;
             for (Map.Entry<String, SubscriptionInfo> entry : subscribers.entrySet()) {
                 SubscriptionInfo s = entry.getValue();
-                FlowGroupInfo f = s.getFgi();
+                AggFlowGroupInfo f = s.getFgi();
                 flow_rate = s.getRate();
 
 //                boolean done = f.transmit(transmitted_MBit * flow_rate / total_rate, PConnid); //  why need the id?

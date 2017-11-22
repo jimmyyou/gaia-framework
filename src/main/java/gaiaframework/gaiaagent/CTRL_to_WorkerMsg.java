@@ -12,12 +12,12 @@ public class CTRL_to_WorkerMsg {
 
     MsgType type;
 
-    FlowGroupInfo fgi;
+    AggFlowGroupInfo fgi;
     double rate = 0.0;
     boolean pause = false;
 
     // subscribe or change rate.
-    public CTRL_to_WorkerMsg(FlowGroupInfo fgi, double rate) {
+    public CTRL_to_WorkerMsg(AggFlowGroupInfo fgi, double rate) {
         this.type = MsgType.SUBSCRIBE;
         this.fgi = fgi;
         this.rate = rate;
@@ -25,7 +25,7 @@ public class CTRL_to_WorkerMsg {
     }
 
     // unsubscribe
-    public CTRL_to_WorkerMsg(FlowGroupInfo fgi) {
+    public CTRL_to_WorkerMsg(AggFlowGroupInfo fgi) {
         this.type = MsgType.UNSUBSCRIBE;
         this.fgi = fgi;
         this.rate = 0.0;
@@ -42,7 +42,7 @@ public class CTRL_to_WorkerMsg {
 
     public MsgType getType() { return type; }
 
-    public FlowGroupInfo getFgi() { return fgi; }
+    public AggFlowGroupInfo getFgi() { return fgi; }
 
     public double getRate() { return rate; }
 

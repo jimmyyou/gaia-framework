@@ -134,7 +134,7 @@ public class FlowGroup {
                 fg.getOwningCoflowID(), fg.getSrcLocation(), fg.getDstLocation(),
                 fg.getTotalVolume() - fg.getTransmitted(), fg.filename, fg.flowInfos);
 
-//        fgo.setVolume( fg.getTotalVolume()-fg.getTransmitted() );
+//        fgo.setVolume( fg.getTotalVolume()-fg.getTransmitted_agg() );
 
         return fgo;
     }

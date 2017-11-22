@@ -5,10 +5,10 @@ package gaiaframework.gaiaagent;
 
 public class SubscriptionInfo {
     final String fgid;
-    final FlowGroupInfo fgi;
+    final AggFlowGroupInfo fgi;
     volatile double rate;
 
-    public SubscriptionInfo(String id, FlowGroupInfo fgi, double rate) {
+    public SubscriptionInfo(String id, AggFlowGroupInfo fgi, double rate) {
         this.fgid = id;
         this.fgi = fgi;
         this.rate = rate;
@@ -18,7 +18,7 @@ public class SubscriptionInfo {
         return fgid;
     }
 
-    public FlowGroupInfo getFgi() {
+    public AggFlowGroupInfo getFgi() {
         return fgi;
     }
 
