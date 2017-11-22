@@ -19,7 +19,7 @@ public class Receiver implements Runnable {
 
     public Receiver(Socket client_sd, LinkedBlockingQueue<DataChunkMessage> dataQueue) throws java.io.IOException {
         sd_ = client_sd;
-        in_ = new ObjectInputStream( client_sd.getInputStream()) ;
+        in_ = new ObjectInputStream(client_sd.getInputStream());
         this.dataQueue = dataQueue;
     }
 
@@ -35,15 +35,18 @@ public class Receiver implements Runnable {
 //                logger.info("Processing data {} {} {}\n{} {}", dataChunk.getFilename(), dataChunk.getStartIndex(),
 //                        dataChunk.getChunkLength(), (int) dataChunk.getData()[0], (int) dataChunk.getData()[1]);
 
-                if (dataChunk != null) dataQueue.put(dataChunk);
+                if (dataChunk != null) {
+                    dataQueue.put(dataChunk);
+                } else {
+                    logger.error("dataChunk == null");
+                }
 
 ////                num_recv = in_.read(buffer);
 //                if (num_recv < 0) {
 //                    logger.info("SocketInputStream.read() returns {}" , num_recv);
 //                    break;
 //                }
-            }
-            catch (java.io.IOException e) {
+            } catch (java.io.IOException e) {
                 logger.error("IOException caught");
                 e.printStackTrace();
                 break;
@@ -54,13 +57,12 @@ public class Receiver implements Runnable {
             }
         }
 
-        logger.info("Closing socket from {}" , sd_.getRemoteSocketAddress());
+        logger.info("Closing socket from {}", sd_.getRemoteSocketAddress());
 
         try {
             in_.close();
             sd_.close();
-        }
-        catch (java.io.IOException e) {
+        } catch (java.io.IOException e) {
             logger.error("Error closing socket");
             e.printStackTrace();
 //            System.exit(1);

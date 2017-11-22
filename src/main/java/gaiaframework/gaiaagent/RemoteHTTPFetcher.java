@@ -111,6 +111,9 @@ public class RemoteHTTPFetcher implements Runnable {
 //            FetchData according to the totalRate
                 // check if 100 permits/s is enough (3200MByte/s enough?)
 
+
+
+
                 if (cur_rate / 1024 / 1024 < (Constants.BLOCK_SIZE_MB * Constants.DEFAULT_TOKEN_RATE)) {
                     // no need to change rate , calculate the length
                     rateLimiter.setRate(Constants.DEFAULT_TOKEN_RATE);
@@ -127,8 +130,8 @@ public class RemoteHTTPFetcher implements Runnable {
 
                 // see if we can read any more bytes?
 
-                if (data_length + readBytes > totalLength) {
-                    data_length = (int) (totalLength - readBytes);
+                if (data_length + total_bytes_sent > totalLength) {
+                    data_length = (int) (totalLength - total_bytes_sent);
                 }
 
                 byte[] buf = new byte[data_length];
@@ -141,7 +144,7 @@ public class RemoteHTTPFetcher implements Runnable {
                 }
 
                 if (bytes_read != data_length) {
-                    logger.error("bytes read is smaller than expected");
+                    logger.error("bytes read is smaller than expected, sent {}, read {}", total_bytes_sent, bytes_read);
                 }
 
                 // send data through all paths

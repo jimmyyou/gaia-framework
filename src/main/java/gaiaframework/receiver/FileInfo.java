@@ -18,6 +18,31 @@ import java.io.RandomAccessFile;
 public class FileInfo {
     private static final Logger logger = LogManager.getLogger();
 
+    boolean isTotalBytesKnown = false;
+
+    public FileInfo(DataChunkMessage fisrtDataChunk) {
+        this.filename = fisrtDataChunk.getFilename();
+        this.totalSize_bytes = fisrtDataChunk.getChunkLength() + fisrtDataChunk.getStartIndex();
+
+        logger.info("Created FileInfo for {}, temporary size: {}, chunks: {}", filename, totalSize_bytes, totalChunks);
+
+        try {
+            dataFile = new RandomAccessFile(filename, "rw");
+
+            dataFile.setLength(totalSize_bytes);
+
+            fileState = FileState.WRITING;
+            logger.info("Created RAF {}", filename);
+
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
     public enum FileState {
         NULL,
         //        NEW,
@@ -35,20 +60,21 @@ public class FileInfo {
 
     // TODO use HashTable etc. to track the progress? in case of retransmission. And report the progress back to GAIA controller
     long receivedChunks = 0;
+    long receivedBytes = 0;
 
-    public FileInfo(String filename, long totalSize_bytes) {
+    public FileInfo(String filename, long knownSize_bytes) {
         this.filename = filename;
-        this.totalSize_bytes = totalSize_bytes;
+        this.totalSize_bytes = knownSize_bytes;
 
-        totalChunks = totalSize_bytes / (Constants.MAX_CHUNK_SIZE_Bytes) + ((totalSize_bytes % (Constants.MAX_CHUNK_SIZE_Bytes)) > 0 ? 1 : 0);
+        totalChunks = knownSize_bytes / (Constants.MAX_CHUNK_SIZE_Bytes) + ((knownSize_bytes % (Constants.MAX_CHUNK_SIZE_Bytes)) > 0 ? 1 : 0);
 
-        logger.info("Created FileInfo for {}, size: {}, chunks: {}", filename, totalSize_bytes, totalChunks);
+        logger.info("Created FileInfo for {}, size: {}, chunks: {}", filename, knownSize_bytes, totalChunks);
 
         // create the RAF
         try {
             dataFile = new RandomAccessFile(filename, "rw");
 
-            dataFile.setLength(totalSize_bytes);
+            dataFile.setLength(knownSize_bytes);
 
             fileState = FileState.WRITING;
             logger.info("Created RAF {}", filename);
@@ -69,23 +95,57 @@ public class FileInfo {
         long startIndex = dataChunk.getStartIndex();
         long chunkLength = dataChunk.getChunkLength();
 
+        if(startIndex == -1){
+
+            logger.info("Received the first Chunk");
+
+            isTotalBytesKnown = true;
+            totalSize_bytes = chunkLength;
+
+            try {
+                dataFile.setLength(totalSize_bytes);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            startIndex = 0;
+            chunkLength = dataChunk.getData().length;
+        }
+        else {
+            if (startIndex + chunkLength > totalSize_bytes) {
+
+                logger.info("Enlarging file size from {} to {}", totalSize_bytes, startIndex + chunkLength);
+                // Need to enlarge the file!!!
+                totalSize_bytes = startIndex + chunkLength;
+
+                try {
+                    dataFile.setLength(totalSize_bytes);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }
+
 //        logger.info("Writing data to {}, [{}:{}]", filename, startIndex, chunkLength);
 
-        // FIXME how to support files larger than 2GB?
         try {
             dataFile.seek(startIndex);
             dataFile.write(dataChunk.getData(), 0, (int) chunkLength);
 //            dataFile.write(dataChunk.getData(), (int) startIndex, (int) chunkLength);
 
             // check the overall progress for this file.
-            receivedChunks++;
+//            receivedChunks++;
+            receivedBytes += dataChunk.getData().length;
 
-            logger.info("File {}, progress {} / {} ({})", filename, receivedChunks, totalChunks, startIndex);
+            logger.info("File {}, progress {} / {} ({})", filename, receivedBytes, totalSize_bytes, startIndex);
 
-            if (receivedChunks >= totalChunks) {
+            // FIXME how to support multipath?
+            if (receivedBytes >= totalSize_bytes){
                 finishAndClose();
                 return true;
             }
+
 
         } catch (IOException e) {
             e.printStackTrace();

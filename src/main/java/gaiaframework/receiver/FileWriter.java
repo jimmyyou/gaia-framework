@@ -67,18 +67,47 @@ public class FileWriter implements Runnable {
 
         // TODO change the logic of writing to file
 
-        if (dataChunk.getStartIndex() == -1) {
+        if (activeFiles.containsKey(dataChunk.getFilename())){
+            writeToFile(dataChunk);
+        }
+        else {
+            CreateFile_Spec(dataChunk);
+        }
+
+/*        if (dataChunk.getStartIndex() == -1) {
             NaiveCreateFile(dataChunk);
 //            createFileandIndex(dataChunk);
         } else {
             writeToFile(dataChunk);
-        }
+        }*/
 /*        else if (dataChunk.getChunkLength() == 0){
             closeFile(dataChunk);
         }
         else {
             writeToFile(dataChunk);
         }*/
+
+    }
+
+    private void CreateFile_Spec(DataChunkMessage dataChunk) {
+        String filename = dataChunk.getFilename();
+        File datafile = new File(filename);
+
+        if (datafile.exists()) {
+            logger.error("File {} exists", filename);
+            return;
+        }
+
+        // continue to create the File, and put into the map
+        logger.info("Creating file and index for {}", filename);
+
+        FileInfo fileInfo = new FileInfo(dataChunk);
+
+        boolean done = fileInfo.writeDataAndCheck(dataChunk);
+
+        if (!done) {
+            activeFiles.put(filename, fileInfo);
+        }
 
     }
 

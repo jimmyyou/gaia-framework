@@ -5,11 +5,15 @@ package gaiaframework.gaiaagent;
 
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.transmission.DataChunkMessage;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class FlowGroupInfo {
+
+    private static final Logger logger = LogManager.getLogger();
 
     String MapAttemptID;
     String ReduceAttemptID;
@@ -60,6 +64,7 @@ public class FlowGroupInfo {
 
         if (done) { // meaning parent AggFlowGroup is done.
 
+            logger.info("{} finished transmission", this.parentFlowInfo.getID());
             //
             // wait until GAIA told us to stop, then stop. (although might cause a problem here.)
 
@@ -70,7 +75,8 @@ public class FlowGroupInfo {
 
             String afgID = afgi.getID(); // fgID == fgiID
 
-            agentSharedData.aggFlowGroups.remove(afgi.getID());
+            // don't remove for now!
+//            agentSharedData.aggFlowGroups.remove(afgi.getID());
 
             // maybe not needing to delete here?
 //            agentSharedData.subscriptionRateMaps.get(faID).get(pathID).remove(afgID);
