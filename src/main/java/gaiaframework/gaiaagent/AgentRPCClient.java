@@ -136,6 +136,7 @@ public class AgentRPCClient {
         }
         synchronized (this) {
             clientStreamObserver.onNext(statusReport);
+//            logger.info("FSR: {}", statusReport);
         }
     }
 

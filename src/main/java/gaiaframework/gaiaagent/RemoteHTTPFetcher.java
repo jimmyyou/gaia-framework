@@ -67,7 +67,7 @@ public class RemoteHTTPFetcher implements Runnable {
 
     // TODO verify
     private String getDstFilename(String srcFilename, String reduceAttemptID) {
-        String ret = srcFilename.substring(0, srcFilename.length()-4) + "_" + reduceAttemptID + ".out";
+        String ret = srcFilename.substring(0, srcFilename.length() - 4) + "_" + reduceAttemptID + ".out";
         return ret;
     }
 
@@ -106,17 +106,20 @@ public class RemoteHTTPFetcher implements Runnable {
 
                 int data_length;
 
+//                logger.info("Rate {}", cur_rate);
+
 //            FetchData according to the totalRate
                 // check if 100 permits/s is enough (3200MByte/s enough?)
-                if (cur_rate < Constants.BLOCK_SIZE_Bytes * 8 * Constants.DEFAULT_TOKEN_RATE) {
+
+                if (cur_rate / 1024 / 1024 < (Constants.BLOCK_SIZE_MB * Constants.DEFAULT_TOKEN_RATE)) {
                     // no need to change rate , calculate the length
                     rateLimiter.setRate(Constants.DEFAULT_TOKEN_RATE);
-                    data_length = (int) (cur_rate / Constants.DEFAULT_TOKEN_RATE * 1024 * 1024 / 8);
+                    data_length = (int) (cur_rate / Constants.DEFAULT_TOKEN_RATE);
                 } else {
-                    data_length = Constants.BLOCK_SIZE_Bytes;
-                    double new_rate = cur_rate / 8 / Constants.BLOCK_SIZE_Bytes;
-                    logger.error("Total rate {} too high for {}, setting new sending rate to {} / s", totalRate, srcFilename, new_rate);
-                    rateLimiter.setRate(new_rate); // TODO: verify that the rate is enforced , since here we (re)set the rate for each chunk
+                    data_length = Constants.BLOCK_SIZE_MB * 1024 * 1024;
+                    double new_freq = cur_rate / 1024 / 1024 / Constants.BLOCK_SIZE_MB;
+                    logger.error("Current rate {} too high for {}, setting new sending freq to {} / s", cur_rate, srcFilename, new_freq);
+                    rateLimiter.setRate(new_freq); // TODO: verify that the rate is enforced , since here we (re)set the rate for each chunk
                 }
 
                 // rate limiting
@@ -131,8 +134,9 @@ public class RemoteHTTPFetcher implements Runnable {
                 byte[] buf = new byte[data_length];
                 int bytes_read = input.read(buf, 0, data_length);
 
-                if (bytes_read == -1){
+                if (bytes_read == -1) {
                     logger.info("Finished reading from {}", srcFilename);
+                    setFinished();
                     break;
                 }
 
@@ -147,28 +151,26 @@ public class RemoteHTTPFetcher implements Runnable {
                     int pathID = wiList.get(i).getPathID();
 
                     int thisChunkSize = 0;
-                    if( i < wiList.size() - 1) {
+                    if (i < wiList.size() - 1) {
                         thisChunkSize = (int) (wiList.get(i).rate / totalRate * bytes_read);
-                    }
-                    else { // the last piece of this block
+                    } else { // the last piece of this block
                         thisChunkSize = data_length - cur_bytes_sent;
                     }
 
                     // copy the chunkbuf
                     byte[] chunkBuf = new byte[thisChunkSize];
-                    for (int j = 0 ; j < thisChunkSize; j ++) {
+                    for (int j = 0; j < thisChunkSize; j++) {
                         chunkBuf[j] = buf[j + cur_bytes_sent];
                     }
 
                     if (total_bytes_sent == 0) { // first chunk
 
-                        DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, -1, totalLength, chunkBuf );
+                        DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, -1, totalLength, chunkBuf);
                         agentSharedData.workerQueues.get(faID)[pathID].put(new CTRL_to_WorkerMsg(dm));
 
-                    }
-                    else {
+                    } else {
 
-                        DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, total_bytes_sent, thisChunkSize, chunkBuf );
+                        DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, total_bytes_sent, thisChunkSize, chunkBuf);
                         agentSharedData.workerQueues.get(faID)[pathID].put(new CTRL_to_WorkerMsg(dm));
 
                     }
@@ -180,8 +182,9 @@ public class RemoteHTTPFetcher implements Runnable {
 
                 }
 
-            }
+                setTransmitted(data_length);
 
+            }
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -192,6 +195,7 @@ public class RemoteHTTPFetcher implements Runnable {
 
 
     }
+
 
     private double learnRate(List<AggFlowGroupInfo.WorkerInfo> wiList) {
         double totalRate = 0;
@@ -246,5 +250,16 @@ public class RemoteHTTPFetcher implements Runnable {
         return null;
     }
 
+    private void setTransmitted(long volume) {
+
+        owningFlowGroupInfo.transmit(volume);
+
+    }
+
+    private void setFinished() {
+
+        logger.info("Invoking setFinished.");
+
+    }
 
 }

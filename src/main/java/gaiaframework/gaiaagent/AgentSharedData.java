@@ -154,7 +154,7 @@ public class AgentSharedData {
             e.printStackTrace();
         }
 
-        logger.debug("finished pushing status report\n{}", statusReport);
+        logger.info("finished pushing status report\n{}", statusReport);
 
 //        while ( !isStreamReady ) {
 //            initStream();

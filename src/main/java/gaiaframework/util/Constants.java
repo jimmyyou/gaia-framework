@@ -41,11 +41,11 @@ public class Constants {
 //    public static final int DEFAULT_OUTPUTSTREAM_RATE = 100000;
 
     // Block is the maximum size of transmission. (64MB for GB/s level trasmission)
-    public static final int BLOCK_SIZE_Bytes = 64 * 1024 * 1024;
+    public static final int BLOCK_SIZE_MB = 16;
 
     public static final int BUFFER_SIZE = 64 * 1024 * 1024;
 
-    public static final int DEFAULT_TOKEN_RATE = 400;
+    public static final int DEFAULT_TOKEN_RATE = 40;
     public static final long EXPERIMENT_INTERVAL = 60000; // 60s between experiments
     public static final long SOCKET_RETRY_MILLIS = 5000;
     public static final int DEFAULT_SOCKET_TIMEOUT = 10000;
