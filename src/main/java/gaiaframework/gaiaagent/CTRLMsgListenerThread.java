@@ -68,8 +68,8 @@ public class CTRLMsgListenerThread implements Runnable{
                         }
 
 //                        // add this flowgroup when not existent // only accept volume from CTRL at this point.
-//                        if( !agentSharedData.flowGroups.containsKey(fgID)){
-//                            agentSharedData.flowGroups.put(fgID , new FlowGroupInfo(fgID , fge.getRemainingVolume() ) );
+//                        if( !agentSharedData.aggFlowGroups.containsKey(fgID)){
+//                            agentSharedData.aggFlowGroups.put(fgID , new FlowGroupInfo(fgID , fge.getRemainingVolume() ) );
 //                        }
 //
 //                        //
@@ -82,7 +82,7 @@ public class CTRLMsgListenerThread implements Runnable{
 //                                infoMap.get(fgID).setRate( rate );
 //                            }
 //                            else { // create this info
-//                                infoMap.put(fgID , new SubscriptionInfo(fgID, agentSharedData.flowGroups.get(fgID) , rate ));
+//                                infoMap.put(fgID , new SubscriptionInfo(fgID, agentSharedData.aggFlowGroups.get(fgID) , rate ));
 //                            }
 //
 //                        } // end loop for pathID

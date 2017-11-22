@@ -3,6 +3,7 @@ package gaiaframework.HTTPServer;
 // Test a HTTP server
 
 
+import gaiaframework.util.Constants;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
@@ -19,7 +20,7 @@ public final class HttpStaticFileServer {
 
     static final boolean SSL = false;
             //System.getProperty("ssl") != null;
-    static final int PORT = 20020;
+    static final int PORT = Constants.DEFAULT_HTTP_SERVER_PORT;
             //Integer.parseInt(System.getProperty("port", SSL ? "8443" : "8080"));
 
     public static void main(String[] args) throws Exception {

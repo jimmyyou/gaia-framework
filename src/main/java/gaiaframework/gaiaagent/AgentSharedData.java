@@ -60,12 +60,12 @@ public class AgentSharedData {
 
     // TODO do we need ConcurrentHashMap?
     // fgID -> FGI. FlowGroups that are currently being sent by this SendingAgent
-    public ConcurrentHashMap<String, AggFlowGroupInfo> flowGroups = new ConcurrentHashMap<String, AggFlowGroupInfo>();
+    public ConcurrentHashMap<String, AggFlowGroupInfo> aggFlowGroups = new ConcurrentHashMap<String, AggFlowGroupInfo>();
 
     // RAID , pathID -> FGID -> subscription info // ArrayList works good here!
-    public HashMap<String , ArrayList< ConcurrentHashMap<String , SubscriptionInfo> > >subscriptionRateMaps = new HashMap<>();
+    public HashMap<String, ArrayList<ConcurrentHashMap<String, SubscriptionInfo>>> subscriptionRateMaps = new HashMap<>();
 
-    // raID , pathID -> workerQueue.
+    // faID , pathID -> workerQueue.
     HashMap<String, LinkedBlockingQueue<CTRL_to_WorkerMsg>[]> workerQueues = new HashMap<>();
 
 //    public List< HashMap<String , SubscriptionInfo> > subscriptionRateMaps;
@@ -93,30 +93,30 @@ public class AgentSharedData {
     }
 
 
-    public void finishFlow(String fgID){
+    public void finishFlow(String fgID) {
 
         // null pointer because of double sending FG_FIN
-        if (flowGroups.get(fgID) == null){
+        if (aggFlowGroups.get(fgID) == null) {
             // already sent the FIN message, do nothing
             return;
         }
 
-        if(flowGroups.get(fgID).getFlowState() == AggFlowGroupInfo.FlowState.FIN){
+        if (aggFlowGroups.get(fgID).getFlowState() == AggFlowGroupInfo.FlowState.FIN) {
             // already sent the FIN message, do nothing
             logger.warn("Already sent the FIN for {}", fgID);
-            flowGroups.remove(fgID);
+            aggFlowGroups.remove(fgID);
             return;
         }
 
-        flowGroups.get(fgID).setFlowState(AggFlowGroupInfo.FlowState.FIN);
-        logger.info("Sending FLOW_FIN for {} to CTRL" , fgID);
+        aggFlowGroups.get(fgID).setFlowState(AggFlowGroupInfo.FlowState.FIN);
+        logger.info("Sending FLOW_FIN for {} to CTRL", fgID);
 //        rpcClient.sendFG_FIN(fgID); // TODO remove
         pushFG_FIN(fgID);
-        flowGroups.remove(fgID);
+        aggFlowGroups.remove(fgID);
     }
 
-    public void pushFG_FIN(String fgID){
-        if (fgID == null){
+    public void pushFG_FIN(String fgID) {
+        if (fgID == null) {
             System.err.println("fgID = null when sending FG_FIN");
             return;
         }
@@ -129,7 +129,7 @@ public class AgentSharedData {
         GaiaMessageProtos.FlowStatusReport FG_FIN = GaiaMessageProtos.FlowStatusReport.newBuilder().addStatus(fsBuilder).build();
 
         try {
-            worker_to_ctrlMsgQueue.put( new Worker_to_CTRLMsg(FG_FIN));
+            worker_to_ctrlMsgQueue.put(new Worker_to_CTRLMsg(FG_FIN));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -139,8 +139,8 @@ public class AgentSharedData {
 
 
     public void pushStatusUpdate() {
-        int size = flowGroups.size();
-        if(size == 0){
+        int size = aggFlowGroups.size();
+        if (size == 0) {
 //            System.out.println("FG_SIZE = 0");
             return;         // if there is no data to send (i.e. the master has not come online), we simply skip.
         }
@@ -149,7 +149,7 @@ public class AgentSharedData {
         GaiaMessageProtos.FlowStatusReport statusReport = buildCurrentFlowStatusReport();
 
         try {
-            worker_to_ctrlMsgQueue.put( new Worker_to_CTRLMsg(statusReport));
+            worker_to_ctrlMsgQueue.put(new Worker_to_CTRLMsg(statusReport));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -163,57 +163,62 @@ public class AgentSharedData {
 
     }
 
-    // methods to update the flowGroups and subscriptionRateMaps
-    public void startFlow(String raID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge) {
+    // methods to update the aggFlowGroups and subscriptionRateMaps
+    public void startFlow(String faID, String afgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fue) {
         // add this flowgroup when not existent // only accept volume from CTRL at this point.
-        if( flowGroups.containsKey(fgID)){
+        if (aggFlowGroups.containsKey(afgID)) {
             logger.error("START failed: an existing flow!");
             return;
         }
 
         // TODO change here to consider all sub-flows
-        fge.getFlowInfosList();
+//        fge.getFlowInfosList();
 
-        AggFlowGroupInfo fgi = new AggFlowGroupInfo(fgID, fge.getRemainingVolume(), fge.getFilename()).setFlowState(AggFlowGroupInfo.FlowState.RUNNING);
-        flowGroups.put(fgID , fgi);
+//        AggFlowGroupInfo fgi = new AggFlowGroupInfo(fgID, fge.getRemainingVolume(), fge.getFilename()).setFlowState(AggFlowGroupInfo.FlowState.RUNNING);
+        AggFlowGroupInfo afgi = new AggFlowGroupInfo(this, afgID, fue, saID, faID).setFlowState(AggFlowGroupInfo.FlowState.RUNNING);
+        aggFlowGroups.put(afgID, afgi);
 
-        addAllSubscription(raID, fgID, fge, fgi);
+        addAllSubscription(faID, afgID, fue, afgi);
 
     }
 
-    private void addAllSubscription(String raID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge, AggFlowGroupInfo flowGroupInfo) {
-        for ( gaiaframework.gaiaprotos.GaiaMessageProtos.FlowUpdate.PathRateEntry pathToRate : fge.getPathToRateList() ){
+    // Called upon start/change flow
+    // maintains AggFlowGroupInfo + FlowGroupInfo + WorkerInfo
+    // FIXME haven't changed yet. may not need changing.
+    private void addAllSubscription(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fue, AggFlowGroupInfo aggFlowGroupInfo) {
+        for (gaiaframework.gaiaprotos.GaiaMessageProtos.FlowUpdate.PathRateEntry pathToRate : fue.getPathToRateList()) {
+
             int pathID = pathToRate.getPathID();
             double rate = pathToRate.getRate();
-            ConcurrentHashMap<String, SubscriptionInfo> infoMap = subscriptionRateMaps.get(raID).get(pathID);
 
-            if (rate < 0.1){
-                rate = 0.1;
+            ConcurrentHashMap<String, SubscriptionInfo> infoMap = subscriptionRateMaps.get(faID).get(pathID);
+
+            if (rate < 1) {
+//                rate = 0.1;
                 System.err.println("WARNING: rate of FUM too low: " + fgID);
             }
 
-            flowGroupInfo.addWorkerInfo(raID, pathID);  // reverse look-up ArrayList
+            aggFlowGroupInfo.addWorkerInfo(faID, pathID, rate);  // reverse look-up ArrayList
 
-            if( infoMap.containsKey(fgID)){ // check whether this FlowGroup is in subscriptionMap.
-                infoMap.get(fgID).setRate( rate );
+            if (infoMap.containsKey(fgID)) { // check whether this FlowGroup is in subscriptionMap.
+                infoMap.get(fgID).setRate(rate);
                 logger.error("DEBUG: this should not happen");
-            }
-            else { // create this info
-                infoMap.put(fgID , new SubscriptionInfo(fgID, flowGroups.get(fgID) , rate ));
+            } else { // create this info
+                infoMap.put(fgID, new SubscriptionInfo(fgID, aggFlowGroups.get(fgID), rate));
             }
 
         } // end loop for pathID
     }
 
-    public void changeFlow(String raID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge) {
+    public void changeFlow(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge) {
 
-        if( flowGroups.containsKey(fgID)){
+        if (aggFlowGroups.containsKey(fgID)) {
 
-            AggFlowGroupInfo fgi = flowGroups.get(fgID);
+            AggFlowGroupInfo fgi = aggFlowGroups.get(fgID);
             fgi.setFlowState(AggFlowGroupInfo.FlowState.RUNNING);
 
-            removeAllSubscription(raID, fgID, fgi);
-            addAllSubscription(raID, fgID, fge, fgi);
+            removeAllSubscription(faID, fgID, fgi);
+            addAllSubscription(faID, fgID, fge, fgi);
 
         } else {
             logger.warn("CHANGE/RESUME failed: a non-existing flow!"); // after FG finished, this can happen
@@ -223,14 +228,14 @@ public class AgentSharedData {
 
     }
 
-    public void pauseFlow(String raID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge) {
+    public void pauseFlow(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge) {
         // search for all subscription with this flowID, and remove them
 
-        if( flowGroups.containsKey(fgID)){
+        if (aggFlowGroups.containsKey(fgID)) {
 
-            AggFlowGroupInfo fgi = flowGroups.get(fgID);
+            AggFlowGroupInfo fgi = aggFlowGroups.get(fgID);
             fgi.setFlowState(AggFlowGroupInfo.FlowState.PAUSED);
-            removeAllSubscription(raID, fgID, fgi);
+            removeAllSubscription(faID, fgID, fgi);
 
         } else {
             logger.error("PAUSE failed: a non-existing flow!");
@@ -239,13 +244,13 @@ public class AgentSharedData {
 
     }
 
-    private void removeAllSubscription(String raID, String fgID, AggFlowGroupInfo fgi) {
+    private void removeAllSubscription(String faID, String fgID, AggFlowGroupInfo fgi) {
 
-        for ( AggFlowGroupInfo.WorkerInfo wi : fgi.workerInfoList){
+        for (AggFlowGroupInfo.WorkerInfo wi : fgi.workerInfoList) {
             try {
-                subscriptionRateMaps.get(raID).get(wi.getPathID()).get(fgID).setRate(0);
-                subscriptionRateMaps.get(raID).get(wi.getPathID()).remove(fgID);
-            } catch (NullPointerException e){ // FIXME? sometimes happens
+                subscriptionRateMaps.get(faID).get(wi.getPathID()).get(fgID).setRate(0);
+                subscriptionRateMaps.get(faID).get(wi.getPathID()).remove(fgID);
+            } catch (NullPointerException e) { // FIXME? sometimes happens
                 e.printStackTrace();
             }
         }
@@ -259,11 +264,11 @@ public class AgentSharedData {
         StringBuilder strBuilder = new StringBuilder();
 //        System.out.println("---------SA STATUS---------");
         strBuilder.append("---------SA STATUS---------\n");
-        for (Map.Entry<String, AggFlowGroupInfo> fgie : flowGroups.entrySet()){
+        for (Map.Entry<String, AggFlowGroupInfo> fgie : aggFlowGroups.entrySet()) {
             AggFlowGroupInfo fgi = fgie.getValue();
-            strBuilder.append(' ').append(fgi.getID()).append(' ').append(fgi.getFlowState()).append(' ').append(fgi.getVolume()-fgi.getTransmitted_agg()).append('\n');
+            strBuilder.append(' ').append(fgi.getID()).append(' ').append(fgi.getFlowState()).append(' ').append(fgi.getVolume() - fgi.getTransmitted_agg()).append('\n');
 
-            for(AggFlowGroupInfo.WorkerInfo wi : fgi.workerInfoList){
+            for (AggFlowGroupInfo.WorkerInfo wi : fgi.workerInfoList) {
                 SubscriptionInfo tmpSI = subscriptionRateMaps.get(wi.getRaID()).get(wi.getPathID()).get(fgi.getID());
                 strBuilder.append("  ").append(wi.getRaID()).append(' ').append(wi.getPathID()).append(' ').append(tmpSI.getRate()).append('\n');
             }
@@ -278,17 +283,17 @@ public class AgentSharedData {
 
         GaiaMessageProtos.FlowStatusReport.Builder statusReportBuilder = GaiaMessageProtos.FlowStatusReport.newBuilder();
 
-        for (Map.Entry<String, AggFlowGroupInfo> entry: flowGroups.entrySet()) {
-            AggFlowGroupInfo fgi = entry.getValue();
+        for (Map.Entry<String, AggFlowGroupInfo> entry : aggFlowGroups.entrySet()) {
+            AggFlowGroupInfo afgi = entry.getValue();
 
-            if (fgi.getFlowState() == AggFlowGroupInfo.FlowState.INIT ){
+            if (afgi.getFlowState() == AggFlowGroupInfo.FlowState.INIT) {
                 logger.error("fgi in INIT state");
                 continue;
             }
-            if ( fgi.getFlowState() == AggFlowGroupInfo.FlowState.FIN ){
+            if (afgi.getFlowState() == AggFlowGroupInfo.FlowState.FIN) {
                 continue;
             }
-            if ( fgi.getFlowState() == AggFlowGroupInfo.FlowState.PAUSED) {
+            if (afgi.getFlowState() == AggFlowGroupInfo.FlowState.PAUSED) {
 //                logger.info("");
                 continue;
             }
@@ -299,7 +304,7 @@ public class AgentSharedData {
 //            }
 
             GaiaMessageProtos.FlowStatusReport.FlowStatus.Builder fsBuilder = GaiaMessageProtos.FlowStatusReport.FlowStatus.newBuilder()
-                    .setFinished(fgi.isFinished()).setId(fgi.getID()).setTransmitted(fgi.getTransmitted_agg());
+                    .setFinished(afgi.isFinished()).setId(afgi.getID()).setTransmitted(afgi.getTransmitted_agg());
 
             statusReportBuilder.addStatus(fsBuilder);
         }
@@ -313,5 +318,5 @@ public class AgentSharedData {
 
     public String getSaName() { return saName; }
 
-    public ConcurrentHashMap<String, FlowGroupInfo> getFlowGroups() { return flowGroups; }*/
+    public ConcurrentHashMap<String, FlowGroupInfo> getFlowGroups() { return aggFlowGroups; }*/
 }

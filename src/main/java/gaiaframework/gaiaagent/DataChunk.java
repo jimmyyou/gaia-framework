@@ -34,12 +34,12 @@ public class DataChunk implements Serializable {
     }
 
     public void appendToFilename(String appendix) {
-//        filename.concat(appendix);
+//        srcFilename.concat(appendix);
         filename = filename + appendix;
     }
 
-/*    public DataChunk(String filename) {
-        this.filename = filename;
+/*    public DataChunk(String srcFilename) {
+        this.srcFilename = srcFilename;
     }*/
 
 }

@@ -50,10 +50,11 @@ public class Constants {
     public static final long SOCKET_RETRY_MILLIS = 5000;
     public static final int DEFAULT_SOCKET_TIMEOUT = 10000;
     public static final long HEARTBEAT_INTERVAL_MILLIS = 2000; // 2s heartbeat
-    public static final int CHUNK_SIZE_KB = 64;
+    public static final int MAX_CHUNK_SIZE_Bytes = 64 * 1024;
     public static final int SENDER_QUEUE_LENGTH = 1000;
     public static final String SCHEDULER_NAME_GAIA = "gaia";
     public static final int HTTP_CHUNKSIZE = 8192;
+    public static final int DEFAULT_HTTP_SERVER_PORT = 20020;
 
     public static HashMap<String, String> node_id_to_trace_id;
 

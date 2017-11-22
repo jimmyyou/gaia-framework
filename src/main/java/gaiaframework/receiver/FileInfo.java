@@ -39,7 +39,7 @@ public class FileInfo {
         this.filename = filename;
         this.totalSize_bytes = totalSize_bytes;
 
-        totalChunks = totalSize_bytes / (Constants.CHUNK_SIZE_KB * 1024) + ((totalSize_bytes % (Constants.CHUNK_SIZE_KB * 1024)) > 0 ? 1 : 0);
+        totalChunks = totalSize_bytes / (Constants.MAX_CHUNK_SIZE_Bytes) + ((totalSize_bytes % (Constants.MAX_CHUNK_SIZE_Bytes)) > 0 ? 1 : 0);
 
         logger.info("Created FileInfo for {}, size: {}, chunks: {}", filename, totalSize_bytes, totalChunks);
 

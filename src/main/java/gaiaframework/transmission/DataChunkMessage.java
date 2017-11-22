@@ -13,8 +13,8 @@ public class DataChunkMessage implements Serializable {
 
     byte[] data;
 
-    public DataChunkMessage(String filename, String destURL, long startIndex, long chunkLength, byte[] data) {
-        header = new DataChunkHeader(filename, destURL, startIndex, chunkLength);
+    public DataChunkMessage(String filename, String destIP, long startIndex, long chunkLength, byte[] data) {
+        header = new DataChunkHeader(filename, destIP, startIndex, chunkLength);
         this.data = data;
     }
 

@@ -126,8 +126,13 @@ public class AgentRPCServer {
                         responseObserver.onNext(reply);
 
                         // Start the worker Thread TODO: handle thread failure/PConn failure
-                        Thread wt = new Thread( new WorkerThread_New(conn_id, ra_id , i , queues[i] , sharedData,
-                                config.getFAIP(raID) , config.getFAPort(raID), port ) );
+/*                        Thread wt = new Thread( new WorkerThread_New(conn_id, ra_id , i , queues[i] , sharedData,
+                                config.getFAIP(raID) , config.getFAPort(raID), port ) );*/
+
+                        // New simple workerThread
+                        Thread wt = new Thread( new SimpleBestEfforWorker(conn_id, ra_id , i , queues[i] , sharedData,
+                                config.getFAIP(raID) , config.getFAPort(raID), port));
+
                         wt.start();
 
                     }

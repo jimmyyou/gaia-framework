@@ -1,6 +1,7 @@
 package gaiaframework.network;
 
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
+import gaiaframework.gaiamaster.FlowGroup;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,8 +25,28 @@ public class FlowGroup_Old {
                                              // by a sending agent (only used by baseline)
 
     public List<ShuffleInfo.FlowInfo> flowInfos;
+    public List<String> srcIPs;
+    public List<String> dstIPs;
 
     private String filename;
+
+    // New constructor
+    public FlowGroup_Old(FlowGroup fg, int intID) {
+        this.id = fg.getId();
+        this.int_id = intID;
+        this.coflow_id = fg.getOwningCoflowID();
+        this.src_loc = fg.getSrcLocation();
+        this.dst_loc = fg.getDstLocation();
+        this.volume = fg.getTotalVolume() - fg.getTransmitted();
+        this.rate = (double)0.0;
+        this.transmitted_volume = (double)0.0;
+        this.flowState = FlowState.INIT;
+        this.filename = fg.getFilename();
+        this.flowInfos = fg.flowInfos;
+
+        this.srcIPs = fg.srcIPs;
+        this.dstIPs = fg.dstIPs;
+    }
 
     // the state of this flow
     public enum FlowState{

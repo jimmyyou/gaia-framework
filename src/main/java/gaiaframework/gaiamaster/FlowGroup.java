@@ -9,12 +9,15 @@ import gaiaframework.network.Pathway;
 import gaiaframework.util.Constants;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class FlowGroup {
 
     // new
-    public List<ShuffleInfo.FlowInfo> flowInfos = new ArrayList<>();
+    public List<ShuffleInfo.FlowInfo> flowInfos = new LinkedList<>();
+    public List<String> srcIPs = new LinkedList<>();
+    public List<String> dstIPs = new LinkedList<>();
 
     // final fields
     private final String id;
@@ -135,6 +138,13 @@ public class FlowGroup {
                 fg.getTotalVolume() - fg.getTransmitted(), fg.filename, fg.flowInfos);
 
 //        fgo.setVolume( fg.getTotalVolume()-fg.getTransmitted_agg() );
+
+        return fgo;
+    }
+
+    // newer version of converter
+    public FlowGroup_Old toFlowGroup_Old(int intID) {
+        FlowGroup_Old fgo = new FlowGroup_Old(this, intID);
 
         return fgo;
     }

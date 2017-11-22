@@ -55,7 +55,7 @@ public class LocalFileReader implements Runnable {
             RandomAccessFile dataRAF = new RandomAccessFile(filename, "r");
 
             // totalSize is not correct here
-//            DataChunk firstChunk = new DataChunk(filename, -1, totalSize, bytes);
+//            DataChunk firstChunk = new DataChunk(srcFilename, -1, totalSize, bytes);
             DataChunk firstChunk = new DataChunk(filename, -1, dataRAF.length(), bytes);
 
             dataQueue.put(firstChunk);
@@ -63,7 +63,7 @@ public class LocalFileReader implements Runnable {
 
             // then read through the large data file
 
-            int bufferSize = Constants.CHUNK_SIZE_KB * 1024;
+            int bufferSize = Constants.MAX_CHUNK_SIZE_Bytes;
             byte[] dataBytes;
             int i;
             for (i = 0; i < dataRAF.length() - bufferSize; i += bufferSize) {

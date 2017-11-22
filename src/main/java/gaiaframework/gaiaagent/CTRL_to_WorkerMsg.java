@@ -2,11 +2,14 @@ package gaiaframework.gaiaagent;
 
 // Message for subscribe a FlowGroup to a persistent connection (worker).
 
+import gaiaframework.transmission.DataChunkMessage;
+
 public class CTRL_to_WorkerMsg {
     public enum  MsgType {
         SUBSCRIBE,
         UNSUBSCRIBE,
         CONNECT,
+        DATA,
         SYNC // SYNC do not carry information
     }
 
@@ -15,6 +18,7 @@ public class CTRL_to_WorkerMsg {
     AggFlowGroupInfo fgi;
     double rate = 0.0;
     boolean pause = false;
+    DataChunkMessage dataChunkMessage;
 
     // subscribe or change rate.
     public CTRL_to_WorkerMsg(AggFlowGroupInfo fgi, double rate) {
@@ -38,6 +42,11 @@ public class CTRL_to_WorkerMsg {
 
     public CTRL_to_WorkerMsg(){
         this.type = MsgType.SYNC;
+    }
+
+    public CTRL_to_WorkerMsg(DataChunkMessage data) {
+        this.dataChunkMessage = data;
+        this.type = MsgType.DATA;
     }
 
     public MsgType getType() { return type; }

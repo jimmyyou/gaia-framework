@@ -1,36 +1,55 @@
 package gaiaframework.gaiaagent;
 
+// This class tracks the FlowInformation for sending Agent.
+// worker looks up information from here
 
-import java.util.ArrayList;
-import java.util.List;
+import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
+import gaiaframework.transmission.DataChunkMessage;
+
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class FlowGroupInfo {
 
-    // Maintain a list of which Worker is working on this AggFlow
-    List<AggFlowGroupInfo.WorkerInfo> workerInfoList = new ArrayList<>();
+    String MapAttemptID;
+    String ReduceAttemptID;
+    String fileName;
 
-    public LinkedBlockingQueue<DataChunk> getDataQueue() {
+    // TODO pass in this information!
+    String srcHostIP;
+    String dstHostIP;
+
+    AggFlowGroupInfo parentFlowInfo;
+
+    volatile double rate;
+
+    AgentSharedData agentSharedData;
+
+
+    LinkedBlockingQueue<DataChunkMessage> dataQueue;
+    Thread fetcher;
+
+    public FlowGroupInfo(AggFlowGroupInfo parent, ShuffleInfo.FlowInfo flowInfo, String srcIP, String dstIP) {
+        this.fileName = flowInfo.getDataFilename();
+        this.MapAttemptID = flowInfo.getMapAttemptID();
+        this.ReduceAttemptID = flowInfo.getReduceAttemptID();
+        this.parentFlowInfo = parent;
+
+        this.srcHostIP = srcIP;
+        this.dstHostIP = dstIP;
+
+        this.agentSharedData = parent.agentSharedData;
+
+        this.dataQueue = new LinkedBlockingQueue<>();
+
+        fetcher = new Thread(new RemoteHTTPFetcher(this, flowInfo, dataQueue, srcHostIP, dstHostIP));
+
+        fetcher.start();
+
+    }
+
+    public LinkedBlockingQueue<DataChunkMessage> getDataQueue() {
         return dataQueue;
     }
 
-    LinkedBlockingQueue<DataChunk> dataQueue;
 
-    Thread fileReader;
-
-
-
-    public class WorkerInfo{
-        int pathID;
-        String raID;
-
-        public WorkerInfo(String raID, int pathID) {
-            this.raID = raID;
-            this.pathID = pathID;
-        }
-
-        public int getPathID() { return pathID; }
-
-        public String getRaID() { return raID; }
-    }
 }

@@ -66,10 +66,12 @@ message FlowUpdate {
         // path to rate mapping
         repeated PathRateEntry pathToRate = 4;
         //        map <int32, double> pathToRate = 3;
-        string filename = 5;
+//        string filename = 5;
 
-        // TODO resolve the dependency of flowInfo in the future.
-        repeated ShuffleInfo.FlowInfo flowInfos = 6;
+        // TODO add IP information
+        repeated ShuffleInfo.FlowInfo flowInfos = 5;
+        repeated string srcIP = 6;
+        repeated string dstIP = 7;
     }
 
     message RAUpdateEntry {

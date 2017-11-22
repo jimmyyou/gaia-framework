@@ -69,10 +69,10 @@ public class Coflow {
     }
 /*    public Coflow (Coflow_Old cfo){
         this.id = cfo.id;
-        this.flowGroups = new HashMap<String , FlowGroup>();
+        this.aggFlowGroups = new HashMap<String , FlowGroup>();
         for(Map.Entry<String, FlowGroup_Old> entry : cfo.flows.entrySet()){
             FlowGroup fg = new FlowGroup(entry.getValue());
-            flowGroups.put( fg.getId() , fg);
+            aggFlowGroups.put( fg.getId() , fg);
         }
 
     }*/
