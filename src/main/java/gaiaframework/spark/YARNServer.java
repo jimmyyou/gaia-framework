@@ -68,7 +68,7 @@ public class YARNServer extends GaiaAbstractServer {
     // dst - dstLoc
     // owningCoflowID - dstStage
     // Volume - divided_data_size
-    private HashMap<String, FlowGroup> generateFlowGroups(String cfID, ShuffleInfo req, HashMap<String, FlowGroup> coLocatedFGs, HashMap<String, FlowGroup> flowGroups) {
+    private HashMap<String, FlowGroup> generateFlowGroups(String cfID, ShuffleInfo req, HashMap<String, FlowGroup> coLocatedFGs, HashMap<String, FlowGroup> aggFlowGroups) {
 
         // first store all flows into aggFlowGroups, then move the co-located ones to coLocatedFGs
 
@@ -84,11 +84,13 @@ public class YARNServer extends GaiaAbstractServer {
             String srcIP = getRawAddrfromTaskID(mapID, req).split(":")[0];
             String dstIP = getRawAddrfromTaskID(redID, req).split(":")[0];
 
+
+            String afgID = cfID + ":" + srcLoc + '-' + dstLoc;
             String fgID = cfID + ":" + mapID + ":" + redID + ":" + srcLoc + '-' + dstLoc;
 
             // check if we already have this fg.
-            if (flowGroups.containsKey(fgID)) {
-                FlowGroup fg = flowGroups.get(fgID);
+            if (aggFlowGroups.containsKey(afgID)) {
+                FlowGroup fg = aggFlowGroups.get(afgID);
 
                 fg.flowInfos.add(flowInfo);
                 fg.srcIPs.add(srcIP);
@@ -105,7 +107,7 @@ public class YARNServer extends GaiaAbstractServer {
                 fg.flowInfos.add(flowInfo);
                 fg.srcIPs.add(srcIP);
                 fg.dstIPs.add(dstIP);
-                flowGroups.put(fgID, fg);
+                aggFlowGroups.put(afgID, fg);
 
                 // when co-located
                 if (srcLoc.equals(dstLoc)) {
@@ -116,10 +118,10 @@ public class YARNServer extends GaiaAbstractServer {
         }
 
         for (String key : coLocatedFGs.keySet()) {
-            flowGroups.remove(key);
+            aggFlowGroups.remove(key);
         }
 
-        return flowGroups;
+        return aggFlowGroups;
     }
 
     // TODO need to change this mechanism in the future // if same mapID and same dstLoc -> redundant

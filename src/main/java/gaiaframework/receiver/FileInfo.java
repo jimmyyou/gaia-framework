@@ -27,7 +27,7 @@ public class FileInfo {
         logger.info("Created FileInfo for {}, temporary size: {}, chunks: {}", filename, totalSize_bytes, totalChunks);
 
         try {
-            dataFile = new RandomAccessFile(filename, "rw");
+            dataFile = new RandomAccessFile(filename, "w");
 
             dataFile.setLength(totalSize_bytes);
 
