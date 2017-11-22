@@ -165,7 +165,9 @@ public class YARNServer extends GaiaAbstractServer {
 
                 String addr_raw = mapperInfo.getMapperIP();
 
-                return addr_raw;
+
+//                return addr_raw;
+                return hardCodedURLResolver(addr_raw);
             }
         }
 
@@ -175,11 +177,39 @@ public class YARNServer extends GaiaAbstractServer {
 
                 String addr_raw = reducerInfo.getReducerIP();
 
-                return addr_raw;
+//                return addr_raw;
+                return hardCodedURLResolver(addr_raw);
             }
         }
 
         return null;
     }
 
+    private String hardCodedURLResolver(String url) {
+        if(url.equals("clnode045.clemson.cloudlab.us:8042")){
+            return "10.0.1.1";
+        }
+
+        if(url.equals("clnode072.clemson.cloudlab.us:8042")){
+            return "10.0.1.2";
+        }
+
+        if(url.equals("clnode062.clemson.cloudlab.us:8042")){
+            return "10.0.1.3";
+        }
+
+        if(url.equals("clnode093.clemson.cloudlab.us:8042")){
+            return "10.0.2.3";
+        }
+
+        if(url.equals("clnode056.clemson.cloudlab.us:8042")){
+            return "10.0.2.1";
+        }
+
+        if(url.equals("clnode088.clemson.cloudlab.us:8042")){
+            return "10.0.2.2";
+        }
+
+        return null;
+    }
 }
