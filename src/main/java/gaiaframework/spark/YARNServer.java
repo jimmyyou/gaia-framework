@@ -88,6 +88,8 @@ public class YARNServer extends GaiaAbstractServer {
             String afgID = cfID + ":" + srcLoc + '-' + dstLoc;
             String fgID = cfID + ":" + mapID + ":" + redID + ":" + srcLoc + '-' + dstLoc;
 
+            if(srcLoc.equals(dstLoc)) continue;
+
             // check if we already have this fg.
             if (aggFlowGroups.containsKey(afgID)) {
                 FlowGroup fg = aggFlowGroups.get(afgID);
@@ -110,6 +112,7 @@ public class YARNServer extends GaiaAbstractServer {
                 aggFlowGroups.put(afgID, fg);
 
                 // when co-located
+                // FIXME, now ignoring all co-located
                 if (srcLoc.equals(dstLoc)) {
                     coLocatedFGs.put(fgID, fg);
                 }
