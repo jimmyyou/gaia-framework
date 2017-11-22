@@ -61,12 +61,15 @@ public class FileWriter implements Runnable {
         if (!isOutputEnabled) {
 
             // append .dbg to file name
-            dataChunk.appendToFilename(".dbg"); // TODO verify
+            dataChunk.appendToFilename(".dbg");
 //            return;
         }
 
+        // TODO change the logic of writing to file
+
         if (dataChunk.getStartIndex() == -1) {
-            createFileandIndex(dataChunk);
+            NaiveCreateFile(dataChunk);
+//            createFileandIndex(dataChunk);
         } else {
             writeToFile(dataChunk);
         }
@@ -76,6 +79,24 @@ public class FileWriter implements Runnable {
         else {
             writeToFile(dataChunk);
         }*/
+
+    }
+
+    private void NaiveCreateFile(DataChunkMessage dataChunk) {
+        String filename = dataChunk.getFilename();
+        File datafile = new File(filename);
+
+        if (datafile.exists()) {
+            logger.error("File {} exists", filename);
+            return;
+        }
+
+        // continue to create the File, and put into the map
+        logger.info("Creating file and index for {}", filename);
+
+        FileInfo fileInfo = new FileInfo(filename, dataChunk.getChunkLength());
+
+        activeFiles.put(filename, fileInfo);
 
     }
 
