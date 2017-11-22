@@ -99,7 +99,7 @@ public class RemoteHTTPFetcher implements Runnable {
                 int cur_bytes_sent = 0;
 
                 // Each time before start fetching, first learn about current rate
-                List<AggFlowGroupInfo.WorkerInfo> wiList = null;
+                List<AggFlowGroupInfo.WorkerInfo> wiList = new LinkedList<>();
                 double totalRate = learnRate(wiList);
 
                 double cur_rate = totalRate;
@@ -195,7 +195,6 @@ public class RemoteHTTPFetcher implements Runnable {
 
     private double learnRate(List<AggFlowGroupInfo.WorkerInfo> wiList) {
         double totalRate = 0;
-        wiList = new LinkedList<>();
 
 //        HashMap<AggFlowGroupInfo.WorkerInfo, Double> workerToRateMap = new HashMap<>();
 
@@ -209,8 +208,8 @@ public class RemoteHTTPFetcher implements Runnable {
 
                 // now we've determined a worker
 
-                if (rateMap.size() >= 1) {
-                    logger.error("rateMap should not > 1!");
+                if (rateMap.size() > 1) {
+                    logger.error("rateMap should not be > 1!");
                 }
 
                 if (rateMap.containsKey(owningFlowGroupInfo.parentFlowInfo.ID)) {

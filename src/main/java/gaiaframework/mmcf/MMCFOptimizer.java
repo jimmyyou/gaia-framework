@@ -66,7 +66,7 @@ public class MMCFOptimizer {
                     dat_string.append(" 0.000");
                 }
                 else {
-                    dat_string.append(String.format(" %.3f", links[i][j].remaining_bw()));
+                    dat_string.append(String.format(" %.3f", links[i][j].remaining_bw() / 8)); // convert B/W to Byte
                 }
             }
             dat_string.append("\n");

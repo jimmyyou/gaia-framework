@@ -1,7 +1,9 @@
 package gaiaframework.transmission;
 
 
-public class DataChunkHeader {
+import java.io.Serializable;
+
+public class DataChunkHeader implements Serializable{
     String filename;
     String destURL;
     long startIndex;

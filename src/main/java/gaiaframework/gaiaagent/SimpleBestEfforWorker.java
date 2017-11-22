@@ -65,7 +65,7 @@ public class SimpleBestEfforWorker implements Runnable {
                 m = inputQueue.take();
 
                 if (m.type == CTRL_to_WorkerMsg.MsgType.CONNECT) {
-                    connectSoc();
+                    connectSoc_Retry();
                     break;
                 } else {
                     logger.error("Expecting CONNECT msg, got {}", m.type);
@@ -98,8 +98,44 @@ public class SimpleBestEfforWorker implements Runnable {
     }
 
 
-    private void connectSoc() {
+    private void connectSoc_Retry() {
+
+        boolean isConnected = false;
+        while ( !isConnected ) {
+            try {
+                dataSocket = new Socket(faIP, faPort, null, localPort);
+//                dataSocket.setSoTimeout(Constants.DEFAULT_SOCKET_TIMEOUT);
+                dataSocket.setKeepAlive(true);
+
+                logger.info("Worker {} connected to {} : {} from port {}, keepAlive {}", connID, faIP, faPort, localPort, dataSocket.getKeepAlive());
+            } catch (IOException e) {
+                logger.error("Error while connecting to {} {} from port {}", faIP, faPort, localPort);
+                e.printStackTrace();
+
+                // sleep for some time
+                try {
+                    logger.error("Retry-connection in {} seconds", 5);
+                    Thread.sleep(5000);
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
+
+                continue;
+            }
+
+            isConnected = true;
+        }
+
         try {
+            oos = new ObjectOutputStream(dataSocket.getOutputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        sharedData.cnt_StartedConnections.countDown();
+        sharedData.activeConnections.incrementAndGet();
+
+/*        try {
             dataSocket = new Socket(faIP, faPort, null, localPort);
             dataSocket.setKeepAlive(true);
 
@@ -112,7 +148,7 @@ public class SimpleBestEfforWorker implements Runnable {
 
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
 }
