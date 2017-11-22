@@ -107,6 +107,9 @@ public class SimpleBestEfforWorker implements Runnable {
 
             oos = new ObjectOutputStream(dataSocket.getOutputStream());
 
+            sharedData.cnt_StartedConnections.countDown();
+            sharedData.activeConnections.incrementAndGet();
+
         } catch (IOException e) {
             e.printStackTrace();
         }

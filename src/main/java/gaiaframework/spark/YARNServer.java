@@ -151,7 +151,7 @@ public class YARNServer extends GaiaAbstractServer {
         String addr = getRawAddrfromTaskID(taskID, req);
 
         if (addr != null) {
-            return configuration.findDCIDbyAddr(addr);
+            return configuration.findDCIDbyHostAddr(addr);
         }
 
         logger.error("Task IP not found for {}", taskID);

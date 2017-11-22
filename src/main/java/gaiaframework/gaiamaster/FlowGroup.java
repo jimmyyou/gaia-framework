@@ -132,7 +132,7 @@ public class FlowGroup {
     }
 
     // TODO check the two converters
-    public static FlowGroup_Old toFlowGroup_Old(FlowGroup fg, int intID) {
+/*    public static FlowGroup_Old toFlowGroup_Old(FlowGroup fg, int intID) {
         FlowGroup_Old fgo = new FlowGroup_Old(fg.getId(), intID,
                 fg.getOwningCoflowID(), fg.getSrcLocation(), fg.getDstLocation(),
                 fg.getTotalVolume() - fg.getTransmitted(), fg.filename, fg.flowInfos);
@@ -140,7 +140,7 @@ public class FlowGroup {
 //        fgo.setVolume( fg.getTotalVolume()-fg.getTransmitted_agg() );
 
         return fgo;
-    }
+    }*/
 
     // newer version of converter
     public FlowGroup_Old toFlowGroup_Old(int intID) {

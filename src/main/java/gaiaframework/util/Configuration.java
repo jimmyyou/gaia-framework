@@ -302,8 +302,22 @@ public class Configuration {
         return masterIP;
     }
 
-    public String findDCIDbyAddr(String addr) {
+    //
+    public String findDCIDbyHostAddr(String addr) {
 
+        // version 2, we only compare IP
+        for (int i = 0; i < numDC; i++) {
+            List<String> raIPs = dataCenters.get(i).hostIPs;
+            for (int j = 0; j < dataCenters.get(i).numHosts; j++) {
+
+                if ((raIPs.get(j)).equals(addr.split(":")[0])) {
+                    return String.valueOf(i);
+                }
+            }
+        }
+
+
+/*
         for (int i = 0; i < numDC; i++) {
             List<String> raIPs = dataCenters.get(i).hostIPs;
             List<Integer> raPorts = dataCenters.get(i).hostPorts;
@@ -314,6 +328,7 @@ public class Configuration {
                 }
             }
         }
+*/
 
         return null;
     }

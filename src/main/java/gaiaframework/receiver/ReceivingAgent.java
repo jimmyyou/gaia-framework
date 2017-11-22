@@ -3,6 +3,7 @@ package gaiaframework.receiver;
 // Receiving Agent, only used to receive data
 
 import gaiaframework.gaiaagent.DataChunk;
+import gaiaframework.transmission.DataChunkMessage;
 import gaiaframework.util.Configuration;
 import gaiaframework.util.Constants;
 import org.apache.commons.cli.*;
@@ -18,7 +19,7 @@ public class ReceivingAgent {
 
     private static final Logger logger = LogManager.getLogger();
 
-    static LinkedBlockingQueue<DataChunk> dataQueue = new LinkedBlockingQueue<>();
+    static LinkedBlockingQueue<DataChunkMessage> dataQueue = new LinkedBlockingQueue<>();
 
     static Thread fileWriterThread;
     static boolean isOutputEnabled = true;

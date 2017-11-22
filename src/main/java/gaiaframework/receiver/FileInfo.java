@@ -6,6 +6,7 @@ package gaiaframework.receiver;
 // VER 1.0 we copy the whole map output file over the net, but only copy once for co-located Reducers (i.e. combine the flowgroups)
 
 import gaiaframework.gaiaagent.DataChunk;
+import gaiaframework.transmission.DataChunkMessage;
 import gaiaframework.util.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -61,7 +62,7 @@ public class FileInfo {
     }
 
 
-    public boolean writeDataAndCheck(DataChunk dataChunk) {
+    public boolean writeDataAndCheck(DataChunkMessage dataChunk) {
 
         // first write the data, then check if it is finished
 

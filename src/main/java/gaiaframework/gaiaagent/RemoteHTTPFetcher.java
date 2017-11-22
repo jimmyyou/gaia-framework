@@ -232,7 +232,7 @@ public class RemoteHTTPFetcher implements Runnable {
 
     private URL getURL() {
 //        http://localhost:20020/home/jimmy/Downloads/profile.xml?start=0&len=5
-        StringBuilder str_url = new StringBuilder(srcIP).append(':').append(Constants.DEFAULT_HTTP_SERVER_PORT)
+        StringBuilder str_url = new StringBuilder("http://").append(srcIP).append(':').append(Constants.DEFAULT_HTTP_SERVER_PORT)
                 .append(srcFilename).append("?start=").append(startOffset).append("&len=").append(totalLength);
 
         try {

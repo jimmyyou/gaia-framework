@@ -1,6 +1,7 @@
 package gaiaframework.receiver;
 
 import gaiaframework.gaiaagent.DataChunk;
+import gaiaframework.transmission.DataChunkMessage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -14,9 +15,9 @@ public class Receiver implements Runnable {
     public Socket sd_;
     public ObjectInputStream in_;
 
-    LinkedBlockingQueue<DataChunk> dataQueue;
+    LinkedBlockingQueue<DataChunkMessage> dataQueue;
 
-    public Receiver(Socket client_sd, LinkedBlockingQueue<DataChunk> dataQueue) throws java.io.IOException {
+    public Receiver(Socket client_sd, LinkedBlockingQueue<DataChunkMessage> dataQueue) throws java.io.IOException {
         sd_ = client_sd;
         in_ = new ObjectInputStream( client_sd.getInputStream()) ;
         this.dataQueue = dataQueue;
@@ -29,7 +30,7 @@ public class Receiver implements Runnable {
         while (true) {
             try {
 
-                DataChunk dataChunk = (DataChunk) in_.readObject();
+                DataChunkMessage dataChunk = (DataChunkMessage) in_.readObject();
 
 //                logger.info("Processing data {} {} {}\n{} {}", dataChunk.getFilename(), dataChunk.getStartIndex(),
 //                        dataChunk.getChunkLength(), (int) dataChunk.getData()[0], (int) dataChunk.getData()[1]);

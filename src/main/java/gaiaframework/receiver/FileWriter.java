@@ -6,6 +6,7 @@ package gaiaframework.receiver;
 // TODO use multiple threads to parallelly handle I/O
 
 import gaiaframework.gaiaagent.DataChunk;
+import gaiaframework.transmission.DataChunkMessage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,13 +17,13 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class FileWriter implements Runnable {
     private static final Logger logger = LogManager.getLogger();
 
-    LinkedBlockingQueue<DataChunk> dataQueue;
+    LinkedBlockingQueue<DataChunkMessage> dataQueue;
 
     HashMap<String, FileInfo> activeFiles = new HashMap<String, FileInfo>();
 
     boolean isOutputEnabled = true;
 
-    public FileWriter(LinkedBlockingQueue<DataChunk> dataQueue, boolean isOutputEnabled) {
+    public FileWriter(LinkedBlockingQueue<DataChunkMessage> dataQueue, boolean isOutputEnabled) {
         this.dataQueue = dataQueue;
         this.isOutputEnabled = isOutputEnabled;
     }
@@ -31,7 +32,7 @@ public class FileWriter implements Runnable {
     public void run() {
         logger.info("Filewriter Thread started");
 
-        DataChunk dataChunk;
+        DataChunkMessage dataChunk;
         while (true) {
             try {
                 dataChunk = dataQueue.take();
@@ -51,7 +52,7 @@ public class FileWriter implements Runnable {
      *
      * @param dataChunk
      */
-    private void processData(DataChunk dataChunk) {
+    private void processData(DataChunkMessage dataChunk) {
 
 //        logger.info("Processing data {} {} {}\n{} {}", dataChunk.getFilename(), dataChunk.getStartIndex(),
 //                dataChunk.getChunkLength(), (int) dataChunk.getData()[0], (int) dataChunk.getData()[1]);
@@ -79,7 +80,7 @@ public class FileWriter implements Runnable {
     }
 
     // upon receiving the first chunk, create and write to index file, also create data file.
-    private void createFileandIndex(DataChunk dataChunk) {
+    private void createFileandIndex(DataChunkMessage dataChunk) {
         // first check if file exists
         String filename = dataChunk.getFilename();
         File datafile = new File(filename);
@@ -121,7 +122,7 @@ public class FileWriter implements Runnable {
 
     }
 
-    private void writeToFile(DataChunk dataChunk) {
+    private void writeToFile(DataChunkMessage dataChunk) {
         String filename = dataChunk.getFilename();
         FileInfo fileInfo = activeFiles.get(filename);
 

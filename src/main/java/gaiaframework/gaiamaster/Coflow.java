@@ -57,7 +57,8 @@ public class Coflow {
                 continue;                // Trim the Coflow_Old, so we don't schedule FGs that are already finished.
             }
 
-            FlowGroup_Old fgo = FlowGroup.toFlowGroup_Old(fg, (cnt++));
+//            FlowGroup_Old fgo = FlowGroup.toFlowGroup_Old(fg, (cnt++));
+            FlowGroup_Old fgo = fg.toFlowGroup_Old((cnt++));
             flows.put( fg.getId() , fgo);
         }
 

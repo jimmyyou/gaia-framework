@@ -371,7 +371,8 @@ public class Master {
                     }
                     else { // we need to pause
                         fg.setFlowState(FlowGroup.FlowState.PAUSED);
-                        fgoToSend.add ( FlowGroup.toFlowGroup_Old(fg, 0).setFlowState(FlowGroup_Old.FlowState.PAUSING) );
+                        fgoToSend.add ( fg.toFlowGroup_Old(0).setFlowState(FlowGroup_Old.FlowState.PAUSING) );
+//                        fgoToSend.add ( FlowGroup.toFlowGroup_Old(fg, 0).setFlowState(FlowGroup_Old.FlowState.PAUSING) );
                     }
                 }
                 else { // case: NEW/PAUSED
