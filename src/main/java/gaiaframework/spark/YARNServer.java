@@ -78,11 +78,17 @@ public class YARNServer extends GaiaAbstractServer {
             String mapID = flowInfo.getMapAttemptID();
             String redID = flowInfo.getReduceAttemptID();
 
-            String srcLoc = getTaskLocationID(mapID, req);
+            String srcIP = flowInfo.getMapperIP();
+            String dstIP = flowInfo.getReducerIP();
+
+            String srcLoc = getTaskLocationIDfromIP(srcIP);
+            String dstLoc = getTaskLocationIDfromIP(dstIP);
+
+/*            String srcLoc = getTaskLocationID(mapID, req);
             String dstLoc = getTaskLocationID(redID, req);
 
             String srcIP = getRawAddrfromTaskID(mapID, req).split(":")[0];
-            String dstIP = getRawAddrfromTaskID(redID, req).split(":")[0];
+            String dstIP = getRawAddrfromTaskID(redID, req).split(":")[0];*/
 
 
             String afgID = cfID + ":" + srcLoc + '-' + dstLoc;
@@ -152,7 +158,7 @@ public class YARNServer extends GaiaAbstractServer {
 
     // 1. find the IP for this task using ShuffleInfo (first look in MapIP, then in ReduceIP)
     // 2. find the DCID for this IP?
-    private String getTaskLocationID(String taskID, ShuffleInfo req) {
+/*    private String getTaskLocationID(String taskID, ShuffleInfo req) {
         String addr = getRawAddrfromTaskID(taskID, req);
 
         if (addr != null) {
@@ -161,9 +167,19 @@ public class YARNServer extends GaiaAbstractServer {
 
         logger.error("Task IP not found for {}", taskID);
         return null;
+    }*/
+
+    private String getTaskLocationIDfromIP(String IP) {
+
+        if (IP != null) {
+            return configuration.findDCIDbyHostAddr(IP);
+        }
+
+        logger.error("Task IP is null");
+        return null;
     }
 
-    private String getRawAddrfromTaskID(String taskID, ShuffleInfo req) {
+/*    private String getRawAddrfromTaskID(String taskID, ShuffleInfo req) {
         // check the hostIP
         for (ShuffleInfo.MapperInfo mapperInfo : req.getMappersList()) {
             if (taskID.equals(mapperInfo.getMapperID())) {
@@ -188,7 +204,7 @@ public class YARNServer extends GaiaAbstractServer {
         }
 
         return null;
-    }
+    }*/
 
     private String hardCodedURLResolver(String url) {
         if(url.equals("clnode045.clemson.cloudlab.us:8042")){
