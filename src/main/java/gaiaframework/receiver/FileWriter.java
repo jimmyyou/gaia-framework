@@ -67,10 +67,9 @@ public class FileWriter implements Runnable {
 
         // TODO change the logic of writing to file
 
-        if (activeFiles.containsKey(dataChunk.getFilename())){
+        if (activeFiles.containsKey(dataChunk.getFilename())) {
             writeToFile(dataChunk);
-        }
-        else {
+        } else {
             CreateFile_Spec(dataChunk);
         }
 
@@ -103,10 +102,13 @@ public class FileWriter implements Runnable {
 
         File dir = datafile.getParentFile();
 
-        if(!dir.exists()){
+        if (!dir.exists()) {
 
-            dir.mkdir();
+            logger.info("Creating dir {}, success = {}", dir, dir.mkdir());
 
+
+        } else {
+            logger.info("Dir {} exists", dir);
         }
 
         FileInfo fileInfo = new FileInfo(dataChunk);
