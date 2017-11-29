@@ -59,6 +59,13 @@ public class YARNServer extends GaiaAbstractServer {
             e.printStackTrace();
         }
 
+        // FIXME: sleep 1s to ensure that the file is fully written to disk
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
     }
 
     // generate aggFlowGroups from req using an IP to ID mapping
