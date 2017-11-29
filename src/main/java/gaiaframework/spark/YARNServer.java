@@ -81,8 +81,11 @@ public class YARNServer extends GaiaAbstractServer {
             String srcIP = flowInfo.getMapperIP();
             String dstIP = flowInfo.getReducerIP();
 
-            String srcLoc = getTaskLocationIDfromIP(srcIP);
-            String dstLoc = getTaskLocationIDfromIP(dstIP);
+            String srcLoc = getTaskLocationIDfromIP(hardCodedURLResolver(srcIP));
+            String dstLoc = getTaskLocationIDfromIP(hardCodedURLResolver(dstIP));
+
+//            String srcLoc = getTaskLocationIDfromIP(srcIP);
+//            String dstLoc = getTaskLocationIDfromIP(dstIP);
 
 /*            String srcLoc = getTaskLocationID(mapID, req);
             String dstLoc = getTaskLocationID(redID, req);
