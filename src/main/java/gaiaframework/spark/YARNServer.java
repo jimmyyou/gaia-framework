@@ -113,7 +113,7 @@ public class YARNServer extends GaiaAbstractServer {
                 // Gaia now uses bytes as the volume
                 long flowVolume = flowInfo.getFlowSize();
                 if (flowVolume == 0) flowVolume = 1;
-                FlowGroup fg = new FlowGroup(fgID, srcLoc, dstLoc, cfID, flowVolume,
+                FlowGroup fg = new FlowGroup(afgID, srcLoc, dstLoc, cfID, flowVolume,
                         flowInfo.getDataFilename(), mapID, redID);
                 fg.flowInfos.add(flowInfo);
                 fg.srcIPs.add(srcIP);
