@@ -15,6 +15,6 @@ graph [
     edge [
         source      0
         target      1
-        bandwidth   10000000
+        bandwidth   12
     ]
 ]

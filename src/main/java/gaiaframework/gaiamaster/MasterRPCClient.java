@@ -147,7 +147,7 @@ public class MasterRPCClient {
                     for (Pathway p : fgo.paths) {
                         int pathID = ng.get_path_id(p);
                         if (pathID != -1) {
-                            fueBuilder.addPathToRate(GaiaMessageProtos.FlowUpdate.PathRateEntry.newBuilder().setPathID(pathID).setRate(p.getBandwidth()));
+                            fueBuilder.addPathToRate(GaiaMessageProtos.FlowUpdate.PathRateEntry.newBuilder().setPathID(pathID).setRate(p.getBandwidth() * 1000000));
                         } else {
                             System.err.println("FATAL: illegal path!");
 //                    System.exit(1); // don't fail yet!

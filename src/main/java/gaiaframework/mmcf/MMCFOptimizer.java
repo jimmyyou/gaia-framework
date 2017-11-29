@@ -90,7 +90,12 @@ public class MMCFOptimizer {
         dat_string.append("param fv:=\n");
         for (int fid : flow_int_id_list) {
             String flow_id = flow_int_id_to_id.get(fid);
-            dat_string.append(String.format(" f%d %.3f\n", fid, coflow.flows.get(flow_id).remaining_volume()));
+            double volume = coflow.flows.get(flow_id).remaining_volume() / 1000000;
+            // make sure that volume > 0.1MByte
+            if(volume < 0.1) {
+                volume = 0.1;
+            }
+            dat_string.append(String.format(" f%d %.3f\n", fid, volume));
         }
         dat_string.append(";\n\n");
 
