@@ -138,7 +138,7 @@ public class MasterRPCServer {
                     fg.setTransmitted( status.getTransmitted() );
                 }
                 else{
-                    logger.warn("Received status report but the FlowGroup does not exist");
+                    logger.warn("Received status report but the FlowGroup {} does not exist", fid);
                 }
             }
         }
