@@ -70,7 +70,8 @@ public class FileWriter implements Runnable {
         if (activeFiles.containsKey(dataChunk.getFilename())) {
             writeToFile(dataChunk);
         } else {
-            CreateFile_Spec(dataChunk);
+            boolean created = CreateFile_Spec(dataChunk);
+            logger.info("dataChunk file created = {}, start={}, len={}", created, dataChunk.getStartIndex(), dataChunk.getChunkLength());
         }
 
 /*        if (dataChunk.getStartIndex() == -1) {
@@ -88,13 +89,13 @@ public class FileWriter implements Runnable {
 
     }
 
-    private void CreateFile_Spec(DataChunkMessage dataChunk) {
+    private boolean CreateFile_Spec(DataChunkMessage dataChunk) {
         String filename = dataChunk.getFilename();
         File datafile = new File(filename);
 
         if (datafile.exists()) {
             logger.error("File {} exists", filename);
-            return;
+            return false;
         }
 
         // continue to create the File, and put into the map
@@ -106,7 +107,6 @@ public class FileWriter implements Runnable {
 
             logger.info("Creating dir {}, success = {}", dir, dir.mkdir());
 
-
         } else {
             logger.info("Dir {} exists", dir);
         }
@@ -117,7 +117,10 @@ public class FileWriter implements Runnable {
 
         if (!done) {
             activeFiles.put(filename, fileInfo);
+//            return true;
         }
+
+        return true;
 
     }
 
