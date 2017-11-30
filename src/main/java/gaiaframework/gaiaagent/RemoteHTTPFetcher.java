@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -135,18 +136,25 @@ public class RemoteHTTPFetcher implements Runnable {
                 }
 
                 byte[] buf = new byte[data_length];
-                int bytes_read = input.read(buf, 0, data_length);
+                try {
 
-                if (bytes_read == -1) {
-                    // This is never reached FIXME
+                    input.readFully(buf, 0, data_length);
+                } catch (EOFException e){
+                    logger.info("Reading EOF from {}, NOP", srcFilename);
+//                    setFinished();
+                    // Not setting finished
+                }
+
+/*                if (bytes_read == -1) {
+
                     logger.info("Finished reading from {}", srcFilename);
                     setFinished();
                     break;
-                }
+                }*/
 
-                if (bytes_read != data_length) {
+/*                if (bytes_read != data_length) {
                     logger.error("bytes read is smaller than expected, sent {}, read {}/{}", total_bytes_sent, bytes_read, data_length);
-                }
+                }*/
 
                 // send data through all paths
                 for (int i = 0; i < workerInfos.size(); i++) {
@@ -156,7 +164,7 @@ public class RemoteHTTPFetcher implements Runnable {
 
                     int thisChunkSize = 0;
                     if (i < workerInfos.size() - 1) {
-                        thisChunkSize = (int) (workerInfos.get(i).rate / totalRate * bytes_read);
+                        thisChunkSize = (int) (workerInfos.get(i).rate / totalRate * data_length);
                     } else { // the last piece of this block
                         thisChunkSize = data_length - cur_bytes_sent;
                     }
