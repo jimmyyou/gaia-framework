@@ -105,7 +105,7 @@ public class FileWriter implements Runnable {
 
         if (!dir.exists()) {
 
-            logger.info("Creating dir {}, success = {}", dir, dir.mkdir());
+            logger.info("Creating dir {}, success = {}", dir, dir.mkdirs());
 
         } else {
             logger.info("Dir {} exists", dir);
