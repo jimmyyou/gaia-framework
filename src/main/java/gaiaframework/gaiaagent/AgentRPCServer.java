@@ -159,7 +159,7 @@ public class AgentRPCServer {
                 public void onNext(GaiaMessageProtos.FlowUpdate flowUpdate) {
                     int fusize = flowUpdate.getSerializedSize();
                     fumaxsize = fusize > fumaxsize ? fusize : fumaxsize;
-                    logger.info("Received FUM, size: {} / {}\ncontent: {}", fusize, fumaxsize, flowUpdate);
+                    logger.debug("Received FUM, size: {} / {}\ncontent: {}", fusize, fumaxsize, flowUpdate);
                     try {
                         sharedData.fumQueue.put(flowUpdate);
                     } catch (InterruptedException e) {
