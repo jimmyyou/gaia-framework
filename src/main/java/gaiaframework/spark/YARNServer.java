@@ -48,6 +48,12 @@ public class YARNServer extends GaiaAbstractServer {
         }
 
         try {
+            
+            if(cf.getFlowGroups().size() == 0) {
+                logger.info("CF {} is empty, skipping", cf.getId());
+                return;
+            }
+
             cfQueue.put(cf);
 
             logger.info("Coflow submitted, Trapping into waiting for coflow to finish");
