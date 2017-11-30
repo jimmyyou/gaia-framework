@@ -99,8 +99,8 @@ public class RemoteHTTPFetcher implements Runnable {
                 int cur_bytes_sent = 0;
 
                 // Each time before start fetching, first learn about current rate
-                List<AggFlowGroupInfo.WorkerInfo> wiList = new LinkedList<>();
-                double totalRate = learnRate(wiList);
+                List<AggFlowGroupInfo.WorkerInfo> workerInfos = new LinkedList<>();
+                double totalRate = learnRate(workerInfos);
 
                 double cur_rate = totalRate;
 
@@ -138,24 +138,25 @@ public class RemoteHTTPFetcher implements Runnable {
                 int bytes_read = input.read(buf, 0, data_length);
 
                 if (bytes_read == -1) {
+                    // This is never reached FIXME
                     logger.info("Finished reading from {}", srcFilename);
                     setFinished();
                     break;
                 }
 
                 if (bytes_read != data_length) {
-                    logger.error("bytes read is smaller than expected, sent {}, read {}", total_bytes_sent, bytes_read);
+                    logger.error("bytes read is smaller than expected, sent {}, read {}/{}", total_bytes_sent, bytes_read, data_length);
                 }
 
                 // send data through all paths
-                for (int i = 0; i < wiList.size(); i++) {
+                for (int i = 0; i < workerInfos.size(); i++) {
 
-                    String faID = wiList.get(i).getRaID();
-                    int pathID = wiList.get(i).getPathID();
+                    String faID = workerInfos.get(i).getRaID();
+                    int pathID = workerInfos.get(i).getPathID();
 
                     int thisChunkSize = 0;
-                    if (i < wiList.size() - 1) {
-                        thisChunkSize = (int) (wiList.get(i).rate / totalRate * bytes_read);
+                    if (i < workerInfos.size() - 1) {
+                        thisChunkSize = (int) (workerInfos.get(i).rate / totalRate * bytes_read);
                     } else { // the last piece of this block
                         thisChunkSize = data_length - cur_bytes_sent;
                     }
@@ -185,7 +186,12 @@ public class RemoteHTTPFetcher implements Runnable {
 
                 }
 
-                setTransmitted(data_length);
+                transmit(data_length);
+                if (total_bytes_sent >= totalLength) {
+                    setFinished();
+                    logger.info("Finished sending for {}", srcFilename);
+                    break;
+                }
 
             }
 
@@ -253,7 +259,7 @@ public class RemoteHTTPFetcher implements Runnable {
         return null;
     }
 
-    private void setTransmitted(long volume) {
+    private void transmit(long volume) {
 
         owningFlowGroupInfo.transmit(volume);
 
