@@ -14,8 +14,15 @@ public class TestClient {
 
     public static void main(String[] args) throws Exception {
         GaiaClient gaiaClient = new GaiaClient("localhost", 50051);
+
+        long shuffleSize = 5000000;
+
         try {
 //            gaiaClient.greet("x");
+
+            if (args.length > 0) {
+                shuffleSize = Long.parseLong(args[0]);
+            }
 
             Map<String, String> mappersIP = new HashMap<String, String>();
             Map<String, String> reducersIP = new HashMap<String, String>();
@@ -25,7 +32,7 @@ public class TestClient {
             reducersIP.put("R1", "localhost");
 
             FlowInfo flowInfo = new FlowInfo("M1", "R1", "/tmp/rand.out",
-                    0, 5000000, "10.0.1.1", "10.0.2.2");
+                    0, shuffleSize, "10.0.1.1", "10.0.2.2");
 
             Map<String, FlowInfo> fmap = new HashMap<String, FlowInfo>();
             fmap.put("user:job:map:reduce", flowInfo);

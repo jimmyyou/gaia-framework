@@ -48,7 +48,7 @@ public class YARNServer extends GaiaAbstractServer {
         }
 
         try {
-            
+
             if(cf.getFlowGroups().size() == 0) {
                 logger.info("CF {} is empty, skipping", cf.getId());
                 return;
@@ -67,7 +67,7 @@ public class YARNServer extends GaiaAbstractServer {
 
         // FIXME: sleep 1s to ensure that the file is fully written to disk
         try {
-            Thread.sleep(1000);
+            Thread.sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
