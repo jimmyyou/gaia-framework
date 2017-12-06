@@ -21,16 +21,16 @@ graph [
     edge [
         source      0
         target      1
-        bandwidth   20
+        bandwidth   2
     ]
     edge [
         source      0
         target      2
-        bandwidth   20
+        bandwidth   2
     ]
     edge [
         source      1
         target      2
-        bandwidth   20
+        bandwidth   2
     ]
 ]
