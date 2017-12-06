@@ -223,7 +223,40 @@ public class YARNServer extends GaiaAbstractServer {
     }*/
 
     private String hardCodedURLResolver(String url) {
-        if(url.equals("clnode045.clemson.cloudlab.us:8042")){
+        // New version on "new3" experiment
+        if(url.equals("clnode075.clemson.cloudlab.us:8042")){
+            return "10.0.1.1";
+        }
+        if(url.equals("clnode049.clemson.cloudlab.us:8042")){
+            return "10.0.1.2";
+        }
+        if(url.equals("clnode053.clemson.cloudlab.us:8042")){
+            return "10.0.1.3";
+        }
+
+
+        if(url.equals("clnode048.clemson.cloudlab.us:8042")){
+            return "10.0.2.1";
+        }
+        if(url.equals("clnode052.clemson.cloudlab.us:8042")){
+            return "10.0.2.2";
+        }
+        if(url.equals("clnode096.clemson.cloudlab.us:8042")){
+            return "10.0.2.3";
+        }
+
+
+        if(url.equals("clnode058.clemson.cloudlab.us:8042")){
+            return "10.0.3.1";
+        }
+        if(url.equals("clnode067.clemson.cloudlab.us:8042")){
+            return "10.0.3.2";
+        }
+        if(url.equals("clnode055.clemson.cloudlab.us:8042")){
+            return "10.0.3.3";
+        }
+
+/*        if(url.equals("clnode045.clemson.cloudlab.us:8042")){
             return "10.0.1.1";
         }
 
@@ -245,7 +278,7 @@ public class YARNServer extends GaiaAbstractServer {
 
         if(url.equals("clnode088.clemson.cloudlab.us:8042")){
             return "10.0.2.2";
-        }
+        }*/
 
         return url;
     }
