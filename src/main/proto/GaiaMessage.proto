@@ -12,6 +12,7 @@ option java_outer_classname = "GaiaMessageProtos";
 //    rpc getFlowRules(PAM_REQ) returns (stream PAMessage) {}
 //}
 
+// service for controlling SAs
 service SendingAgentService {
     //    rpc StartFlow (FlowUpdate) returns (stream StatusReport) {}
     rpc PrepareConnections (PAM_REQ) returns (stream PAMessage) {}
@@ -20,6 +21,7 @@ service SendingAgentService {
 //    rpc GetShuffleSize(ShuffleInfoReq) returns (ShuffleFiles) {}
 }
 
+// service for reporting to Master
 service MasterService {
     rpc UpdateFlowStatus (stream FlowStatusReport) returns (FlowStatus_ACK) {}
     rpc UpdatePathStatus (PathStatusReport) returns (PathStatus_ACK) {}
@@ -47,6 +49,8 @@ message PathStatusReport {
     //    repeated PathStatus pathStatus = 1;
 }
 
+// message from Master to agents to change flow rate etc.
+// rates are grouped by [raID][flowID][pathID]
 message FlowUpdate {
 
     message PathRateEntry {
