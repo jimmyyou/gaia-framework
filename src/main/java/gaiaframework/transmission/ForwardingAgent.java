@@ -2,6 +2,7 @@ package gaiaframework.transmission;
 
 // Forwards the data to the specific destination host inside the DataCenter
 // Each Data Center only has one ForwardingAgent
+// So all connections from SA is directed at this address. (we can put this agent in the router as 10.0.*.254)
 
 import gaiaframework.util.Configuration;
 import org.apache.commons.cli.*;
@@ -52,7 +53,7 @@ public class ForwardingAgent {
         HelpFormatter formatter = new HelpFormatter();
 
         if (args.length == 0) {
-            formatter.printHelp("SendingAgent -c [config] -n", options);
+            formatter.printHelp("Forwarding Agent -c [config] -n", options);
             return;
         }
 
