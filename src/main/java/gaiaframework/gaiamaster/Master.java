@@ -128,7 +128,7 @@ public class Master {
         }
         else {
             System.out.println("Unrecognized scheduler type: " + scheduler_type);
-            System.out.println("Scheduler must be one of { baseline, recursive-remain-flow }");
+            System.out.println("Scheduler must be one of { baseline, gaia }");
             System.exit(1);
         }
 
@@ -191,6 +191,7 @@ public class Master {
         }
 
         // start sending heartbeat
+        logger.info("start heartbeat");
         for (String sa_id : netGraph.nodes_) {
             rpcClientHashMap.get(sa_id).startExp();
         }

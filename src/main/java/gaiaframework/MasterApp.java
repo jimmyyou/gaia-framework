@@ -41,6 +41,14 @@ public class MasterApp {
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
 
+        if (cmd.hasOption("e")) {
+            is_emulation_ = true;
+        }
+
+        if (cmd.hasOption("l")) {
+            isRunningOnList = true;
+        }
+
         if (cmd.hasOption("g")) {
             args_map.put("gml", cmd.getOptionValue("g"));
         }
@@ -60,7 +68,7 @@ public class MasterApp {
         if (cmd.hasOption("j")) {
             args_map.put("trace", cmd.getOptionValue("j"));
         }
-        else {
+        else if (!cmd.hasOption('e')){ // if provided -e, no need for the trace.
             System.out.println("ERROR: Must specify a path to a trace file using the -j flag");
             System.exit(1);
         }
@@ -78,14 +86,6 @@ public class MasterApp {
         }
         else {
             args_map.put("outdir", "/tmp");
-        }
-
-        if (cmd.hasOption("e")) {
-            is_emulation_ = true;
-        }
-
-        if (cmd.hasOption("l")) {
-            isRunningOnList = true;
         }
 
         if (cmd.hasOption("c")){

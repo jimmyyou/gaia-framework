@@ -32,7 +32,7 @@ public class TestClient {
             reducersIP.put("R1", "localhost");
 
             FlowInfo flowInfo = new FlowInfo("M1", "R1", "/tmp/rand.out",
-                    0, shuffleSize, "10.0.1.1", "10.0.2.2");
+                    0, shuffleSize, "m1IP", "r1IP");
 
             Map<String, FlowInfo> fmap = new HashMap<String, FlowInfo>();
             fmap.put("user:job:map:reduce", flowInfo);

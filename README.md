@@ -1,8 +1,9 @@
-This is the Terra/Gaia framework for making scheduling decisions and tranferring the data using multipath.
+# Terra
+This is the Terra/Gaia framework for making scheduling decisions and transferring the data using multipath.
 
 This framework is dependent on gaia-lib.
 
-##How to run gaia-framework
+## How to run gaia-framework
 
 To start *Forwarding Agents*:
 
@@ -31,5 +32,5 @@ java -cp target/gaia_all-jar-with-dependencies.jar gaiaframework.HTTPServer.Http
 To start *Master*:
 
 ```
-java -cp java -cp target/gaia_all-jar-with-dependencies.jar gaiaframework.receiver.ReceivingAgent [-p <port>]
+java -cp java -cp target/gaia_all-jar-with-dependencies.jar gaiaframework.MasterApp -g <gml> -c <conf> -e -s gaia
 ```
