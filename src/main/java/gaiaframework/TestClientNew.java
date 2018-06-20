@@ -31,7 +31,7 @@ public class TestClientNew {
             reducersIP.put("R1", args[1]);
 
             FlowInfo flowInfo = new FlowInfo("M1", "R1", args[2],
-                    0, shuffleSize, "m1IP", "r1IP");
+                    0, shuffleSize, args[0], args[1]);
 
             Map<String, FlowInfo> fmap = new HashMap<String, FlowInfo>();
             fmap.put("user:job:map:reduce", flowInfo);
