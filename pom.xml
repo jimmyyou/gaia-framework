@@ -126,12 +126,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>21.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <version>3.3.0</version>
+            <version>19.0</version>
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>
@@ -147,16 +142,6 @@
             <groupId>io.grpc</groupId>
             <artifactId>grpc-stub</artifactId>
             <version>1.6.1</version>
-        </dependency>
-        <!--<dependency>-->
-            <!--<groupId>io.netty</groupId>-->
-            <!--<artifactId>netty</artifactId>-->
-            <!--<version>4.0.0.Alpha8</version>-->
-        <!--</dependency>-->
-        <dependency>
-            <groupId>org.jboss.netty</groupId>
-            <artifactId>netty</artifactId>
-            <version>3.2.10.Final</version>
         </dependency>
     </dependencies>
 
