@@ -258,48 +258,34 @@ public class YARNServer extends GaiaAbstractServer {
             String dstIP = getRawAddrfromTaskID(redID, req).split(":")[0];*/
 
 
-            String afgID = cfID + ":" + srcLoc + '-' + dstLoc;
+//            String afgID = cfID + ":" + srcLoc + '-' + dstLoc;
             String fgID = cfID + ":" + mapID + ":" + redID + ":" + srcLoc + '-' + dstLoc;
 
             // Filter same location
             if(srcLoc.equals(dstLoc)) continue;
 
-            // check if we already have this fg.
-            if (false) {
-//                FlowGroup fg = aggFlowGroups.get(afgID);
-//
-//                fg.flowInfos.add(flowInfo);
-//                fg.srcIPs.add(srcIP);
-//                fg.dstIPs.add(dstIP);
-//                fg.addTotalVolume(flowInfo.getFlowSize());
-//
-//                logger.info("WARN: Add Flow {} to existing FG {}", flowInfo.getDataFilename(), afgID);
+            // Gaia now uses bytes as the volume
+            long flowVolume = flowInfo.getFlowSize();
+            if (flowVolume == 0) flowVolume = 1;
+            FlowGroup fg = new FlowGroup(fgID, srcLoc, dstLoc, cfID, flowVolume,
+                    flowInfo.getDataFilename(), mapID, redID);
+            fg.flowInfos.add(flowInfo);
+            fg.srcIPs.add(srcIP);
+            fg.dstIPs.add(dstIP);
+            outputFlowGroups.put(fgID, fg);
 
-            } else {
-
-                // Gaia now uses bytes as the volume
-                long flowVolume = flowInfo.getFlowSize();
-                if (flowVolume == 0) flowVolume = 1;
-                FlowGroup fg = new FlowGroup(afgID, srcLoc, dstLoc, cfID, flowVolume,
-                        flowInfo.getDataFilename(), mapID, redID);
-                fg.flowInfos.add(flowInfo);
-                fg.srcIPs.add(srcIP);
-                fg.dstIPs.add(dstIP);
-                outputFlowGroups.put(afgID, fg);
-
-                // Filter out all co-located flows
-                if (srcLoc.equals(dstLoc)) {
-                    coLocatedFGs.put(fgID, fg);
-                }
-
-                // Filter index files
-                if(flowInfo.getDataFilename().endsWith("index")) {
-                    logger.info("Got an index file {}", flowInfo.getDataFilename());
-                    indexFileFGs.put(fgID, fg);
-                }
-
-
+            // Filter out all co-located flows
+            if (srcLoc.equals(dstLoc)) {
+                coLocatedFGs.put(fgID, fg);
             }
+
+            // Filter index files
+            if(flowInfo.getDataFilename().endsWith("index")) {
+                logger.info("Got an index file {}", flowInfo.getDataFilename());
+                indexFileFGs.put(fgID, fg);
+            }
+
+            
         }
 
         // use this method to remove co-located
