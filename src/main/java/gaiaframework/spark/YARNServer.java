@@ -88,7 +88,7 @@ public class YARNServer extends GaiaAbstractServer {
 
             String trimmedDirPath = filepath.substring( 0 , filepath.lastIndexOf("/"));
             String cmd_mkdir = "ssh wentingt@" + fg.dstIPs.get(0) + " mkdir -p " + trimmedDirPath ;
-            String cmd = "scp -r " + fg.srcIPs.get(0) + ":" + trimmedDirPath + "/* " + fg.dstIPs.get(0) + ":" + trimmedDirPath;
+            String cmd = "scp -r " + fg.srcIPs.get(0) + ":" + filepath + " " + fg.dstIPs.get(0) + ":" + filepath;
 
             System.out.println("Invoking " + cmd_mkdir);
             System.out.println("Invoking " + cmd);
