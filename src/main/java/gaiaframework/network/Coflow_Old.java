@@ -144,5 +144,19 @@ public class Coflow_Old {
 
         return true;
     }
+
+    public String toPrintableString(){
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(this.id).append(' ').append(this.volume_).append('\n');
+        for(FlowGroup_Old fgo : this.flows.values()){
+
+            sb.append(fgo.getId()).append(' ');
+            sb.append(fgo.remaining_volume()).append(' ');
+            sb.append(fgo.getFilename()).append('\n');
+        }
+
+        return sb.toString();
+    }
 }
 
