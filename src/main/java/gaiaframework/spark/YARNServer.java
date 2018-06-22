@@ -8,6 +8,7 @@ import gaiaframework.util.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -37,10 +38,9 @@ public class YARNServer extends GaiaAbstractServer {
 
         HashMap<String, FlowGroup> coLocatedFGs = new HashMap<>();
         HashMap<String, FlowGroup> flowGroups = new HashMap<>();
+        HashMap<String, FlowGroup> indexFiles = new HashMap<>();
 
-        //removeRedundantFlowGroups(generateFlowGroups(cfID, req));
-
-        generateFlowGroups(cfID, req, coLocatedFGs, flowGroups);
+        generateFlowGroups(cfID, req, coLocatedFGs, flowGroups, indexFiles);
         Coflow cf = new Coflow(cfID, flowGroups);
 
         if (coLocatedFGs.size() >= 0) {
@@ -56,6 +56,9 @@ public class YARNServer extends GaiaAbstractServer {
 
             cfQueue.put(cf);
 
+            // Try using SCP to transfer index files for now.
+            handleIndexFiles(indexFiles);
+
             logger.info("Coflow submitted, Trapping into waiting for coflow to finish");
             cf.blockTillFinish();
 //            ShuffleTask st = new ShuffleTask(cf);
@@ -67,11 +70,64 @@ public class YARNServer extends GaiaAbstractServer {
 
         // FIXME: sleep 1s to ensure that the file is fully written to disk
         try {
-            Thread.sleep(5000);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
+    }
+
+    private void handleIndexFiles(HashMap<String, FlowGroup> indexFiles) {
+        for(FlowGroup fg : indexFiles.values()){
+
+            String filepath = fg.getFilename();
+
+            if(fg.dstIPs.size() > 1){
+                logger.error("indexFiles FG have multiple dstIP!");
+            }
+
+            String trimmedDirPath = filepath.substring( 0 , filepath.lastIndexOf("/"));
+            String cmd_mkdir = "ssh wentingt@" + fg.dstIPs.get(0) + " mkdir -p " + trimmedDirPath ;
+            String cmd = "scp -r " + fg.srcIPs.get(0) + ":" + trimmedDirPath + "/* " + fg.dstIPs.get(0) + ":" + trimmedDirPath;
+
+            System.out.println("Invoking " + cmd_mkdir);
+            System.out.println("Invoking " + cmd);
+
+            Process p = null;
+            try {
+
+                p = Runtime.getRuntime().exec(cmd_mkdir);
+                p.waitFor();
+
+/*                String line;
+                BufferedReader bri = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                while ((line = bri.readLine()) != null) {
+                    System.out.println(line);
+                }
+
+                bri = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                while ((line = bri.readLine()) != null) {
+                    System.out.println(line);
+                }*/
+
+                p = Runtime.getRuntime().exec(cmd);
+                p.waitFor();
+
+/*                bri = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                while ((line = bri.readLine()) != null) {
+                    System.out.println(line);
+                }
+
+                bri = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                while ((line = bri.readLine()) != null) {
+                    System.out.println(line);
+                }*/
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     // generate aggFlowGroups from req using an IP to ID mapping
@@ -81,7 +137,8 @@ public class YARNServer extends GaiaAbstractServer {
     // dst - dstLoc
     // owningCoflowID - dstStage
     // Volume - divided_data_size
-    private HashMap<String, FlowGroup> generateFlowGroups(String cfID, ShuffleInfo req, HashMap<String, FlowGroup> coLocatedFGs, HashMap<String, FlowGroup> aggFlowGroups) {
+    private HashMap<String, FlowGroup> generateFlowGroups(String cfID, ShuffleInfo req, HashMap<String, FlowGroup> coLocatedFGs,
+                                                          HashMap<String, FlowGroup> aggFlowGroups, HashMap<String, FlowGroup> indexFileFGs) {
 
         // first store all flows into aggFlowGroups, then move the co-located ones to coLocatedFGs
 
@@ -91,8 +148,11 @@ public class YARNServer extends GaiaAbstractServer {
             String mapID = flowInfo.getMapAttemptID();
             String redID = flowInfo.getReduceAttemptID();
 
-            String srcIP = hardCodedURLResolver(flowInfo.getMapperIP());
-            String dstIP = hardCodedURLResolver(flowInfo.getReducerIP());
+//            String srcIP = hardCodedURLResolver(flowInfo.getMapperIP());
+//            String dstIP = hardCodedURLResolver(flowInfo.getReducerIP());
+            String srcIP = (flowInfo.getMapperIP());
+            String dstIP = (flowInfo.getReducerIP());
+
 
             String srcLoc = getTaskLocationIDfromIP(srcIP);
             String dstLoc = getTaskLocationIDfromIP(dstIP);
@@ -110,6 +170,7 @@ public class YARNServer extends GaiaAbstractServer {
             String afgID = cfID + ":" + srcLoc + '-' + dstLoc;
             String fgID = cfID + ":" + mapID + ":" + redID + ":" + srcLoc + '-' + dstLoc;
 
+            // Filter same location
             if(srcLoc.equals(dstLoc)) continue;
 
             // check if we already have this fg.
@@ -120,6 +181,8 @@ public class YARNServer extends GaiaAbstractServer {
                 fg.srcIPs.add(srcIP);
                 fg.dstIPs.add(dstIP);
                 fg.addTotalVolume(flowInfo.getFlowSize());
+
+                logger.info("WARN: Add Flow {} to existing FG {}", flowInfo.getDataFilename(), afgID);
 
             } else {
 
@@ -133,13 +196,19 @@ public class YARNServer extends GaiaAbstractServer {
                 fg.dstIPs.add(dstIP);
                 aggFlowGroups.put(afgID, fg);
 
-                // when co-located
-                // FIXME, now ignoring all co-located
+                // Filter out all co-located flows
                 if (srcLoc.equals(dstLoc)) {
                     coLocatedFGs.put(fgID, fg);
                 }
-            }
 
+                // Filter index files
+                if(flowInfo.getDataFilename().endsWith("index")) {
+                    logger.info("Got an index file {}", flowInfo.getDataFilename());
+                    indexFileFGs.put(fgID, fg);
+                }
+
+
+            }
         }
 
         for (String key : coLocatedFGs.keySet()) {
@@ -233,7 +302,6 @@ public class YARNServer extends GaiaAbstractServer {
         if(url.equals("clnode053.clemson.cloudlab.us:8042")){
             return "10.0.1.3";
         }
-
 
         if(url.equals("clnode048.clemson.cloudlab.us:8042")){
             return "10.0.2.1";
