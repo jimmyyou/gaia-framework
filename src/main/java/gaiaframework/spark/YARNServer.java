@@ -40,7 +40,7 @@ public class YARNServer extends GaiaAbstractServer {
         HashMap<String, FlowGroup> flowGroups = new HashMap<>();
         HashMap<String, FlowGroup> indexFiles = new HashMap<>();
 
-        generateFlowGroups(cfID, req, coLocatedFGs, flowGroups, indexFiles);
+        generateFlowGroups_noAgg(cfID, req, coLocatedFGs, flowGroups, indexFiles);
         Coflow cf = new Coflow(cfID, flowGroups);
 
         if (coLocatedFGs.size() >= 0) {
@@ -131,6 +131,7 @@ public class YARNServer extends GaiaAbstractServer {
     }
 
     // generate aggFlowGroups from req using an IP to ID mapping
+    // this is the version with aggregation
     // Location encoding starts from 0
     // id - job_id:srcStage:dstStage:srcLoc-dstLoc // encoding task location info.
     // src - srcLoc
@@ -217,6 +218,98 @@ public class YARNServer extends GaiaAbstractServer {
 
         return aggFlowGroups;
     }
+
+
+    // generate aggFlowGroups from req using an IP to ID mapping
+    // this is the version without aggregation
+    // Location encoding starts from 0
+    // id - job_id:srcStage:dstStage:srcLoc-dstLoc // encoding task location info.
+    // src - srcLoc
+    // dst - dstLoc
+    // owningCoflowID - dstStage
+    // Volume - divided_data_size
+    private HashMap<String, FlowGroup> generateFlowGroups_noAgg(String cfID, ShuffleInfo req, HashMap<String, FlowGroup> coLocatedFGs,
+                                                          HashMap<String, FlowGroup> outputFlowGroups, HashMap<String, FlowGroup> indexFileFGs) {
+
+        // first store all flows into aggFlowGroups, then move the co-located ones to coLocatedFGs
+
+        // for each FlowInfo, first find the fgID etc.
+        for (ShuffleInfo.FlowInfo flowInfo : req.getFlowsList()) {
+
+            String mapID = flowInfo.getMapAttemptID();
+            String redID = flowInfo.getReduceAttemptID();
+
+//            String srcIP = hardCodedURLResolver(flowInfo.getMapperIP());
+//            String dstIP = hardCodedURLResolver(flowInfo.getReducerIP());
+            String srcIP = (flowInfo.getMapperIP());
+            String dstIP = (flowInfo.getReducerIP());
+
+
+            String srcLoc = getTaskLocationIDfromIP(srcIP);
+            String dstLoc = getTaskLocationIDfromIP(dstIP);
+
+//            String srcLoc = getTaskLocationIDfromIP(srcIP);
+//            String dstLoc = getTaskLocationIDfromIP(dstIP);
+
+/*            String srcLoc = getTaskLocationID(mapID, req);
+            String dstLoc = getTaskLocationID(redID, req);
+
+            String srcIP = getRawAddrfromTaskID(mapID, req).split(":")[0];
+            String dstIP = getRawAddrfromTaskID(redID, req).split(":")[0];*/
+
+
+            String afgID = cfID + ":" + srcLoc + '-' + dstLoc;
+            String fgID = cfID + ":" + mapID + ":" + redID + ":" + srcLoc + '-' + dstLoc;
+
+            // Filter same location
+            if(srcLoc.equals(dstLoc)) continue;
+
+            // check if we already have this fg.
+            if (false) {
+//                FlowGroup fg = aggFlowGroups.get(afgID);
+//
+//                fg.flowInfos.add(flowInfo);
+//                fg.srcIPs.add(srcIP);
+//                fg.dstIPs.add(dstIP);
+//                fg.addTotalVolume(flowInfo.getFlowSize());
+//
+//                logger.info("WARN: Add Flow {} to existing FG {}", flowInfo.getDataFilename(), afgID);
+
+            } else {
+
+                // Gaia now uses bytes as the volume
+                long flowVolume = flowInfo.getFlowSize();
+                if (flowVolume == 0) flowVolume = 1;
+                FlowGroup fg = new FlowGroup(afgID, srcLoc, dstLoc, cfID, flowVolume,
+                        flowInfo.getDataFilename(), mapID, redID);
+                fg.flowInfos.add(flowInfo);
+                fg.srcIPs.add(srcIP);
+                fg.dstIPs.add(dstIP);
+                outputFlowGroups.put(afgID, fg);
+
+                // Filter out all co-located flows
+                if (srcLoc.equals(dstLoc)) {
+                    coLocatedFGs.put(fgID, fg);
+                }
+
+                // Filter index files
+                if(flowInfo.getDataFilename().endsWith("index")) {
+                    logger.info("Got an index file {}", flowInfo.getDataFilename());
+                    indexFileFGs.put(fgID, fg);
+                }
+
+
+            }
+        }
+
+        // use this method to remove co-located
+        for (String key : coLocatedFGs.keySet()) {
+            outputFlowGroups.remove(key);
+        }
+
+        return outputFlowGroups;
+    }
+
 
     // TODO need to change this mechanism in the future // if same mapID and same dstLoc -> redundant
     private HashMap<String, FlowGroup> removeRedundantFlowGroups(HashMap<String, FlowGroup> inFlowGroups) {
