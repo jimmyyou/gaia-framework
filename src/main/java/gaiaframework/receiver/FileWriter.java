@@ -85,7 +85,7 @@ public class FileWriter implements Runnable {
             }
         } else {
             boolean created = CreateOrOpenFile_Spec(handlerId, dataChunk);
-            logger.info("dataChunk file created = {}, start={}, len={}", created, dataChunk.getStartIndex(), dataChunk.getTotalBlockLength());
+            logger.info("dataChunk file created = {}, start={}, blen={}, flen={}", created, dataChunk.getStartIndex(), dataChunk.getTotalBlockLength(), dataChunk.getTotalFileLength());
         }
 
     }
