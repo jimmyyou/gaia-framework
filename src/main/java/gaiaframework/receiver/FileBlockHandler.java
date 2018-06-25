@@ -169,6 +169,12 @@ public class FileBlockHandler {
     private void checkAndChangeFileSize(DataChunkMessage dataChunk) throws IOException {
         // current file length
         long reqLength = dataChunk.getStartIndex() + dataChunk.getData().length;
+
+        // guarantee that the output file size is the same
+        if (reqLength < dataChunk.getTotalBlockLength()) {
+            reqLength = dataChunk.getTotalBlockLength();
+        }
+
         if (currentLength < reqLength){
             currentLength = reqLength;
             dataFile.setLength(currentLength);

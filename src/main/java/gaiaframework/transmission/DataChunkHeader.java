@@ -9,12 +9,15 @@ public class DataChunkHeader implements Serializable{
     String blockID;
     long chunkStartIndex;
     long totalBlockLength;
+    long totalFileLength;
 
-    public DataChunkHeader(String filename, String destURL, String blockID, long chunkStartIndex, long totalBlockLength) {
+    public DataChunkHeader(String filename, String destURL, String blockID, long chunkStartIndex, long totalBlockLength, long totalFileLength) {
         this.filename = filename;
         this.destURL = destURL;
+        this.blockID = blockID;
         this.chunkStartIndex = chunkStartIndex;
         this.totalBlockLength = totalBlockLength;
+        this.totalFileLength = totalFileLength;
     }
 
     public String getFilename() {

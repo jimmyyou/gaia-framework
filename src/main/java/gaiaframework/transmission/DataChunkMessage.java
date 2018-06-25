@@ -12,8 +12,8 @@ public class DataChunkMessage implements Serializable {
 
     byte[] data;
 
-    public DataChunkMessage(String filename, String destIP, String blockID, long startIndex, long totalBlockLength, byte[] data) {
-        header = new DataChunkHeader(filename, destIP, blockID, startIndex, totalBlockLength);
+    public DataChunkMessage(String filename, String destIP, String blockID, long startIndex, long totalBlockLength, long totalFileLength, byte[] data) {
+        header = new DataChunkHeader(filename, destIP, blockID, startIndex, totalBlockLength, totalFileLength);
         this.data = data;
     }
 
@@ -25,11 +25,11 @@ public class DataChunkMessage implements Serializable {
 
     public String getBlockId() { return header.blockID; }
 
-    public long getStartIndex() {
-        return header.getChunkStartIndex();
-    }
+    public long getStartIndex() { return header.getChunkStartIndex(); }
 
     public long getTotalBlockLength() { return header.getTotalBlockLength(); }
+
+    public long getTotalFileLength() { return header.totalFileLength; }
 
     public byte[] getData() {
         return data;

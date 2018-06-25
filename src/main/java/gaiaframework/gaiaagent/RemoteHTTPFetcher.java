@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.DataInputStream;
 import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -92,6 +93,12 @@ public class RemoteHTTPFetcher implements Runnable {
         URL url = getURL();
 
         RateLimiter rateLimiter = RateLimiter.create(Constants.DEFAULT_TOKEN_RATE);
+
+
+        // FIXME read local filesize data
+        File localFile = new File(srcFilename);
+        long filelength = localFile.length();
+
 
         try {
             connection = (HttpURLConnection) url.openConnection();
@@ -188,7 +195,7 @@ public class RemoteHTTPFetcher implements Runnable {
                     }
 
                     // First chunk and other chunks are essientially the same (async)
-                    DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, blockId, (startOffset + total_bytes_sent), totalLength, chunkBuf);
+                    DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, blockId, (startOffset + total_bytes_sent), totalLength, filelength, chunkBuf);
                     agentSharedData.workerQueues.get(faID)[pathID].put(new CTRL_to_WorkerMsg(dm));
 
                     total_bytes_sent += thisChunkSize;
