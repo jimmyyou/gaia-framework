@@ -201,7 +201,7 @@ public class RemoteHTTPFetcher implements Runnable {
                     total_bytes_sent += thisChunkSize;
                     cur_bytes_sent += thisChunkSize;
 
-                    logger.info("Sent {} for {}", total_bytes_sent, dstFilename);
+                    logger.info("Sent {} for {}, fileLength {}", total_bytes_sent, dstFilename, filelength);
 
                 }
 
