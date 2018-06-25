@@ -5,7 +5,6 @@ package gaiaframework.receiver;
 
 // TODO use multiple threads to parallelly handle I/O
 
-import gaiaframework.gaiaagent.DataChunk;
 import gaiaframework.transmission.DataChunkMessage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,14 +16,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class FileWriter implements Runnable {
     private static final Logger logger = LogManager.getLogger();
 
-    LinkedBlockingQueue<DataChunkMessage> dataQueue;
+    LinkedBlockingQueue<DataChunkMessage> dataChunkQueue;
 
-    HashMap<String, FileInfo> activeFiles = new HashMap<String, FileInfo>();
+    HashMap<String, FileBlockHandler> activeFileBlocks = new HashMap<String, FileBlockHandler>();
 
     boolean isOutputEnabled = true;
 
-    public FileWriter(LinkedBlockingQueue<DataChunkMessage> dataQueue, boolean isOutputEnabled) {
-        this.dataQueue = dataQueue;
+    public FileWriter(LinkedBlockingQueue<DataChunkMessage> dataChunkQueue, boolean isOutputEnabled) {
+        this.dataChunkQueue = dataChunkQueue;
         this.isOutputEnabled = isOutputEnabled;
     }
 
@@ -35,7 +34,7 @@ public class FileWriter implements Runnable {
         DataChunkMessage dataChunk;
         while (true) {
             try {
-                dataChunk = dataQueue.take();
+                dataChunk = dataChunkQueue.take();
 
                 processData(dataChunk);
 
@@ -48,14 +47,16 @@ public class FileWriter implements Runnable {
     }
 
     /**
-     * process the dataChunk, if startOffset == -1, the start index is the total size of the file
+     * process the dataChunk,
+     * In this version we don't care about whether the chunk is the first chunk.
+     * Given a chunk, first check the size of the file buffer, then write to the file.
      *
      * @param dataChunk
      */
     private void processData(DataChunkMessage dataChunk) {
 
-//        logger.info("Processing data {} {} {}\n{} {}", dataChunk.getFilename(), dataChunk.getStartIndex(),
-//                dataChunk.getChunkLength(), (int) dataChunk.getData()[0], (int) dataChunk.getData()[1]);
+//        logger.info("Processing data {} {} {}\n{} {}", dataChunk.getFilename(), dataChunk.getChunkStartIndex(),
+//                dataChunk.getTotalBlockLength(), (int) dataChunk.getData()[0], (int) dataChunk.getData()[1]);
 
         // DEBUG purpose, No Op when debugging on single host
         if (!isOutputEnabled) {
@@ -65,66 +66,72 @@ public class FileWriter implements Runnable {
 //            return;
         }
 
-        // TODO change the logic of writing to file
+        String filename = dataChunk.getFilename();
+        String handlerId = filename + "-" + dataChunk.getBlockId();
 
-        if (activeFiles.containsKey(dataChunk.getFilename())) {
-            writeToFile(dataChunk);
-        } else {
-            boolean created = CreateFile_Spec(dataChunk);
-            logger.info("dataChunk file created = {}, start={}, len={}", created, dataChunk.getStartIndex(), dataChunk.getChunkLength());
-        }
+        if (activeFileBlocks.containsKey(handlerId)) {
+            FileBlockHandler fileBlockHandler = activeFileBlocks.get(handlerId);
 
-/*        if (dataChunk.getStartIndex() == -1) {
-            NaiveCreateFile(dataChunk);
-//            createFileandIndex(dataChunk);
+            if (fileBlockHandler != null) {
+                boolean isFinished = fileBlockHandler.writeDataAndCheck(dataChunk);
+
+                if (isFinished) {
+                    logger.info("File-block {} finished", handlerId);
+                    activeFileBlocks.remove(handlerId);
+                }
+
+            } else {
+                logger.error("Received dataChunk for file {}, but FileBlockHandler == null", dataChunk.getFilename());
+            }
         } else {
-            writeToFile(dataChunk);
-        }*/
-/*        else if (dataChunk.getChunkLength() == 0){
-            closeFile(dataChunk);
+            boolean created = CreateOrOpenFile_Spec(handlerId, dataChunk);
+            logger.info("dataChunk file created = {}, start={}, len={}", created, dataChunk.getStartIndex(), dataChunk.getTotalBlockLength());
         }
-        else {
-            writeToFile(dataChunk);
-        }*/
 
     }
 
-    private boolean CreateFile_Spec(DataChunkMessage dataChunk) {
+
+// Try to create/open the file and write data and put handler into HashMap
+    private boolean CreateOrOpenFile_Spec(String handlerId, DataChunkMessage dataChunk) {
         String filename = dataChunk.getFilename();
         File datafile = new File(filename);
 
         if (datafile.exists()) {
-            logger.error("File {} exists", filename);
+            logger.warn("File {} exists", filename);
+
+            // TODO Then try opening the file
+            FileBlockHandler fileBlockHandler = new FileBlockHandler(dataChunk);
+
+            boolean finished = fileBlockHandler.writeDataAndCheck(dataChunk);
+
+            if (!finished) {
+                activeFileBlocks.put(handlerId, fileBlockHandler);
+            }
+
             return false;
         }
 
-        // continue to create the File, and put into the map
+        // create the File, and put into the map
         logger.info("Creating file and dir for {}", filename);
-
         File dir = datafile.getParentFile();
-
         if (!dir.exists()) {
-
             logger.info("Creating dir {}, success = {}", dir, dir.mkdirs());
-
         } else {
             logger.info("Dir {} exists", dir);
         }
 
-        FileInfo fileInfo = new FileInfo(dataChunk);
+        FileBlockHandler fileBlockHandler = new FileBlockHandler(dataChunk);
 
-        boolean done = fileInfo.writeDataAndCheck(dataChunk);
+        boolean finished = fileBlockHandler.writeDataAndCheck(dataChunk);
 
-        if (!done) {
-            activeFiles.put(filename, fileInfo);
-//            return true;
+        if (!finished) {
+            activeFileBlocks.put(handlerId, fileBlockHandler);
         }
 
         return true;
-
     }
 
-    private void NaiveCreateFile(DataChunkMessage dataChunk) {
+/*    private void NaiveCreateFile(DataChunkMessage dataChunk) {
         String filename = dataChunk.getFilename();
         File datafile = new File(filename);
 
@@ -136,14 +143,14 @@ public class FileWriter implements Runnable {
         // continue to create the File, and put into the map
         logger.info("Creating file and index for {}", filename);
 
-        FileInfo fileInfo = new FileInfo(filename, dataChunk.getChunkLength());
+        FileBlockHandler fileBlockHandler = new FileBlockHandler(filename, dataChunk.getTotalBlockLength());
 
-        activeFiles.put(filename, fileInfo);
+        activeFileBlocks.put(filename, fileBlockHandler);
 
-    }
+    }*/
 
     // upon receiving the first chunk, create and write to index file, also create data file.
-    private void createFileandIndex(DataChunkMessage dataChunk) {
+/*    private void createFileandIndex(DataChunkMessage dataChunk) {
         // first check if file exists
         String filename = dataChunk.getFilename();
         File datafile = new File(filename);
@@ -164,9 +171,9 @@ public class FileWriter implements Runnable {
 
 
         // TODO WRONG ChunkLength
-        FileInfo fileInfo = new FileInfo(filename, dataChunk.getChunkLength());
+        FileBlockHandler fileBlockHandler = new FileBlockHandler(filename, dataChunk.getTotalBlockLength());
 
-        activeFiles.put(filename, fileInfo);
+        activeFileBlocks.put(filename, fileBlockHandler);
 
         // create and write to the index file
 
@@ -183,25 +190,6 @@ public class FileWriter implements Runnable {
             e.printStackTrace();
         }
 
-    }
-
-    private void writeToFile(DataChunkMessage dataChunk) {
-        String filename = dataChunk.getFilename();
-        FileInfo fileInfo = activeFiles.get(filename);
-
-        if (fileInfo != null) {
-            boolean isFinished = fileInfo.writeDataAndCheck(dataChunk);
-
-            if (isFinished) {
-                logger.info("File {} finished", filename);
-
-                activeFiles.remove(filename);
-            }
-
-        } else {
-            logger.error("Received dataChunk for inactive file {}", dataChunk.getFilename());
-        }
-
-    }
+    }*/
 
 }

@@ -42,8 +42,8 @@ public class ForwardingServer implements Runnable {
 
                 DataChunkMessage dataChunk = (DataChunkMessage) ois.readObject();
 
-//                logger.info("Processing data {} {} {}\n{} {}", dataChunk.getFilename(), dataChunk.getStartIndex(),
-//                        dataChunk.getChunkLength(), (int) dataChunk.getData()[0], (int) dataChunk.getData()[1]);
+//                logger.info("Processing data {} {} {}\n{} {}", dataChunk.getFilename(), dataChunk.getChunkStartIndex(),
+//                        dataChunk.getTotalBlockLength(), (int) dataChunk.getData()[0], (int) dataChunk.getData()[1]);
 
                 if (dataChunk != null) {
 

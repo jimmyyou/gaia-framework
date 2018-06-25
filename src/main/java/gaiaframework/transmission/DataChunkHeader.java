@@ -6,14 +6,15 @@ import java.io.Serializable;
 public class DataChunkHeader implements Serializable{
     String filename;
     String destURL;
-    long startIndex;
-    long chunkLength;
+    String blockID;
+    long chunkStartIndex;
+    long totalBlockLength;
 
-    public DataChunkHeader(String filename, String destURL, long startIndex, long chunkLength) {
+    public DataChunkHeader(String filename, String destURL, String blockID, long chunkStartIndex, long totalBlockLength) {
         this.filename = filename;
         this.destURL = destURL;
-        this.startIndex = startIndex;
-        this.chunkLength = chunkLength;
+        this.chunkStartIndex = chunkStartIndex;
+        this.totalBlockLength = totalBlockLength;
     }
 
     public String getFilename() {
@@ -32,20 +33,20 @@ public class DataChunkHeader implements Serializable{
         this.destURL = destURL;
     }
 
-    public long getStartIndex() {
-        return startIndex;
+    public long getChunkStartIndex() {
+        return chunkStartIndex;
     }
 
-    public void setStartIndex(long startIndex) {
-        this.startIndex = startIndex;
+    public void setChunkStartIndex(long chunkStartIndex) {
+        this.chunkStartIndex = chunkStartIndex;
     }
 
-    public long getChunkLength() {
-        return chunkLength;
+    public long getTotalBlockLength() {
+        return totalBlockLength;
     }
 
-    public void setChunkLength(long chunkLength) {
-        this.chunkLength = chunkLength;
+    public void setTotalBlockLength(long totalBlockLength) {
+        this.totalBlockLength = totalBlockLength;
     }
 
     @Override
@@ -53,8 +54,8 @@ public class DataChunkHeader implements Serializable{
         return "DataChunkHeader{" +
                 "filename='" + filename + '\'' +
                 ", destURL='" + destURL + '\'' +
-                ", startIndex=" + startIndex +
-                ", chunkLength=" + chunkLength +
+                ", chunkStartIndex=" + chunkStartIndex +
+                ", totalBlockLength=" + totalBlockLength +
                 '}';
     }
 }

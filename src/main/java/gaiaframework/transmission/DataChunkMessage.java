@@ -3,7 +3,6 @@ package gaiaframework.transmission;
 // The new DataChunk to replace the old one
 
 import java.io.Serializable;
-import java.util.Arrays;
 
 public class DataChunkMessage implements Serializable {
 
@@ -13,8 +12,8 @@ public class DataChunkMessage implements Serializable {
 
     byte[] data;
 
-    public DataChunkMessage(String filename, String destIP, long startIndex, long chunkLength, byte[] data) {
-        header = new DataChunkHeader(filename, destIP, startIndex, chunkLength);
+    public DataChunkMessage(String filename, String destIP, String blockID, long startIndex, long totalBlockLength, byte[] data) {
+        header = new DataChunkHeader(filename, destIP, blockID, startIndex, totalBlockLength);
         this.data = data;
     }
 
@@ -24,11 +23,13 @@ public class DataChunkMessage implements Serializable {
         return header.getFilename();
     }
 
+    public String getBlockId() { return header.blockID; }
+
     public long getStartIndex() {
-        return header.getStartIndex();
+        return header.getChunkStartIndex();
     }
 
-    public long getChunkLength() { return header.getChunkLength(); }
+    public long getTotalBlockLength() { return header.getTotalBlockLength(); }
 
     public byte[] getData() {
         return data;
