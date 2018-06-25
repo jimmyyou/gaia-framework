@@ -182,7 +182,7 @@ public class WorkerThread_New implements Runnable {
                 DataChunk dataChunk = se.getValue().fgi.getDataQueue().remove();
                 oos.writeObject(dataChunk);
 
-//                data.getStartIndex() + data.getChunkLength() >= se.getValue().fgi.
+//                data.getChunkStartIndex() + data.getTotalBlockLength() >= se.getValue().fgi.
 
             } catch (IOException e) {
                 e.printStackTrace();

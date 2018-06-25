@@ -20,9 +20,15 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
+/**
+ * This is the fetcher thread that request file blocks from an HTTP server.
+ * A Fetcher only works on one block (for one reducer) of file (specified by @startOffset and @totalLength)
+ *
+ */
 public class RemoteHTTPFetcher implements Runnable {
     private static final Logger logger = LogManager.getLogger();
 
+    private final String blockId;
     String srcFilename;
     String dstFilename;
     // FIXME use real IP addr!!!
@@ -54,7 +60,8 @@ public class RemoteHTTPFetcher implements Runnable {
         this.totalLength = flowInfo.getFlowSize();
 
         this.srcFilename = flowInfo.getDataFilename();
-        this.dstFilename = getDstFilename(srcFilename, flowInfo.getReduceAttemptID());
+        this.dstFilename = srcFilename; // use real name now!
+        this.blockId = flowInfo.getReduceAttemptID();
 //        this.dataQueue = dataQueue;
 
         this.srcIP = srcHostIP;
@@ -66,7 +73,12 @@ public class RemoteHTTPFetcher implements Runnable {
 
     }
 
-    // TODO verify
+    /**
+     * converts srcFilename into dstFilename
+     * @param srcFilename
+     * @param reduceAttemptID
+     * @return dstFilename
+     */
     private String getDstFilename(String srcFilename, String reduceAttemptID) {
         String ret = srcFilename.substring(0, srcFilename.length() - 4) + "_" + reduceAttemptID + ".out";
         return ret;
@@ -175,17 +187,9 @@ public class RemoteHTTPFetcher implements Runnable {
                         chunkBuf[j] = buf[j + cur_bytes_sent];
                     }
 
-                    if (total_bytes_sent == 0) { // first chunk
-
-                        DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, -1, totalLength, chunkBuf);
-                        agentSharedData.workerQueues.get(faID)[pathID].put(new CTRL_to_WorkerMsg(dm));
-
-                    } else {
-
-                        DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, total_bytes_sent, thisChunkSize, chunkBuf);
-                        agentSharedData.workerQueues.get(faID)[pathID].put(new CTRL_to_WorkerMsg(dm));
-
-                    }
+                    // First chunk and other chunks are essientially the same (async)
+                    DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, blockId, (startOffset + total_bytes_sent), totalLength, chunkBuf);
+                    agentSharedData.workerQueues.get(faID)[pathID].put(new CTRL_to_WorkerMsg(dm));
 
                     total_bytes_sent += thisChunkSize;
                     cur_bytes_sent += thisChunkSize;
