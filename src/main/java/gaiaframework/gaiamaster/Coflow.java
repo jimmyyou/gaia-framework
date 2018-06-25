@@ -107,4 +107,18 @@ public class Coflow {
     public long getEndTime() { return endTime; }
 
     public void setEndTime(long endTime) { this.endTime = endTime; }
+
+    public String toPrintableString(){
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(" Coflow: ").append(this.id);
+        for(FlowGroup fg : this.flowGroups.values()){
+
+            sb.append("\nFGID: ").append(fg.getId()).append(' ');
+            sb.append("\nVolume: ").append(fg.getTotalVolume()).append(' ');
+            sb.append("\nFile: ").append(fg.getFilename()).append('\n');
+        }
+
+        return sb.toString();
+    }
 }

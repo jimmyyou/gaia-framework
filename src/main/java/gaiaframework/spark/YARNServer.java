@@ -43,6 +43,8 @@ public class YARNServer extends GaiaAbstractServer {
         generateFlowGroups_noAgg(cfID, req, coLocatedFGs, flowGroups, indexFiles);
         Coflow cf = new Coflow(cfID, flowGroups);
 
+        logger.info("YARN Server submitting CF: {}", cf.toPrintableString());
+
         if (coLocatedFGs.size() >= 0) {
             logger.error("{} co-located FG received by Gaia", coLocatedFGs.size());
         }
