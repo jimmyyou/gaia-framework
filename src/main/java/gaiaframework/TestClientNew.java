@@ -30,8 +30,11 @@ public class TestClientNew {
 //            TaskInfo taskInfor = new TaskInfo("taskIDr", "attemptIDr");
             reducersIP.put("R1", args[1]);
 
+            long startOffset = Long.parseLong(args[3]);
+            shuffleSize = Long.parseLong(args[4]);
+
             FlowInfo flowInfo = new FlowInfo("M1", "R1", args[2],
-                    0, shuffleSize, args[0], args[1]);
+                    startOffset, shuffleSize, args[0], args[1]);
 
             Map<String, FlowInfo> fmap = new HashMap<String, FlowInfo>();
             fmap.put("user:job:map:reduce", flowInfo);
