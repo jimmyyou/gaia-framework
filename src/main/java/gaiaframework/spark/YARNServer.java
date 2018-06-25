@@ -274,17 +274,20 @@ public class YARNServer extends GaiaAbstractServer {
             fg.flowInfos.add(flowInfo);
             fg.srcIPs.add(srcIP);
             fg.dstIPs.add(dstIP);
-            outputFlowGroups.put(fgID, fg);
 
             // Filter out all co-located flows
             if (srcLoc.equals(dstLoc)) {
                 coLocatedFGs.put(fgID, fg);
+                continue;
             }
 
             // Filter index files
             if(flowInfo.getDataFilename().endsWith("index")) {
                 logger.info("Got an index file {}", flowInfo.getDataFilename());
                 indexFileFGs.put(fgID, fg);
+            }
+            else {
+                outputFlowGroups.put(fgID, fg);
             }
 
             
