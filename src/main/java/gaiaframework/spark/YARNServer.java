@@ -38,22 +38,22 @@ public class YARNServer extends GaiaAbstractServer {
         // Gaia only sees Data Centers
         // How to deal with co-located flows?
 
-        HashMap<String, FlowGroup> coLocatedFGs = new HashMap<>();
+        HashMap<String, FlowGroup> coSiteFGs = new HashMap<>();
         HashMap<String, FlowGroup> flowGroups = new HashMap<>();
         HashMap<String, FlowGroup> indexFiles = new HashMap<>();
 
-        generateFlowGroups_noAgg(cfID, req, coLocatedFGs, flowGroups, indexFiles);
+        generateFlowGroups_noAgg(cfID, req, coSiteFGs, flowGroups, indexFiles);
         Coflow cf = new Coflow(cfID, flowGroups);
 
         logger.info("YARN Server submitting CF: {}", cf.toPrintableString());
 
-        if (coLocatedFGs.size() >= 0) {
-            logger.error("{} co-located FG received by Gaia", coLocatedFGs.size());
+        if (coSiteFGs.size() >= 0) {
+            logger.error("{} co-located FG received by Gaia", coSiteFGs.size());
         }
 
         try {
 
-            if(cf.getFlowGroups().size() == 0) {
+            if (cf.getFlowGroups().size() == 0) {
                 logger.info("CF {} is empty, skipping", cf.getId());
                 return;
             }
@@ -61,7 +61,8 @@ public class YARNServer extends GaiaAbstractServer {
             cfQueue.put(cf);
 
             // Try using SCP to transfer index files for now.
-            handleIndexFiles(indexFiles);
+            SCPTransferFiles(indexFiles);
+            SCPTransferFiles(coSiteFGs);
 
             logger.info("Coflow submitted, Trapping into waiting for coflow to finish");
             cf.blockTillFinish();
@@ -81,11 +82,11 @@ public class YARNServer extends GaiaAbstractServer {
 
     }
 
-    private void handleIndexFiles(HashMap<String, FlowGroup> indexFiles) {
+    private void SCPTransferFiles(HashMap<String, FlowGroup> fgsToSCP) {
 
         // Create a list of cmds;
         List<String> cmds = new ArrayList<>();
-        for(FlowGroup fg : indexFiles.values()) {
+        for (FlowGroup fg : fgsToSCP.values()) {
 
             String filepath = fg.getFilename();
 
@@ -105,7 +106,7 @@ public class YARNServer extends GaiaAbstractServer {
 
         List<Process> pool = new ArrayList<>();
 
-        for(String cmd : cmds){
+        for (String cmd : cmds) {
             Process p = null;
             try {
 
@@ -128,14 +129,15 @@ public class YARNServer extends GaiaAbstractServer {
         }
 
         // Wait for all cmd to finish
-
-        for(Process p : pool){
+        logger.info("Waiting for SCP file transfer");
+        for (Process p : pool) {
             try {
                 p.waitFor();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
+        logger.info("SCP file transfer finished");
     }
 
     // generate aggFlowGroups from req using an IP to ID mapping
@@ -180,7 +182,7 @@ public class YARNServer extends GaiaAbstractServer {
             String fgID = cfID + ":" + mapID + ":" + redID + ":" + srcLoc + '-' + dstLoc;
 
             // Filter same location
-            if(srcLoc.equals(dstLoc)) continue;
+            if (srcLoc.equals(dstLoc)) continue;
 
             // check if we already have this fg.
             if (aggFlowGroups.containsKey(afgID)) {
@@ -211,7 +213,7 @@ public class YARNServer extends GaiaAbstractServer {
                 }
 
                 // Filter index files
-                if(flowInfo.getDataFilename().endsWith("index")) {
+                if (flowInfo.getDataFilename().endsWith("index")) {
                     logger.info("Got an index file {}", flowInfo.getDataFilename());
                     indexFileFGs.put(fgID, fg);
                 }
@@ -236,8 +238,8 @@ public class YARNServer extends GaiaAbstractServer {
     // dst - dstLoc
     // owningCoflowID - dstStage
     // Volume - divided_data_size
-    private HashMap<String, FlowGroup> generateFlowGroups_noAgg(String cfID, ShuffleInfo req, HashMap<String, FlowGroup> coLocatedFGs,
-                                                          HashMap<String, FlowGroup> outputFlowGroups, HashMap<String, FlowGroup> indexFileFGs) {
+    private HashMap<String, FlowGroup> generateFlowGroups_noAgg(String cfID, ShuffleInfo req, HashMap<String, FlowGroup> coSiteFGs,
+                                                                HashMap<String, FlowGroup> outputFlowGroups, HashMap<String, FlowGroup> indexFileFGs) {
 
         // first store all flows into aggFlowGroups, then move the co-located ones to coLocatedFGs
 
@@ -269,8 +271,8 @@ public class YARNServer extends GaiaAbstractServer {
 //            String afgID = cfID + ":" + srcLoc + '-' + dstLoc;
             String fgID = cfID + ":" + mapID + ":" + redID + ":" + srcLoc + '-' + dstLoc;
 
-            // Filter same location
-            if(srcLoc.equals(dstLoc)) continue;
+            // Filter same host
+            if (srcIP.equals(dstIP)) continue;
 
             // Gaia now uses bytes as the volume
             long flowVolume = flowInfo.getFlowSize();
@@ -281,26 +283,24 @@ public class YARNServer extends GaiaAbstractServer {
             fg.srcIPs.add(srcIP);
             fg.dstIPs.add(dstIP);
 
-            // Filter out all co-located flows
+            // Filter coSited flows
             if (srcLoc.equals(dstLoc)) {
-                coLocatedFGs.put(fgID, fg);
+                coSiteFGs.put(fgID, fg);
                 continue;
             }
 
             // Filter index files
-            if(flowInfo.getDataFilename().endsWith("index")) {
+            if (flowInfo.getDataFilename().endsWith("index")) {
                 logger.info("Got an index file {}", flowInfo.getDataFilename());
                 indexFileFGs.put(fgID, fg);
-            }
-            else {
+            } else {
                 outputFlowGroups.put(fgID, fg);
             }
 
-            
         }
 
         // use this method to remove co-located
-        for (String key : coLocatedFGs.keySet()) {
+        for (String key : coSiteFGs.keySet()) {
             outputFlowGroups.remove(key);
         }
 
@@ -383,34 +383,34 @@ public class YARNServer extends GaiaAbstractServer {
 
     private String hardCodedURLResolver(String url) {
         // New version on "new3" experiment
-        if(url.equals("clnode075.clemson.cloudlab.us:8042")){
+        if (url.equals("clnode075.clemson.cloudlab.us:8042")) {
             return "10.0.1.1";
         }
-        if(url.equals("clnode049.clemson.cloudlab.us:8042")){
+        if (url.equals("clnode049.clemson.cloudlab.us:8042")) {
             return "10.0.1.2";
         }
-        if(url.equals("clnode053.clemson.cloudlab.us:8042")){
+        if (url.equals("clnode053.clemson.cloudlab.us:8042")) {
             return "10.0.1.3";
         }
 
-        if(url.equals("clnode048.clemson.cloudlab.us:8042")){
+        if (url.equals("clnode048.clemson.cloudlab.us:8042")) {
             return "10.0.2.1";
         }
-        if(url.equals("clnode052.clemson.cloudlab.us:8042")){
+        if (url.equals("clnode052.clemson.cloudlab.us:8042")) {
             return "10.0.2.2";
         }
-        if(url.equals("clnode096.clemson.cloudlab.us:8042")){
+        if (url.equals("clnode096.clemson.cloudlab.us:8042")) {
             return "10.0.2.3";
         }
 
 
-        if(url.equals("clnode058.clemson.cloudlab.us:8042")){
+        if (url.equals("clnode058.clemson.cloudlab.us:8042")) {
             return "10.0.3.1";
         }
-        if(url.equals("clnode067.clemson.cloudlab.us:8042")){
+        if (url.equals("clnode067.clemson.cloudlab.us:8042")) {
             return "10.0.3.2";
         }
-        if(url.equals("clnode055.clemson.cloudlab.us:8042")){
+        if (url.equals("clnode055.clemson.cloudlab.us:8042")) {
             return "10.0.3.3";
         }
 
