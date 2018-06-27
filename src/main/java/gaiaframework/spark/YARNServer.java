@@ -9,7 +9,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -80,26 +82,35 @@ public class YARNServer extends GaiaAbstractServer {
     }
 
     private void handleIndexFiles(HashMap<String, FlowGroup> indexFiles) {
-        for(FlowGroup fg : indexFiles.values()){
+
+        // Create a list of cmds;
+        List<String> cmds = new ArrayList<>();
+        for(FlowGroup fg : indexFiles.values()) {
 
             String filepath = fg.getFilename();
 
-            if(fg.dstIPs.size() > 1){
+            if (fg.dstIPs.size() > 1) {
                 logger.error("indexFiles FG have multiple dstIP!");
             }
 
-            String trimmedDirPath = filepath.substring( 0 , filepath.lastIndexOf("/"));
-            String cmd_mkdir = "ssh jimmyyou@" + fg.dstIPs.get(0) + " mkdir -p " + trimmedDirPath ;
+            String trimmedDirPath = filepath.substring(0, filepath.lastIndexOf("/"));
+            String cmd_mkdir = "ssh jimmyyou@" + fg.dstIPs.get(0) + " mkdir -p " + trimmedDirPath;
             String cmd = "scp -r " + fg.srcIPs.get(0) + ":" + filepath + " " + fg.dstIPs.get(0) + ":" + filepath;
 
-            System.out.println("Invoking " + cmd_mkdir);
-            System.out.println("Invoking " + cmd);
+            cmds.add(cmd_mkdir + ";" + cmd);
 
+            logger.info("Invoking {}", cmd_mkdir);
+            logger.info("Invoking {}", cmd);
+        }
+
+        List<Process> pool = new ArrayList<>();
+
+        for(String cmd : cmds){
             Process p = null;
             try {
 
-                p = Runtime.getRuntime().exec(cmd_mkdir);
-                p.waitFor();
+                p = Runtime.getRuntime().exec(cmd);
+                pool.add(p);
 
 /*                String line;
                 BufferedReader bri = new BufferedReader(new InputStreamReader(p.getInputStream()));
@@ -111,21 +122,16 @@ public class YARNServer extends GaiaAbstractServer {
                 while ((line = bri.readLine()) != null) {
                     System.out.println(line);
                 }*/
-
-                p = Runtime.getRuntime().exec(cmd);
-                p.waitFor();
-
-/*                bri = new BufferedReader(new InputStreamReader(p.getInputStream()));
-                while ((line = bri.readLine()) != null) {
-                    System.out.println(line);
-                }
-
-                bri = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-                while ((line = bri.readLine()) != null) {
-                    System.out.println(line);
-                }*/
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+
+        // Wait for all cmd to finish
+
+        for(Process p : pool){
+            try {
+                p.waitFor();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
