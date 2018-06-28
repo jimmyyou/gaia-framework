@@ -4,11 +4,13 @@ import gaiaframework.gaiamaster.Coflow;
 import gaiaframework.gaiaprotos.GaiaMessageProtos;
 import gaiaframework.mmcf.MMCFOptimizer;
 import gaiaframework.network.*;
+import gaiaframework.receiver.FileWriter;
 import gaiaframework.util.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.graphstream.graph.Edge;
 
+import java.io.BufferedWriter;
 import java.util.*;
 
 // coflow scheduler 0.2.0
@@ -330,6 +332,7 @@ public class CoflowScheduler extends Scheduler {
         return remaining_bw;
     }
 
+    @Deprecated
     public HashMap<String, FlowGroup_Old> schedule_flows(HashMap<String, Coflow_Old> coflows,
                                                          long timestamp) throws Exception {
         flows_.clear();
@@ -459,6 +462,10 @@ public class CoflowScheduler extends Scheduler {
 
         nonDDLCFList.clear();
 
+        // API required by fanlai. Write current CCT to file
+        BufferedWriter bwrt = new BufferedWriter(new java.io.FileWriter("/tmp/terra_coflows.txt"));
+        bwrt.write(String.valueOf(System.currentTimeMillis()) + "\n");
+
         // TODO check if admitted CF can meet ddl?
         // Part 0: first deal with CFs with deadline
         for ( CoflowSchedulerEntry e : cfList){
@@ -547,6 +554,7 @@ public class CoflowScheduler extends Scheduler {
 
             // schedule this CF
             logger.info("CoflowScheduler: Coflow {} expected to complete in {} seconds" , c.getId() , e.cct);
+            bwrt.write(c.getId() + " " + e.cct + "\n");
 
             MMCFOptimizer.MMCFOutput mmcf_out = MMCFOptimizer.glpk_optimize(c, net_graph_, links_); // This is the recursive part.
 
