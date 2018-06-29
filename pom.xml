@@ -61,7 +61,7 @@
                         <configuration>
                             <archive>
                                 <manifest>
-                                    <mainClass>src.main.java.gaiaframework.MasterApp</mainClass>
+                                    <mainClass>src.main.java.gaiaframework.TerraMaster</mainClass>
                                 </manifest>
                             </archive>
                             <descriptorRefs>

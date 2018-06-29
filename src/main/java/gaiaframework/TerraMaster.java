@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 
-public class MasterApp {
+public class TerraMaster {
 
     public static boolean is_emulation_ = false;
     private static boolean isRunningOnList = false;

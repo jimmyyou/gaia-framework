@@ -32,5 +32,25 @@ java -cp target/gaia_all-jar-with-dependencies.jar gaiaframework.HTTPServer.Http
 To start *Master*:
 
 ```
-java -cp java -cp target/gaia_all-jar-with-dependencies.jar gaiaframework.MasterApp -g <gml> -c <conf> -e -s gaia
+java -cp java -cp target/gaia_all-jar-with-dependencies.jar gaiaframework.TerraMaster -g <gml> -c <conf> -e -s gaia
 ```
+
+## How to config Terra
+Using *.conf file we can config the IP:port for Terra Masters and Agents
+
+
+Format:
+
+```
+<Master IP> <Master Port>
+<Number of DCs>
+{ // for each DC
+    <DC_ID> <Number of Hosts>
+    { // for each host
+        <Sending Agent> <port>
+        <Forwarding Agent> <port>
+        <Receiving Agent> <port>
+    }
+}
+```
+ 
