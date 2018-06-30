@@ -101,8 +101,8 @@ public class YARNServer extends GaiaAbstractServer {
 
             cmds.add(cmd_mkdir + ";" + cmd);
 
-            logger.info("Invoking {}", cmd_mkdir);
-            logger.info("Invoking {}", cmd);
+//            logger.info("Invoking {}", cmd_mkdir);
+//            logger.info("Invoking {}", cmd);
         }
 
         List<Process> pool = new ArrayList<>();
@@ -113,6 +113,7 @@ public class YARNServer extends GaiaAbstractServer {
 
                 p = Runtime.getRuntime().exec(cmd);
                 pool.add(p);
+                logger.info("Exec: {}", cmd);
 
 /*                String line;
                 BufferedReader bri = new BufferedReader(new InputStreamReader(p.getInputStream()));
