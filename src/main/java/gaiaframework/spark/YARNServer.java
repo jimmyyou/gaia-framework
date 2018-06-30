@@ -274,11 +274,19 @@ public class YARNServer extends GaiaAbstractServer {
             String fgID = cfID + ":" + mapID + ":" + redID + ":" + srcLoc + '-' + dstLoc;
 
             // Filter same host
-            if (srcIP.equals(dstIP)) continue;
+            if (srcIP.equals(dstIP)) {
+                logger.warn("Ignoring Co-located {} {}", fgID, flowInfo.getDataFilename());
+                continue;
+            }
 
             // Gaia now uses bytes as the volume
             long flowVolume = flowInfo.getFlowSize();
-            if (flowVolume == 0) flowVolume = 1;
+            if (flowVolume == 0) {
+                flowVolume = 1;
+                // FIXME Terra now ignores flowVol = 0 flows
+                logger.warn("Ignoring size=0 flow {} {} ", fgID, flowInfo.getDataFilename());
+                continue;
+            }
             FlowGroup fg = new FlowGroup(fgID, srcLoc, dstLoc, cfID, flowVolume,
                     flowInfo.getDataFilename(), mapID, redID);
             fg.flowInfos.add(flowInfo);
