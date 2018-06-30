@@ -59,12 +59,13 @@ public class YARNServer extends GaiaAbstractServer {
             }
 
             cfQueue.put(cf);
+            logger.info("Coflow submitted, Trapping into waiting for coflow to finish");
 
             // Try using SCP to transfer index files for now.
+            // FIXME SCP will NEVER scale!!!
             SCPTransferFiles(indexFiles);
             SCPTransferFiles(coSiteFGs);
 
-            logger.info("Coflow submitted, Trapping into waiting for coflow to finish");
             cf.blockTillFinish();
 //            ShuffleTask st = new ShuffleTask(cf);
 //            st.run(); // wait for it to finish
@@ -96,7 +97,7 @@ public class YARNServer extends GaiaAbstractServer {
 
             String trimmedDirPath = filepath.substring(0, filepath.lastIndexOf("/"));
             String cmd_mkdir = "ssh jimmyyou@" + fg.dstIPs.get(0) + " mkdir -p " + trimmedDirPath;
-            String cmd = "scp -r " + fg.srcIPs.get(0) + ":" + filepath + " " + fg.dstIPs.get(0) + ":" + filepath;
+            String cmd = "scp " + fg.srcIPs.get(0) + ":" + filepath + " " + fg.dstIPs.get(0) + ":" + filepath;
 
             cmds.add(cmd_mkdir + ";" + cmd);
 
