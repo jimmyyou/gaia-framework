@@ -55,7 +55,7 @@ public class YARNServer extends GaiaAbstractServer {
 
             // Try using SCP to transfer index files for now.
             // FIXME SCP will NEVER scale!!!
-            SCPTransferFiles(indexFiles);
+            SCPTransferFiles_Serial(indexFiles);
 //            SCPTransferFiles(coSiteFGs);
 
             if (cf.getFlowGroups().size() == 0) {
@@ -65,13 +65,15 @@ public class YARNServer extends GaiaAbstractServer {
 
             cfQueue.put(cf);
             logger.info("Coflow submitted, Trapping into waiting for coflow to finish");
-            
+
 
             cf.blockTillFinish();
 //            ShuffleTask st = new ShuffleTask(cf);
 //            st.run(); // wait for it to finish
         } catch (InterruptedException e) {
             logger.error("ERROR occurred while submitting coflow");
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -141,6 +143,61 @@ public class YARNServer extends GaiaAbstractServer {
             }
         }
         logger.info("SCP file transfer finished");
+    }
+
+    private void SCPTransferFiles_Serial(HashMap<String, FlowGroup> fgsToSCP) throws IOException, InterruptedException {
+
+        // Create a list of cmds;
+        List<String> cmds = new ArrayList<>();
+        for (FlowGroup fg : fgsToSCP.values()) {
+
+            String filepath = fg.getFilename();
+
+            if (fg.dstIPs.size() > 1) {
+                logger.error("indexFiles FG have multiple dstIP!");
+            }
+
+            String trimmedDirPath = filepath.substring(0, filepath.lastIndexOf("/"));
+            String cmd_mkdir = "ssh jimmyyou@" + fg.dstIPs.get(0) + " mkdir -p " + trimmedDirPath;
+            String cmd = "scp " + fg.srcIPs.get(0) + ":" + filepath + " " + fg.dstIPs.get(0) + ":" + filepath;
+
+            cmds.add(cmd_mkdir + " ; " + cmd);
+
+//            logger.info("Invoking {}", cmd_mkdir);
+            logger.info("Invoking {}", cmd);
+
+            Process p = Runtime.getRuntime().exec(cmd);
+            p.waitFor();
+
+        }
+
+        logger.info("SCP file transfer finished");
+
+        /*for (String cmd : cmds) {
+            Process p = null;
+            try {
+
+                p = Runtime.getRuntime().exec(cmd);
+                pool.add(p);
+                logger.info("Exec: {}", cmd);
+
+*//*                String line;
+                BufferedReader bri = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                while ((line = bri.readLine()) != null) {
+                    System.out.println(line);
+                }
+
+                bri = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+                while ((line = bri.readLine()) != null) {
+                    System.out.println(line);
+                }*//*
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+*/
+
+
     }
 
     /*// generate aggFlowGroups from req using an IP to ID mapping
