@@ -2,6 +2,7 @@ package gaiaframework;
 
 // Gaia client resides in YARN's Application Master
 // Application master submits shuffle info to Gaia controller, by invoking the submitShuffleInfo
+// TestClientNew <srcIP> <dstIP> <file> <start> <length>
 
 import edu.umich.gaialib.FlowInfo;
 import edu.umich.gaialib.GaiaClient;

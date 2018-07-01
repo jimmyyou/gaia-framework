@@ -64,7 +64,7 @@ public class YARNServer extends GaiaAbstractServer {
             // Try using SCP to transfer index files for now.
             // FIXME SCP will NEVER scale!!!
             SCPTransferFiles(indexFiles);
-            SCPTransferFiles(coSiteFGs);
+//            SCPTransferFiles(coSiteFGs);
 
             cf.blockTillFinish();
 //            ShuffleTask st = new ShuffleTask(cf);
@@ -99,7 +99,7 @@ public class YARNServer extends GaiaAbstractServer {
             String cmd_mkdir = "ssh jimmyyou@" + fg.dstIPs.get(0) + " mkdir -p " + trimmedDirPath;
             String cmd = "scp " + fg.srcIPs.get(0) + ":" + filepath + " " + fg.dstIPs.get(0) + ":" + filepath;
 
-            cmds.add(cmd_mkdir + ";" + cmd);
+            cmds.add(cmd_mkdir + " ; " + cmd);
 
 //            logger.info("Invoking {}", cmd_mkdir);
 //            logger.info("Invoking {}", cmd);
@@ -142,7 +142,7 @@ public class YARNServer extends GaiaAbstractServer {
         logger.info("SCP file transfer finished");
     }
 
-    // generate aggFlowGroups from req using an IP to ID mapping
+    /*// generate aggFlowGroups from req using an IP to ID mapping
     // this is the version with aggregation
     // Location encoding starts from 0
     // id - job_id:srcStage:dstStage:srcLoc-dstLoc // encoding task location info.
@@ -173,11 +173,11 @@ public class YARNServer extends GaiaAbstractServer {
 //            String srcLoc = getTaskLocationIDfromIP(srcIP);
 //            String dstLoc = getTaskLocationIDfromIP(dstIP);
 
-/*            String srcLoc = getTaskLocationID(mapID, req);
+*//*            String srcLoc = getTaskLocationID(mapID, req);
             String dstLoc = getTaskLocationID(redID, req);
 
             String srcIP = getRawAddrfromTaskID(mapID, req).split(":")[0];
-            String dstIP = getRawAddrfromTaskID(redID, req).split(":")[0];*/
+            String dstIP = getRawAddrfromTaskID(redID, req).split(":")[0];*//*
 
 
             String afgID = cfID + ":" + srcLoc + '-' + dstLoc;
@@ -230,7 +230,7 @@ public class YARNServer extends GaiaAbstractServer {
 
         return aggFlowGroups;
     }
-
+*/
 
     // generate aggFlowGroups from req using an IP to ID mapping
     // this is the version without aggregation
@@ -293,18 +293,18 @@ public class YARNServer extends GaiaAbstractServer {
             fg.srcIPs.add(srcIP);
             fg.dstIPs.add(dstIP);
 
-            // Filter coSited flows
-            if (srcLoc.equals(dstLoc)) {
-                coSiteFGs.put(fgID, fg);
-                continue;
-            }
 
             // Filter index files
             if (flowInfo.getDataFilename().endsWith("index")) {
                 logger.info("Got an index file {}", flowInfo.getDataFilename());
                 indexFileFGs.put(fgID, fg);
-            } else {
+            } else if (!srcLoc.equals(dstLoc)) { // Not co-sited FGs
+                // Filter coSited flows
                 outputFlowGroups.put(fgID, fg);
+            } else { // co-sited FGs
+                logger.warn("Got an co-sited flow");
+                coSiteFGs.put(fgID, fg);
+                continue;
             }
 
         }
