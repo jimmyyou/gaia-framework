@@ -53,6 +53,11 @@ public class YARNServer extends GaiaAbstractServer {
 
         try {
 
+            // Try using SCP to transfer index files for now.
+            // FIXME SCP will NEVER scale!!!
+            SCPTransferFiles(indexFiles);
+//            SCPTransferFiles(coSiteFGs);
+
             if (cf.getFlowGroups().size() == 0) {
                 logger.info("CF {} is empty, skipping", cf.getId());
                 return;
@@ -60,11 +65,7 @@ public class YARNServer extends GaiaAbstractServer {
 
             cfQueue.put(cf);
             logger.info("Coflow submitted, Trapping into waiting for coflow to finish");
-
-            // Try using SCP to transfer index files for now.
-            // FIXME SCP will NEVER scale!!!
-            SCPTransferFiles(indexFiles);
-//            SCPTransferFiles(coSiteFGs);
+            
 
             cf.blockTillFinish();
 //            ShuffleTask st = new ShuffleTask(cf);
