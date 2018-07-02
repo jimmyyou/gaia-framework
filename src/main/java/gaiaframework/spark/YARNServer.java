@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
 public class YARNServer extends GaiaAbstractServer {
 
@@ -165,12 +166,17 @@ public class YARNServer extends GaiaAbstractServer {
 
             cmds.add(cmd);
 
-//            logger.info("Invoking {}", cmd_mkdir);
+        }
+
+        // Then remove duplicate commands
+        List<String> dedupedCmds = cmds.stream().distinct().collect(Collectors.toList());
+        logger.info("Trimmed {} SCP commands", (cmds.size() - dedupedCmds.size()));
+
+        for (String cmd : dedupedCmds) {
             logger.info("Invoking {}", cmd);
 
             Process p = Runtime.getRuntime().exec(cmd);
             p.waitFor();
-
         }
 
         logger.info("SCP file transfer finished");
