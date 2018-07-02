@@ -38,6 +38,7 @@ public class TerraMaster {
         options.addOption("w", true, "scaling factor for workload");
         options.addOption("l", false, "run on a list of job traces");
         options.addOption("p", false, "set up flow rules");
+        options.addOption("d", false, "enable debug mode");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
@@ -50,7 +51,7 @@ public class TerraMaster {
             isRunningOnList = true;
         }
 
-        if (cmd.hasOption('d')) {
+        if (cmd.hasOption("d")) {
             isDebugMode = true;
         }
 
