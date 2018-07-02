@@ -47,46 +47,36 @@ public class YARNServer extends GaiaAbstractServer {
         HashMap<String, FlowGroup> indexFiles = new HashMap<>();
 
         generateFlowGroups_noAgg(cfID, req, coSiteFGs, flowGroups, indexFiles);
-        Coflow cf = new Coflow(cfID, flowGroups);
 
-        logger.info("YARN Server submitting CF: {}", cf.toPrintableString());
+        logger.error("{} co-located FG received by Gaia", coSiteFGs.size());
 
-        if (coSiteFGs.size() >= 0) {
-            logger.error("{} co-located FG received by Gaia", coSiteFGs.size());
-        }
 
         try {
 
-            // Try using SCP to transfer index files for now.
-            // FIXME SCP will NEVER scale!!!
-
-            if (cf.getFlowGroups().size() == 0) {
-                logger.info("CF {} is empty, skipping", cf.getId());
+            if (flowGroups.size() == 0) {
+                logger.error("FATAL: CF {} is empty, skipping", cfID);
+                // TODO Check this in the future, should not happen.
                 SCPTransferFiles_Serial(indexFiles);
 //            SCPTransferFiles(indexFiles);
                 return;
+            } else {
+                // Submit small flows (index files) to master
+                Coflow cf = new Coflow(cfID, flowGroups, indexFiles);
+                logger.info("YARN Server submitting CF: {}", cf.toPrintableString());
+
+                cfQueue.put(cf);
+                logger.info("Coflow submitted, Trapping into waiting for coflow to finish");
+
+                // TODO also handle small flows
+                cf.isSmallFlowDoneLatch.await();
+                cf.blockTillFinish();
             }
 
-            cfQueue.put(cf);
-            logger.info("Coflow submitted, Trapping into waiting for coflow to finish");
-
-            SCPTransferFiles_Serial(indexFiles);
-//            SCPTransferFiles(indexFiles);
-
-            cf.blockTillFinish();
-//            ShuffleTask st = new ShuffleTask(cf);
-//            st.run(); // wait for it to finish
         } catch (InterruptedException e) {
             logger.error("ERROR occurred while submitting coflow");
             e.printStackTrace();
         }
 
-        // FIXME: sleep 1s to ensure that the file is fully written to disk
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
         if (isDebugMode) {
             System.out.println("Finished Shuffle, continue?");

@@ -16,10 +16,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Coflow {
     // final fields
     private final String id;
-    CountDownLatch isDoneLatch = new CountDownLatch(1);
+    CountDownLatch isDoneLatch;
+    public CountDownLatch isSmallFlowDoneLatch;
 
     // list of flowgroups: final? ArrayList or ConcurrentHashMap?
-    private HashMap<String , FlowGroup> flowGroups;
+    private HashMap<String, FlowGroup> flowGroups;
+
+    HashMap<String, FlowGroup> smallFlows;
 
     // multiple FGs may finish concurrently leading to the finish of Coflow.
     private AtomicBoolean finished = new AtomicBoolean(false);
@@ -30,36 +33,57 @@ public class Coflow {
 
     public int ddl_Millis = -1;
 
-    public Coflow(String id, HashMap<String , FlowGroup> flowGroups) {
+    public Coflow(String id, HashMap<String, FlowGroup> flowGroups) {
         this.id = id;
         this.flowGroups = flowGroups;
+        this.isDoneLatch = new CountDownLatch(1);
     }
 
-    public String getId() { return id; }
+    /**
+     * Create a Coflow with FlowGroups, and small flows (flows that are sent directly, without scheduling)
+     *
+     * @param id
+     * @param flowGroups
+     * @param smallFlows
+     */
+    public Coflow(String id, HashMap<String, FlowGroup> flowGroups, HashMap<String, FlowGroup> smallFlows) {
+        this.id = id;
+        this.flowGroups = flowGroups;
+        this.smallFlows = smallFlows;
+        this.isDoneLatch = new CountDownLatch(1);
+        this.isSmallFlowDoneLatch = new CountDownLatch(smallFlows.size());
+    }
+
+    public String getId() {
+        return id;
+    }
 
 
-    public HashMap<String , FlowGroup>  getFlowGroups() { return flowGroups; }
+    public HashMap<String, FlowGroup> getFlowGroups() {
+        return flowGroups;
+    }
 
-    public FlowGroup getFlowGroup(String fgid) { return flowGroups.get(fgid); }
+    public FlowGroup getFlowGroup(String fgid) {
+        return flowGroups.get(fgid);
+    }
 
     // TODO verify the two converters
     // converter between Old Coflow and new coflow, for use by Scheduler.
     // scheduler takes in ID, flowgroups (with IntID, srcLoc, dstLoc, volume remain.)
-    public static Coflow_Old toCoflow_Old_with_Trimming(Coflow cf){
+    public static Coflow_Old toCoflow_Old_with_Trimming(Coflow cf) {
         Coflow_Old ret = new Coflow_Old(cf.getId(), new String[]{"null"}); // location not specified here.
 
         HashMap<String, FlowGroup_Old> flows = new HashMap<String, FlowGroup_Old>();
 
         int cnt = 0;
-        for (FlowGroup fg : cf.getFlowGroups().values()){
-            if(fg.isFinished() || fg.getTransmitted() + Constants.DOUBLE_EPSILON >= fg.getTotalVolume())
-            {
+        for (FlowGroup fg : cf.getFlowGroups().values()) {
+            if (fg.isFinished() || fg.getTransmitted() + Constants.DOUBLE_EPSILON >= fg.getTotalVolume()) {
                 continue;                // Trim the Coflow_Old, so we don't schedule FGs that are already finished.
             }
 
 //            FlowGroup_Old fgo = FlowGroup.toFlowGroup_Old(fg, (cnt++));
             FlowGroup_Old fgo = fg.toFlowGroup_Old((cnt++));
-            flows.put( fg.getId() , fgo);
+            flows.put(fg.getId(), fgo);
         }
 
         ret.flows = flows;
@@ -78,17 +102,25 @@ public class Coflow {
 
     }*/
 
-    public boolean getFinished() { return finished.get(); }
+    public boolean getFinished() {
+        return finished.get();
+    }
 
 //    public void setFinished(boolean value) { this.finished.set(value); }
 
     public boolean finish(boolean newValue) {
 
-        if (isDoneLatch.getCount() != 0 ){
+        if (isDoneLatch.getCount() != 0) {
             isDoneLatch.countDown();
         }
 
         return this.finished.getAndSet(newValue);
+    }
+
+    public void finishSF() {
+        if (isSmallFlowDoneLatch.getCount() != 0) {
+            isSmallFlowDoneLatch.countDown();
+        }
     }
 
     public void blockTillFinish() throws InterruptedException {
@@ -100,19 +132,27 @@ public class Coflow {
     //    private int state;
 //    private String owningClient;
 // Optional field
-    public long getStartTime() { return startTime; }
+    public long getStartTime() {
+        return startTime;
+    }
 
-    public void setStartTime(long startTime) { this.startTime = startTime; }
+    public void setStartTime(long startTime) {
+        this.startTime = startTime;
+    }
 
-    public long getEndTime() { return endTime; }
+    public long getEndTime() {
+        return endTime;
+    }
 
-    public void setEndTime(long endTime) { this.endTime = endTime; }
+    public void setEndTime(long endTime) {
+        this.endTime = endTime;
+    }
 
-    public String toPrintableString(){
+    public String toPrintableString() {
         StringBuilder sb = new StringBuilder();
 
         sb.append(" Coflow: ").append(this.id);
-        for(FlowGroup fg : this.flowGroups.values()){
+        for (FlowGroup fg : this.flowGroups.values()) {
 
             sb.append("\nFGID: ").append(fg.getId()).append(' ');
             sb.append("\nVolume: ").append(fg.getTotalVolume()).append(' ');

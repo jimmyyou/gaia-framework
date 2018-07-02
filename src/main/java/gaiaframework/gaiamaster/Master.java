@@ -42,7 +42,7 @@ public class Master {
 
     // SubModules of Master
     protected Thread coflowListener;
-//    protected Thread agentController; // This is similar to the Manager eventloop in old version. // maybe multiple threads?
+    //    protected Thread agentController; // This is similar to the Manager eventloop in old version. // maybe multiple threads?
     protected final ScheduledExecutorService mainExec; // For periodic call of schedule()
 
     protected final ExecutorService saControlExec;
@@ -53,23 +53,25 @@ public class Master {
 //    protected LinkedBlockingQueue<AgentMessage> agentEventQueue = new LinkedBlockingQueue<>();
 
 
-    protected class CoflowListener implements Runnable{
+    protected class CoflowListener implements Runnable {
         @Override
         public void run() {
             System.out.println("Master: CoflowListener is up");
-            while (true){
+            while (true) {
                 try {
                     Coflow cf = coflowEventQueue.take();
                     String cfID = cf.getId();
                     System.out.println("Master: Received Coflow from YARN with ID = " + cfID);
 
                     // first check the deadline then decide whether to add
-                    if ( scheduler.checkDDL(cf) ) {
+                    if (scheduler.checkDDL(cf)) {
 
                         masterSharedData.addCoflow(cfID, cf);
                         masterSharedData.flag_CF_ADD = true;
-                    }
-                    else {
+
+                        // TODO handle small flows
+                        submitSmallFlows(cf);
+                    } else {
                         logger.info("Coflow {} can't meet deadline, aborting", cfID);
 
                         masterSharedData.yarnEventQueue.put(new YARNMessages(cfID, YARNMessages.Type.COFLOW_DROP));
@@ -84,21 +86,38 @@ public class Master {
         }
     }
 
+    /**
+     * submit Small Flows to Sending Agents
+     *
+     * @param coflow
+     */
+    private void submitSmallFlows(Coflow coflow) {
+
+        for (FlowGroup smallfg : coflow.smallFlows.values()) {
+
+            // Get SA-ID for destinationIP
+            String saID = config.findDCIDbyHostAddr(smallfg.dstIPs.get(0));
+
+            // submit request
+            logger.info("Submitting {} to SA - {}", smallfg.filename, saID);
+            rpcClientHashMap.get(saID).submitSmallFlow(smallfg, coflow);
+        }
+    }
+
     public Master(String gml_file, String trace_file, String scheduler_type, String outdir, String configFile,
                   double bw_factor, boolean isRunningOnList, boolean isSettingFlowRules, boolean isDebugMode) throws IOException {
 
         this.outdir = outdir;
-        this.netGraph = new NetGraph(gml_file , bw_factor );
+        this.netGraph = new NetGraph(gml_file, bw_factor);
         this.rpcClientHashMap = new HashMap<>();
         this.is_SettingFlowRules = isSettingFlowRules;
         this.isDebugMode = isDebugMode;
 
         printPaths(netGraph);
-        if(configFile == null){
+        if (configFile == null) {
 //            this.config = new Configuration(netGraph.nodes_.size(), netGraph.nodes_.size());
             this.config = new Configuration(netGraph.nodes_.size());
-        }
-        else {
+        } else {
 //            this.config = new Configuration(netGraph.nodes_.size(), netGraph.nodes_.size(), configFile);
             this.config = new Configuration(netGraph.nodes_.size(), configFile);
         }
@@ -111,7 +130,7 @@ public class Master {
         // setting up interface with YARN.
         this.coflowEventQueue = new LinkedBlockingQueue<Coflow>();
 //        this.yarnServer = new Thread(new YARNEmulator(trace_file , netGraph , masterSharedData.yarnEventQueue , coflowEventQueue, outdir, isRunningOnList));
-        this.coflowListener = new Thread( new CoflowListener() );
+        this.coflowListener = new Thread(new CoflowListener());
 
         // setting up the scheduler
         scheduler = new CoflowScheduler(netGraph);
@@ -121,14 +140,12 @@ public class Master {
             System.exit(1);
 //            scheduler = new BaselineScheduler(netGraph);
 //            enablePersistentConn = false;
-        }
-        else if (scheduler_type.equals(Constants.SCHEDULER_NAME_GAIA)) {
+        } else if (scheduler_type.equals(Constants.SCHEDULER_NAME_GAIA)) {
 //            scheduler = new PoorManScheduler(netGraph);
 //            scheduler = new CoflowScheduler(netGraph);
 //            enablePersistentConn = true;
             System.out.println("Using coflow scheduler");
-        }
-        else {
+        } else {
             System.out.println("Unrecognized scheduler type: " + scheduler_type);
             System.out.println("Scheduler must be one of { baseline, gaia }");
             System.exit(1);
@@ -158,7 +175,7 @@ public class Master {
         for (String sa_id : netGraph.nodes_) {
             int id = Integer.parseInt(sa_id); // id is from 0 to n, IP from 1 to (n+1)
             MasterRPCClient client = new MasterRPCClient(config.getSAIP(id), config.getSAPort(id));
-            rpcClientHashMap.put( sa_id , client);
+            rpcClientHashMap.put(sa_id, client);
             Iterator<GaiaMessageProtos.PAMessage> it = client.preparePConn();
             while (it.hasNext()) {
                 GaiaMessageProtos.PAMessage pam = it.next();
@@ -180,8 +197,7 @@ public class Master {
             PortAnnouncementRelayMessage relay = new PortAnnouncementRelayMessage(netGraph, PAEventQueue);
             relay.relay_ports();
             logger.info("All flow rules set up sleeping 5s before starting HeartBeat");
-        }
-        else {
+        } else {
             logger.info("skipping setting flow rules, sleep 5s");
         }
 
@@ -234,17 +250,17 @@ public class Master {
     }
 
     // print the pathway with their ID
-    private void printPaths(NetGraph ng){
-        for (String src : ng.nodes_){
-            if (ng.apap_.get(src) == null){
+    private void printPaths(NetGraph ng) {
+        for (String src : ng.nodes_) {
+            if (ng.apap_.get(src) == null) {
                 continue;
             }
-            for (String dst : ng.nodes_){
+            for (String dst : ng.nodes_) {
                 ArrayList<Pathway> list = ng.apap_.get(src).get(dst);
-                if(list != null && list.size() > 0 ){
+                if (list != null && list.size() > 0) {
                     System.out.println("Paths for " + src + " - " + dst + " :");
-                    for (int i = 0 ; i < list.size() ; i++){
-                        System.out.println( i + " : " + list.get(i));
+                    for (int i = 0; i < list.size(); i++) {
+                        System.out.println(i + " : " + list.get(i));
                     }
                 }
             }
@@ -253,7 +269,7 @@ public class Master {
 
     // the new version of schedule()
     // 1. check in the last interval if anything happens, and determine a fast schedule or re-do the sorting process
-    private void schedule(){
+    private void schedule() {
 //        logger.info("schedule_New(): CF_ADD: {} CF_FIN: {} FG_FIN: {}", masterSharedData.flag_CF_ADD, masterSharedData.flag_CF_FIN, masterSharedData.flag_FG_FIN);
 
         long currentTime = System.currentTimeMillis();
@@ -261,15 +277,15 @@ public class Master {
         List<FlowGroup_Old> FGsToSend = new ArrayList<>();
 
         // snapshoting and converting
-        HashMap<String , Coflow_Old> outcf = new HashMap<>();
-        for ( Map.Entry<String, Coflow> ecf : masterSharedData.coflowPool.entrySet()){
+        HashMap<String, Coflow_Old> outcf = new HashMap<>();
+        for (Map.Entry<String, Coflow> ecf : masterSharedData.coflowPool.entrySet()) {
             Coflow_Old cfo = Coflow.toCoflow_Old_with_Trimming(ecf.getValue());
-            outcf.put( cfo.getId() , cfo );
+            outcf.put(cfo.getId(), cfo);
         }
 
         // process Link change
         GaiaMessageProtos.PathStatusReport m = masterSharedData.linkStatusQueue.poll();
-        while (m != null){
+        while (m != null) {
             scheduler.processLinkChange(m);
             m = masterSharedData.linkStatusQueue.poll();
 
@@ -279,7 +295,7 @@ public class Master {
 
 //        printCFList(outcf);
 
-        if (masterSharedData.flag_CF_ADD){ // redo sorting, may result in preemption
+        if (masterSharedData.flag_CF_ADD) { // redo sorting, may result in preemption
             masterSharedData.flag_CF_ADD = false;
             masterSharedData.flag_CF_FIN = false;
             masterSharedData.flag_FG_FIN = false;
@@ -299,8 +315,7 @@ public class Master {
                 e.printStackTrace();
             }
 
-        }
-        else if (masterSharedData.flag_CF_FIN){ // no LP-sort, just update volume status and re-schedule
+        } else if (masterSharedData.flag_CF_FIN) { // no LP-sort, just update volume status and re-schedule
             masterSharedData.flag_CF_FIN = false;
             masterSharedData.flag_FG_FIN = false;
             scheduler.handleCoflowFIN(outcf);
@@ -317,8 +332,7 @@ public class Master {
                 e.printStackTrace();
             }
 
-        }
-        else if (masterSharedData.flag_FG_FIN){ // no-reschedule, just pick up a new flowgroup.
+        } else if (masterSharedData.flag_FG_FIN) { // no-reschedule, just pick up a new flowgroup.
             masterSharedData.flag_FG_FIN = false;
             scheduler.handleFlowGroupFIN(outcf);
 
@@ -333,18 +347,17 @@ public class Master {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
-        else {  // if none, NOP
+        } else {  // if none, NOP
             return; // no need to print out the execution time.
         }
 
         long deltaTime = System.currentTimeMillis() - currentTime;
 
         StringBuilder fgoContent = new StringBuilder("\n");
-        for ( FlowGroup_Old fgo : FGsToSend){
+        for (FlowGroup_Old fgo : FGsToSend) {
             fgoContent.append(fgo.getId()).append(' ').append(fgo.paths).append(' ').append(fgo.getFlowState()).append('\n');
         }
-        logger.info("schedule(): took {} ms. Active CF: {} Scheduled FG: {} FG content:{}", deltaTime , masterSharedData.coflowPool.size(), scheduledFGs.size(), fgoContent);
+        logger.info("schedule(): took {} ms. Active CF: {} Scheduled FG: {} FG content:{}", deltaTime, masterSharedData.coflowPool.size(), scheduledFGs.size(), fgoContent);
 
 //        printMasterState();
     }
@@ -355,39 +368,35 @@ public class Master {
         HashMap<String, FlowGroup_Old> fgoHashMap = new HashMap<>();
 
         // first convert List to hashMap
-        for (FlowGroup_Old fgo : scheduledFGs){
+        for (FlowGroup_Old fgo : scheduledFGs) {
             fgoHashMap.put(fgo.getId(), fgo);
         }
 
         // traverse all FGs in CFPool
-        for ( Map.Entry<String, Coflow> ecf : masterSharedData.coflowPool.entrySet()) { // snapshoting should not be a problem
+        for (Map.Entry<String, Coflow> ecf : masterSharedData.coflowPool.entrySet()) { // snapshoting should not be a problem
             Coflow cf = ecf.getValue();
-            for ( Map.Entry<String, FlowGroup> fge : cf.getFlowGroups().entrySet()){
+            for (Map.Entry<String, FlowGroup> fge : cf.getFlowGroups().entrySet()) {
                 FlowGroup fg = fge.getValue();
-                if (fg.getFlowState() == FlowGroup.FlowState.FIN){
+                if (fg.getFlowState() == FlowGroup.FlowState.FIN) {
                     logger.info("find fg {} in FIN state, to be removed", fg.getId());
                     continue; // ignore finished, they shall be removed shortly
-                }
-                else if (fg.getFlowState() == FlowGroup.FlowState.RUNNING) { // may pause/change the running flow
-                    if (fgoHashMap.containsKey(fg.getId())){ // we may need to change, if the path/rate are different TODO: speculatively send change message
-                        fgoToSend.add (fgoHashMap.get(fg.getId()).setFlowState(FlowGroup_Old.FlowState.CHANGING) ); // running flow needs to change
-                    }
-                    else { // we need to pause
+                } else if (fg.getFlowState() == FlowGroup.FlowState.RUNNING) { // may pause/change the running flow
+                    if (fgoHashMap.containsKey(fg.getId())) { // we may need to change, if the path/rate are different TODO: speculatively send change message
+                        fgoToSend.add(fgoHashMap.get(fg.getId()).setFlowState(FlowGroup_Old.FlowState.CHANGING)); // running flow needs to change
+                    } else { // we need to pause
                         fg.setFlowState(FlowGroup.FlowState.PAUSED);
-                        fgoToSend.add ( fg.toFlowGroup_Old(0).setFlowState(FlowGroup_Old.FlowState.PAUSING) );
+                        fgoToSend.add(fg.toFlowGroup_Old(0).setFlowState(FlowGroup_Old.FlowState.PAUSING));
 //                        fgoToSend.add ( FlowGroup.toFlowGroup_Old(fg, 0).setFlowState(FlowGroup_Old.FlowState.PAUSING) );
                     }
-                }
-                else { // case: NEW/PAUSED
+                } else { // case: NEW/PAUSED
                     if (fgoHashMap.containsKey(fg.getId())) { // we take action only if the flow get (re)scheduled
-                        if (fg.getFlowState() == FlowGroup.FlowState.NEW){ // start the flow
+                        if (fg.getFlowState() == FlowGroup.FlowState.NEW) { // start the flow
                             fg.setFlowState(FlowGroup.FlowState.RUNNING);
-                            fgoToSend.add (fgoHashMap.get(fg.getId()).setFlowState(FlowGroup_Old.FlowState.STARTING) );
-                            masterSharedData.flowStartCnt ++ ;
-                        }
-                        else if (fg.getFlowState() == FlowGroup.FlowState.PAUSED){ // RESUME the flow
+                            fgoToSend.add(fgoHashMap.get(fg.getId()).setFlowState(FlowGroup_Old.FlowState.STARTING));
+                            masterSharedData.flowStartCnt++;
+                        } else if (fg.getFlowState() == FlowGroup.FlowState.PAUSED) { // RESUME the flow
                             fg.setFlowState(FlowGroup.FlowState.RUNNING);
-                            fgoToSend.add (fgoHashMap.get(fg.getId()).setFlowState(FlowGroup_Old.FlowState.CHANGING) );
+                            fgoToSend.add(fgoHashMap.get(fg.getId()).setFlowState(FlowGroup_Old.FlowState.CHANGING));
                         }
 
                     }
@@ -401,16 +410,16 @@ public class Master {
 
     private void sendControlMessages_Async(List<FlowGroup_Old> scheduledFGs) {
         // group FGOs by SA
-        Map< String , List<FlowGroup_Old>> fgoBySA = scheduledFGs.stream()
+        Map<String, List<FlowGroup_Old>> fgoBySA = scheduledFGs.stream()
                 .collect(Collectors.groupingBy(FlowGroup_Old::getSrc_loc));
 
         // just post the update to RPCClient, not waiting for reply
-        for ( Map.Entry<String,List<FlowGroup_Old>> entry : fgoBySA.entrySet() ){
+        for (Map.Entry<String, List<FlowGroup_Old>> entry : fgoBySA.entrySet()) {
             String saID = entry.getKey();
             List<FlowGroup_Old> fgforSA = entry.getValue();
 
             // call async RPC
-            rpcClientHashMap.get(saID).setFlow(fgforSA, netGraph , saID);
+            rpcClientHashMap.get(saID).setFlow(fgforSA, netGraph, saID);
         }
 
 /*        // How to parallelize -> use the threadpool
@@ -427,29 +436,29 @@ public class Master {
         }*/
     }
 
-    public void printMasterState(){
+    public void printMasterState() {
         StringBuilder str = new StringBuilder("-----Master state-----\n");
         int paused = 0;
         int running = 0;
-        for( Map.Entry<String, Coflow> cfe : masterSharedData.coflowPool.entrySet()){
+        for (Map.Entry<String, Coflow> cfe : masterSharedData.coflowPool.entrySet()) {
             Coflow cf = cfe.getValue();
 
             str.append(cf.getId()).append('\n');
 
-            for ( Map.Entry<String, FlowGroup> fge : cf.getFlowGroups().entrySet()){
+            for (Map.Entry<String, FlowGroup> fge : cf.getFlowGroups().entrySet()) {
                 FlowGroup fg = fge.getValue();
                 str.append(' ').append(fge.getKey()).append(' ').append(fg.getFlowState())
                         .append(' ').append(fg.getTransmitted()).append(' ').append(fg.getTotalVolume()).append('\n');
                 if (fg.getFlowState() == FlowGroup.FlowState.PAUSED) {
                     paused++;
-                } else if (fg.getFlowState() == FlowGroup.FlowState.RUNNING){
+                } else if (fg.getFlowState() == FlowGroup.FlowState.RUNNING) {
                     running++;
                 }
             }
         }
 
         str.append("stats s: ").append(masterSharedData.flowStartCnt).append(" f: ").append(masterSharedData.flowFINCnt)
-            .append(" p: ").append(paused).append(" r: ").append(running).append('\n');
+                .append(" p: ").append(paused).append(" r: ").append(running).append('\n');
         logger.info(str);
     }
 

@@ -1,7 +1,6 @@
 package gaiaframework.gaiamaster;
 
 
-import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.gaiaprotos.GaiaMessageProtos;
 import gaiaframework.gaiaprotos.SendingAgentServiceGrpc;
 import gaiaframework.network.FlowGroup_Old;
@@ -24,8 +23,7 @@ public class MasterRPCClient {
     private final ManagedChannel channel;
     private final SendingAgentServiceGrpc.SendingAgentServiceBlockingStub blockingStub;
     private final SendingAgentServiceGrpc.SendingAgentServiceStub asyncStub;
-    private StreamObserver<GaiaMessageProtos.FUM_ACK> responseObserver;
-    private StreamObserver<GaiaMessageProtos.FlowUpdate> clientStreamObserver;
+    private StreamObserver<GaiaMessageProtos.FlowUpdate> fumStreamObserver;
 
     String targetIP;
     int targetPort;
@@ -43,9 +41,18 @@ public class MasterRPCClient {
     public MasterRPCClient(ManagedChannel channel) {
         this.channel = channel;
         blockingStub = SendingAgentServiceGrpc.newBlockingStub(channel);
-
         asyncStub = SendingAgentServiceGrpc.newStub(channel);
-        responseObserver = new StreamObserver<GaiaMessageProtos.FUM_ACK>() {
+
+
+    }
+
+    public void shutdown() throws InterruptedException {
+        channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+
+    public void initStream() {
+        logger.warn("(Re)starting the stream");
+        StreamObserver<GaiaMessageProtos.FUM_ACK> FUMresponseObserver = new StreamObserver<GaiaMessageProtos.FUM_ACK>() {
 
             @Override
             public void onNext(GaiaMessageProtos.FUM_ACK fumAck) {
@@ -62,46 +69,67 @@ public class MasterRPCClient {
                 channel.shutdown();
             }
         };
+        fumStreamObserver = asyncStub.changeFlow(FUMresponseObserver);
 
-    }
-
-    public void shutdown() throws InterruptedException {
-        channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-    }
-
-    public void initStream() {
-        logger.warn("(Re)starting the stream");
-        clientStreamObserver = asyncStub.changeFlow(responseObserver);
         isStreamReady = true;
     }
 
-    public Iterator<GaiaMessageProtos.PAMessage> preparePConn(){
+    public Iterator<GaiaMessageProtos.PAMessage> preparePConn() {
         GaiaMessageProtos.PAM_REQ req = GaiaMessageProtos.PAM_REQ.newBuilder().build();
         return blockingStub.prepareConnections(req);
     }
 
-    public void setFlow( Collection<FlowGroup_Old> fgos, NetGraph ng, String saID ){
+    public void setFlow(Collection<FlowGroup_Old> fgos, NetGraph ng, String saID) {
 
         GaiaMessageProtos.FlowUpdate fum = buildFUM(fgos, ng, saID);
         logger.info("Built the FUM\n {}", fum);
 
-        if ( !isStreamReady ) {
+        if (!isStreamReady) {
             initStream();
         }
 
-        clientStreamObserver.onNext(fum);
-        logger.debug("FUM sent for saID = {}" , saID);
+        fumStreamObserver.onNext(fum);
+        logger.debug("FUM sent for saID = {}", saID);
 
     }
 
-    public GaiaMessageProtos.FlowUpdate buildFUM(Collection<FlowGroup_Old> fgos, NetGraph ng, String saID){
+    public void submitSmallFlow(FlowGroup smallfg, Coflow coflow) {
+
+        // TODO
+        GaiaMessageProtos.SmallFlow.Builder sfb = GaiaMessageProtos.SmallFlow.newBuilder()
+                .setFilename(smallfg.getFilename()).setSrcIP(smallfg.srcIPs.get(0));
+
+        StreamObserver<GaiaMessageProtos.SmallFlow_ACK> SmallFlowReqObserver = new StreamObserver<GaiaMessageProtos.SmallFlow_ACK>() {
+            @Override
+            public void onNext(GaiaMessageProtos.SmallFlow_ACK smallFlow_ack) {
+
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+
+            }
+
+            @Override
+            public void onCompleted() {
+                // TODO check here
+                logger.info("Finished Small Flow {}", smallfg.filename);
+                coflow.isSmallFlowDoneLatch.countDown();
+
+            }
+        };
+
+        asyncStub.fetchSmallFlow(sfb.build(), SmallFlowReqObserver);
+    }
+
+    public GaiaMessageProtos.FlowUpdate buildFUM(Collection<FlowGroup_Old> fgos, NetGraph ng, String saID) {
 
         GaiaMessageProtos.FlowUpdate.Builder fumBuilder = GaiaMessageProtos.FlowUpdate.newBuilder();
 
         // first sort all fgos according to the RA.
-        Map< String , List<FlowGroup_Old>> fgobyRA = fgos.stream().collect(Collectors.groupingBy(FlowGroup_Old::getDst_loc));
+        Map<String, List<FlowGroup_Old>> fgobyRA = fgos.stream().collect(Collectors.groupingBy(FlowGroup_Old::getDst_loc));
 
-        for (Map.Entry<String , List<FlowGroup_Old>> entrybyRA: fgobyRA.entrySet()) {
+        for (Map.Entry<String, List<FlowGroup_Old>> entrybyRA : fgobyRA.entrySet()) {
 
 //            String raID = entrybyRA.getKey();
 
@@ -118,11 +146,9 @@ public class MasterRPCClient {
                 if (fgo.getFlowState() == FlowGroup_Old.FlowState.INIT) {
                     logger.error("ERROR: FUM message contains flows that have not been scheduled");
                     continue;
-                }
-                else if (fgo.getFlowState() == FlowGroup_Old.FlowState.PAUSING){
+                } else if (fgo.getFlowState() == FlowGroup_Old.FlowState.PAUSING) {
                     fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.PAUSE);
-                }
-                else if (fgo.getFlowState() == FlowGroup_Old.FlowState.STARTING ||
+                } else if (fgo.getFlowState() == FlowGroup_Old.FlowState.STARTING ||
                         fgo.getFlowState() == FlowGroup_Old.FlowState.CHANGING) { // STARTING && CHANGING
 
                     if (fgo.getFlowState() == FlowGroup_Old.FlowState.STARTING) {

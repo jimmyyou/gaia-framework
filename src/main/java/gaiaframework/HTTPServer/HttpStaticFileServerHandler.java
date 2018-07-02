@@ -184,7 +184,8 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 
         if (startOffset + length > fileLength) {
             logger.error("Requested size is bigger than actual size");
-            return;
+            length = fileLength - startOffset;
+//            return;
         }
 
         HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
