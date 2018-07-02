@@ -110,9 +110,7 @@ public class RemoteHTTPFetcher implements Runnable {
             DataInputStream input = new DataInputStream(connection.getInputStream());
 
             // Get file length first
-            byte [] bytebuf = new byte[8];
-            input.readFully(bytebuf);
-            long filelength = Longs.fromByteArray(bytebuf);
+            long filelength = connection.getHeaderFieldLong("x-FileLength" , 0);
 
             int total_bytes_sent = 0;
             while (true) {

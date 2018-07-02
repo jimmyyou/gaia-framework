@@ -203,8 +203,9 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 
         // Write the initial line and the header.
         ctx.write(response);
-        // Embedd length info here, costs 8 bytes
-        ctx.write(Longs.toByteArray(fileLength));
+
+        // Use HTTP Header to convey fileLength
+        response.headers().set("x-FileLength", fileLength);
 
         // Write the content.
         ChannelFuture sendFileFuture;
