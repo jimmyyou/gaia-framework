@@ -56,8 +56,8 @@ public class YARNServer extends GaiaAbstractServer {
 
             // Try using SCP to transfer index files for now.
             // FIXME SCP will NEVER scale!!!
-//            SCPTransferFiles_Serial(indexFiles);
-            SCPTransferFiles(indexFiles);
+            SCPTransferFiles_Serial(indexFiles);
+//            SCPTransferFiles(indexFiles);
 
             if (cf.getFlowGroups().size() == 0) {
                 logger.info("CF {} is empty, skipping", cf.getId());
