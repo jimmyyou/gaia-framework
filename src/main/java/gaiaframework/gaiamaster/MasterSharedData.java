@@ -11,11 +11,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class MasterSharedData {
     private static final Logger logger = LogManager.getLogger();
 
-    volatile ConcurrentHashMap<String , Coflow> coflowPool;
+    volatile ConcurrentHashMap<String, Coflow> coflowPool;
 
     // index for searching flowGroup in this data structure.
     // only need to add entry, no need to delete entry. TODO verify this.
-    private volatile ConcurrentHashMap<String , Coflow> flowIDtoCoflow;
+    private volatile ConcurrentHashMap<String, Coflow> flowIDtoCoflow;
 
     volatile boolean flag_CF_ADD = false;
     volatile boolean flag_CF_FIN = false;
@@ -29,7 +29,7 @@ public class MasterSharedData {
     public AtomicBoolean flag_CF_FIN = new AtomicBoolean(false);
     public AtomicBoolean flag_FG_FIN = new AtomicBoolean(false);*/
 
-// stats
+    // stats
     int flowStartCnt = 0;
     int flowFINCnt = 0;
 
@@ -38,58 +38,55 @@ public class MasterSharedData {
         System.out.println("Master: trying to finish Coflow: " + coflowID);
 
 
-            // use the get and set method, to make sure that:
-            // 1. the value is false before we send COFLOW_FIN
-            // 2. the value must be set to true, after whatever we do.
-            if( coflowPool.containsKey(coflowID) && !coflowPool.get(coflowID).finish(true) ){
+        // use the get and set method, to make sure that:
+        // 1. the value is false before we send COFLOW_FIN
+        // 2. the value must be set to true, after whatever we do.
+        if (coflowPool.containsKey(coflowID) && !coflowPool.get(coflowID).finish(true)) {
 
-                this.flag_CF_FIN = true;
+            this.flag_CF_FIN = true;
 
-                coflowPool.remove(coflowID);
+            coflowPool.remove(coflowID);
 
-//                yarnEventQueue.put(new YARNMessages(coflowID));
-                // TODO integrate with YARN, process the returned TRUE.
-                return true;
-            }
+            return true;
+        }
 
         return false;
     }
 
-    public void addCoflow(String id, Coflow cf){ // trim the co-located flowgroup before adding!
+    public void addCoflow(String id, Coflow cf) { // trim the co-located flowgroup before adding!
         // first add index
-        for ( FlowGroup fg : cf.getFlowGroups().values()){
-            flowIDtoCoflow.put( fg.getId() , cf );
+        for (FlowGroup fg : cf.getFlowGroups().values()) {
+            flowIDtoCoflow.put(fg.getId(), cf);
         }
         //  then add coflow
-        coflowPool.put(id , cf);
+        coflowPool.put(id, cf);
     }
 
 
-    public FlowGroup getFlowGroup(String id){
-        if( flowIDtoCoflow.containsKey(id)){
+    public FlowGroup getFlowGroup(String id) {
+        if (flowIDtoCoflow.containsKey(id)) {
             return flowIDtoCoflow.get(id).getFlowGroup(id);
-        }
-        else {
+        } else {
             return null;
         }
     }
 
     // TODO: set the concurrency level.
-    public MasterSharedData(){
+    public MasterSharedData() {
         this.coflowPool = new ConcurrentHashMap<>();
         this.flowIDtoCoflow = new ConcurrentHashMap<>();
     }
 
     public void onFinishFlowGroup(String fid, long timestamp) {
 
-        flowFINCnt ++;
+        flowFINCnt++;
 
         FlowGroup fg = getFlowGroup(fid);
-        if (fg == null){
+        if (fg == null) {
             logger.warn("fg == null for fid = {}", fid);
             return;
         }
-        if(fg.getAndSetFinish(timestamp)){
+        if (fg.getAndSetFinish(timestamp)) {
             logger.warn("Finishing a flow that should have been finished");
             return; // if already finished, do nothing.
         }
@@ -99,20 +96,20 @@ public class MasterSharedData {
         // check if the owning coflow is finished
         Coflow cf = coflowPool.get(fg.getOwningCoflowID());
 
-        if(cf == null){ // cf may already be finished.
+        if (cf == null) { // cf may already be finished.
             return;
         }
 
         boolean flag = true;
 
-        for(FlowGroup ffg : cf.getFlowGroups().values()){
+        for (FlowGroup ffg : cf.getFlowGroups().values()) {
             flag = flag && ffg.isFinished();
         }
 
         // if so set coflow status, send COFLOW_FIN
-        if (flag){
+        if (flag) {
             String coflowID = fg.getOwningCoflowID();
-            if ( onFinishCoflow(coflowID) ){
+            if (onFinishCoflow(coflowID)) {
                 try {
                     yarnEventQueue.put(new YARNMessages(coflowID));
                 } catch (InterruptedException e) {
@@ -122,7 +119,7 @@ public class MasterSharedData {
         }
     }
 
-    public void onLinkDown(String saID, String raID, int pathID){
+    public void onLinkDown(String saID, String raID, int pathID) {
 
     }
 

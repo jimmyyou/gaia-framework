@@ -18,7 +18,8 @@ service SendingAgentService {
     rpc PrepareConnections (PAM_REQ) returns (stream PAMessage) {}
     rpc ChangeFlow (stream FlowUpdate) returns (FUM_ACK) {}
     rpc ControlExperiment (Exp_CTRL) returns (Exp_CTRL_ACK) {}
-//    rpc GetShuffleSize(ShuffleInfoReq) returns (ShuffleFiles) {}
+    rpc FetchSmallFlow (SmallFlow) returns (SmallFlow_ACK) {}
+    //    rpc GetShuffleSize(ShuffleInfoReq) returns (ShuffleFiles) {}
 }
 
 // service for reporting to Master
@@ -61,7 +62,7 @@ message FlowUpdate {
     message FlowUpdateEntry {
         double remainingVolume = 1;
         string flowID = 2;
-        enum Operation{
+        enum Operation {
             START = 0;
             CHANGE = 1;
             PAUSE = 2;
@@ -70,7 +71,7 @@ message FlowUpdate {
         // path to rate mapping
         repeated PathRateEntry pathToRate = 4;
         //        map <int32, double> pathToRate = 3;
-//        string filename = 5;
+        //        string filename = 5;
 
         // TODO add IP information
         repeated ShuffleInfo.FlowInfo flowInfos = 5;
@@ -87,6 +88,11 @@ message FlowUpdate {
     // Collectors.groupingBy() should enforce that multiple RAUEntry all have different raID
 }
 
+
+message SmallFlow {
+    string srcIP = 1;
+    string filename = 2;
+}
 
 message PAMessage {
     string sa_id = 1;
@@ -105,8 +111,8 @@ message FlowStatus_ACK {}
 
 message PathStatus_ACK {}
 
-message Exp_CTRL{
-    enum CTRL_Operation{
+message Exp_CTRL {
+    enum CTRL_Operation {
         START = 0;
         STOP = 1;
     }
@@ -115,7 +121,9 @@ message Exp_CTRL{
     string ExpName = 2;
 }
 
-message Exp_CTRL_ACK{}
+message Exp_CTRL_ACK {}
+
+message SmallFlow_ACK {}
 
 /*message ShuffleInfoReq{
 
