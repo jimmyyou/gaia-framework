@@ -56,8 +56,8 @@ public class YARNServer extends GaiaAbstractServer {
 
             // Try using SCP to transfer index files for now.
             // FIXME SCP will NEVER scale!!!
-            SCPTransferFiles_Serial(indexFiles);
-//            SCPTransferFiles(coSiteFGs);
+//            SCPTransferFiles_Serial(indexFiles);
+            SCPTransferFiles(indexFiles);
 
             if (cf.getFlowGroups().size() == 0) {
                 logger.info("CF {} is empty, skipping", cf.getId());
@@ -73,8 +73,6 @@ public class YARNServer extends GaiaAbstractServer {
 //            st.run(); // wait for it to finish
         } catch (InterruptedException e) {
             logger.error("ERROR occurred while submitting coflow");
-            e.printStackTrace();
-        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -106,19 +104,19 @@ public class YARNServer extends GaiaAbstractServer {
 
             cmds.add(cmd);
 
-//            logger.info("Invoking {}", cmd_mkdir);
-//            logger.info("Invoking {}", cmd);
         }
+        // Then remove duplicate commands
+        List<String> dedupedCmds = cmds.stream().distinct().collect(Collectors.toList());
+        logger.info("Trimmed {} SCP commands", (cmds.size() - dedupedCmds.size()));
 
         List<Process> pool = new ArrayList<>();
-
         for (String cmd : cmds) {
             Process p = null;
             try {
 
                 p = Runtime.getRuntime().exec(cmd);
                 pool.add(p);
-                logger.info("Exec: {}", cmd);
+                logger.info("Exec (submitted): {}", cmd);
 
 /*                String line;
                 BufferedReader bri = new BufferedReader(new InputStreamReader(p.getInputStream()));
@@ -147,7 +145,7 @@ public class YARNServer extends GaiaAbstractServer {
         logger.info("SCP file transfer finished");
     }
 
-    private void SCPTransferFiles_Serial(HashMap<String, FlowGroup> fgsToSCP) throws IOException, InterruptedException {
+    private void SCPTransferFiles_Serial(HashMap<String, FlowGroup> fgsToSCP) throws InterruptedException {
 
         // Create a list of cmds;
         List<String> cmds = new ArrayList<>();
@@ -175,8 +173,13 @@ public class YARNServer extends GaiaAbstractServer {
         for (String cmd : dedupedCmds) {
             logger.info("Invoking {}", cmd);
 
-            Process p = Runtime.getRuntime().exec(cmd);
-            p.waitFor();
+            Process p = null;
+            try {
+                p = Runtime.getRuntime().exec(cmd);
+                p.waitFor();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         logger.info("SCP file transfer finished");
