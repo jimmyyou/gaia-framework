@@ -1,6 +1,7 @@
 package gaiaframework.HTTPServer;
 
 
+import com.google.common.primitives.Longs;
 import gaiaframework.util.Constants;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -181,7 +182,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         }
         long fileLength = raf.length();
 
-        if (startOffset + length > fileLength){
+        if (startOffset + length > fileLength) {
             logger.error("Requested size is bigger than actual size");
             return;
         }
@@ -202,6 +203,8 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 
         // Write the initial line and the header.
         ctx.write(response);
+        // Embedd length info here, costs 8 bytes
+        ctx.write(Longs.toByteArray(fileLength));
 
         // Write the content.
         ChannelFuture sendFileFuture;
@@ -281,7 +284,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         // Convert to absolute path.
 //        return SystemPropertyUtil.get("user.dir") + File.separator + uri;
         return File.separator + uri;
-        // TODO limit the access to within the hadoop folder.
+        // TODO limit the access to within the hadoop folder. (/tmp)
     }
 
     private static final Pattern ALLOWED_FILE_NAME = Pattern.compile("[^-\\._]?[^<>&\\\"]*");

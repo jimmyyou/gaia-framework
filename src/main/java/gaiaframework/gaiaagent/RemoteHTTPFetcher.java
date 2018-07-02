@@ -3,6 +3,7 @@ package gaiaframework.gaiaagent;
 // Similar to LocalFileReader, but use HTTP to fetch data instead
 // fetches from ShuffleHandler of Hadoop
 
+import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.RateLimiter;
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.transmission.DataChunkMessage;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -94,12 +96,6 @@ public class RemoteHTTPFetcher implements Runnable {
 
         RateLimiter rateLimiter = RateLimiter.create(Constants.DEFAULT_TOKEN_RATE);
 
-
-        // FIXME read local filesize data
-        File localFile = new File(srcFilename);
-        long filelength = localFile.length();
-
-
         try {
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
@@ -112,6 +108,11 @@ public class RemoteHTTPFetcher implements Runnable {
 
             // then set up the connection, and convert the stream into queue
             DataInputStream input = new DataInputStream(connection.getInputStream());
+
+            // Get file length first
+            byte [] bytebuf = new byte[8];
+            input.readFully(bytebuf);
+            long filelength = Longs.fromByteArray(bytebuf);
 
             int total_bytes_sent = 0;
             while (true) {
@@ -240,6 +241,7 @@ public class RemoteHTTPFetcher implements Runnable {
 
                 // now we've determined a worker
 
+                // TODO why?
                 if (rateMap.size() > 1) {
                     logger.error("rateMap should not be > 1!");
                 }
