@@ -100,9 +100,10 @@ public class YARNServer extends GaiaAbstractServer {
 
             String trimmedDirPath = filepath.substring(0, filepath.lastIndexOf("/"));
             String cmd_mkdir = "ssh jimmyyou@" + fg.dstIPs.get(0) + " mkdir -p " + trimmedDirPath;
-            String cmd = "scp " + fg.srcIPs.get(0) + ":" + filepath + " " + fg.dstIPs.get(0) + ":" + filepath;
+            String cmd_scp = "scp " + fg.srcIPs.get(0) + ":" + filepath + " " + fg.dstIPs.get(0) + ":" + filepath;
+            String cmd = cmd_mkdir + " ; " + cmd_scp;
 
-            cmds.add(cmd_mkdir + " ; " + cmd);
+            cmds.add(cmd);
 
 //            logger.info("Invoking {}", cmd_mkdir);
 //            logger.info("Invoking {}", cmd);
@@ -159,9 +160,10 @@ public class YARNServer extends GaiaAbstractServer {
 
             String trimmedDirPath = filepath.substring(0, filepath.lastIndexOf("/"));
             String cmd_mkdir = "ssh jimmyyou@" + fg.dstIPs.get(0) + " mkdir -p " + trimmedDirPath;
-            String cmd = "scp " + fg.srcIPs.get(0) + ":" + filepath + " " + fg.dstIPs.get(0) + ":" + filepath;
+            String cmd_scp = "scp " + fg.srcIPs.get(0) + ":" + filepath + " " + fg.dstIPs.get(0) + ":" + filepath;
+            String cmd = cmd_mkdir + " ; " + cmd_scp;
 
-            cmds.add(cmd_mkdir + " ; " + cmd);
+            cmds.add(cmd);
 
 //            logger.info("Invoking {}", cmd_mkdir);
             logger.info("Invoking {}", cmd);
@@ -362,7 +364,6 @@ public class YARNServer extends GaiaAbstractServer {
             } else { // co-sited FGs
                 logger.warn("Got an co-sited flow");
                 coSiteFGs.put(fgID, fg);
-                continue;
             }
 
         }
