@@ -26,7 +26,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 /**
  * This is the fetcher thread that request file blocks from an HTTP server.
  * A Fetcher only works on one block (for one reducer) of file (specified by @startOffset and @totalLength)
- *
  */
 public class RemoteHTTPFetcher implements Runnable {
     private static final Logger logger = LogManager.getLogger();
@@ -34,7 +33,7 @@ public class RemoteHTTPFetcher implements Runnable {
     private final String blockId;
     String srcFilename;
     String dstFilename;
-    // FIXME use real IP addr!!!
+
     String dstIP;
     String srcIP = "localhost";
 
@@ -61,10 +60,10 @@ public class RemoteHTTPFetcher implements Runnable {
     public RemoteHTTPFetcher(FlowGroupInfo flowGroupInfo, ShuffleInfo.FlowInfo flowInfo, LinkedBlockingQueue<DataChunkMessage> dataQueue, String srcHostIP, String dstHostIP) {
         this.startOffset = flowInfo.getStartOffSet();
         this.totalLength = flowInfo.getFlowSize();
+        this.blockId = flowInfo.getReduceAttemptID();
 
         this.srcFilename = flowInfo.getDataFilename();
-        this.dstFilename = srcFilename; // use real name now!
-        this.blockId = flowInfo.getReduceAttemptID();
+        this.dstFilename = getDstFilename(srcFilename, blockId);
 //        this.dataQueue = dataQueue;
 
         this.srcIP = srcHostIP;
@@ -78,12 +77,13 @@ public class RemoteHTTPFetcher implements Runnable {
 
     /**
      * converts srcFilename into dstFilename
+     *
      * @param srcFilename
      * @param reduceAttemptID
      * @return dstFilename
      */
     private String getDstFilename(String srcFilename, String reduceAttemptID) {
-        String ret = srcFilename.substring(0, srcFilename.length() - 4) + "_" + reduceAttemptID + ".out";
+        String ret = srcFilename.substring(0, srcFilename.lastIndexOf('.')) + "-" + reduceAttemptID + ".data";
         return ret;
     }
 
@@ -110,7 +110,7 @@ public class RemoteHTTPFetcher implements Runnable {
             DataInputStream input = new DataInputStream(connection.getInputStream());
 
             // Get file length first
-            long filelength = connection.getHeaderFieldLong("x-FileLength" , 0);
+            long filelength = connection.getHeaderFieldLong("x-FileLength", 0);
 
             int total_bytes_sent = 0;
             while (true) {
@@ -129,8 +129,6 @@ public class RemoteHTTPFetcher implements Runnable {
 
 //            FetchData according to the totalRate
                 // check if 100 permits/s is enough (3200MByte/s enough?)
-
-
 
 
                 if (cur_rate / 1024 / 1024 < (Constants.BLOCK_SIZE_MB * Constants.DEFAULT_TOKEN_RATE)) {
@@ -157,7 +155,7 @@ public class RemoteHTTPFetcher implements Runnable {
                 try {
 
                     input.readFully(buf, 0, data_length);
-                } catch (EOFException e){
+                } catch (EOFException e) {
                     logger.info("Reading EOF from {}, NOP", srcFilename);
 //                    setFinished();
                     // Not setting finished
@@ -194,7 +192,7 @@ public class RemoteHTTPFetcher implements Runnable {
                     }
 
                     // First chunk and other chunks are essientially the same (async)
-                    DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, blockId, (startOffset + total_bytes_sent), totalLength, filelength, chunkBuf);
+                    DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, blockId, (total_bytes_sent), totalLength, 0, chunkBuf);
                     agentSharedData.workerQueues.get(faID)[pathID].put(new CTRL_to_WorkerMsg(dm));
 
                     total_bytes_sent += thisChunkSize;
