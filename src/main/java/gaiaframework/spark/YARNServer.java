@@ -8,6 +8,7 @@ import gaiaframework.util.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.sound.midi.SysexMessage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -160,6 +161,8 @@ public class YARNServer extends GaiaAbstractServer {
 
     private void SCPTransferFiles_Serial(HashMap<String, FlowGroup> fgsToSCP) throws InterruptedException {
 
+        long startTime = System.currentTimeMillis();
+
         // Create a list of cmds;
         List<String> cmds = new ArrayList<>();
         for (FlowGroup fg : fgsToSCP.values()) {
@@ -195,7 +198,7 @@ public class YARNServer extends GaiaAbstractServer {
             }
         }
 
-        logger.info("SCP file transfer finished");
+        logger.info("SCP file transfer finished, took {} ms", (System.currentTimeMillis() - startTime));
 
         /*for (String cmd : cmds) {
             Process p = null;
