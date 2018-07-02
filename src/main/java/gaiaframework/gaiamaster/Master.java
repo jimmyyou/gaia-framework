@@ -30,6 +30,7 @@ public class Master {
     private final Configuration config;
     private final CoflowScheduler scheduler;
     private final boolean is_SettingFlowRules;
+    private final boolean isDebugMode;
 
     NetGraph netGraph;
 
@@ -84,12 +85,13 @@ public class Master {
     }
 
     public Master(String gml_file, String trace_file, String scheduler_type, String outdir, String configFile,
-                  double bw_factor, boolean isRunningOnList, boolean isSettingFlowRules) throws IOException {
+                  double bw_factor, boolean isRunningOnList, boolean isSettingFlowRules, boolean isDebugMode) throws IOException {
 
         this.outdir = outdir;
         this.netGraph = new NetGraph(gml_file , bw_factor );
         this.rpcClientHashMap = new HashMap<>();
         this.is_SettingFlowRules = isSettingFlowRules;
+        this.isDebugMode = isDebugMode;
 
         printPaths(netGraph);
         if(configFile == null){
@@ -209,7 +211,7 @@ public class Master {
         ScheduledFuture<?> mainHandler = mainExec.scheduleAtFixedRate(runSchedule, 0, Constants.SCHEDULE_INTERVAL_MS, MILLISECONDS);
 
         // Start the input
-        yarnServer = new YARNServer(config, Constants.DEFAULT_YARN_PORT, coflowEventQueue);
+        yarnServer = new YARNServer(config, Constants.DEFAULT_YARN_PORT, coflowEventQueue, isDebugMode);
         try {
             yarnServer.start();
         } catch (IOException e) {

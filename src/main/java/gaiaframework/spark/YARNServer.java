@@ -19,13 +19,15 @@ import java.util.stream.Collectors;
 public class YARNServer extends GaiaAbstractServer {
 
     private static final Logger logger = LogManager.getLogger();
+    private final boolean isDebugMode;
     LinkedBlockingQueue<Coflow> cfQueue;
     Configuration configuration;
 
-    public YARNServer(Configuration config, int port, LinkedBlockingQueue<Coflow> coflowQueue) {
+    public YARNServer(Configuration config, int port, LinkedBlockingQueue<Coflow> coflowQueue, boolean isDebugMode) {
         super(port);
         this.cfQueue = coflowQueue;
         this.configuration = config;
+        this.isDebugMode = isDebugMode;
     }
 
     @Override
@@ -81,6 +83,15 @@ public class YARNServer extends GaiaAbstractServer {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+
+        if(isDebugMode) {
+            System.out.println("Finished Shuffle, continue?");
+            try {
+                System.in.read();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
     }

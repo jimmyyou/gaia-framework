@@ -15,6 +15,7 @@ public class TerraMaster {
     public static boolean is_emulation_ = false;
     private static boolean isRunningOnList = false;
     private static boolean isSettingFlowRules = false;
+    private static boolean isDebugMode = false;
 
     public static double SCALE_FACTOR = 1.0; // default value, used by DAGReader.java
     private static final Logger logger = LogManager.getLogger();
@@ -49,53 +50,51 @@ public class TerraMaster {
             isRunningOnList = true;
         }
 
+        if (cmd.hasOption('d')) {
+            isDebugMode = true;
+        }
+
         if (cmd.hasOption("g")) {
             args_map.put("gml", cmd.getOptionValue("g"));
-        }
-        else {
+        } else {
             System.out.println("ERROR: Must specify a path to a gml file using the -g flag");
             System.exit(1);
         }
 
-        if (cmd.hasOption("p")){
+        if (cmd.hasOption("p")) {
             System.out.println("Flow rules not set, we are setting flow rules this time");
             isSettingFlowRules = true;
-        }
-        else {
+        } else {
             logger.warn("Assuming flow rules has been set");
         }
 
         if (cmd.hasOption("j")) {
             args_map.put("trace", cmd.getOptionValue("j"));
-        }
-        else if (!cmd.hasOption('e')){ // if provided -e, no need for the trace.
+        } else if (!cmd.hasOption('e')) { // if provided -e, no need for the trace.
             System.out.println("ERROR: Must specify a path to a trace file using the -j flag");
             System.exit(1);
         }
 
         if (cmd.hasOption("s")) {
             args_map.put("scheduler", cmd.getOptionValue("s"));
-        }
-        else {
+        } else {
             System.out.println("ERROR: Must specify a scheduler {baseline, recursive-remain-flow} using the -s flag");
             System.exit(1);
         }
 
         if (cmd.hasOption("o")) {
             args_map.put("outdir", cmd.getOptionValue("o"));
-        }
-        else {
+        } else {
             args_map.put("outdir", "/tmp");
         }
 
-        if (cmd.hasOption("c")){
-            args_map.put("config" , cmd.getOptionValue("c"));
-        }
-        else {
-            args_map.put("config" , null);
+        if (cmd.hasOption("c")) {
+            args_map.put("config", cmd.getOptionValue("c"));
+        } else {
+            args_map.put("config", null);
         }
 
-        if (cmd.hasOption('w')){
+        if (cmd.hasOption('w')) {
             MASTER_SCALE_FACTOR = Double.parseDouble(cmd.getOptionValue('w'));
             System.out.println("Using master scaling factor = " + MASTER_SCALE_FACTOR);
         }
@@ -114,8 +113,7 @@ public class TerraMaster {
         HashMap<String, String> args_map = null;
         try {
             args_map = parse_cli(args);
-        }
-        catch (org.apache.commons.cli.ParseException e) {
+        } catch (org.apache.commons.cli.ParseException e) {
             e.printStackTrace();
             return;
         }
@@ -127,17 +125,15 @@ public class TerraMaster {
             logger.info("GAIA: finished copying the model..");
 
             Master m = new Master(args_map.get("gml"), args_map.get("trace"),
-                    args_map.get("scheduler"), args_map.get("outdir") , args_map.get("config"),
-                    Double.parseDouble(args_map.get("bw_factor")), isRunningOnList, isSettingFlowRules);
+                    args_map.get("scheduler"), args_map.get("outdir"), args_map.get("config"),
+                    Double.parseDouble(args_map.get("bw_factor")), isRunningOnList, isSettingFlowRules, isDebugMode);
 
             if (is_emulation_) {
                 m.emulate();
-            }
-            else {
+            } else {
                 m.simulate();
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
