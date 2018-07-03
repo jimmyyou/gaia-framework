@@ -202,7 +202,7 @@ public class AgentSharedData {
 
             if (infoMap.containsKey(fgID)) { // check whether this FlowGroup is in subscriptionMap.
                 infoMap.get(fgID).setRate(rate);
-                logger.error("DEBUG: this should not happen");
+                logger.error("FATAL: this should not happen");
             } else { // create this info
                 infoMap.put(fgID, new SubscriptionInfo(fgID, aggFlowGroups.get(fgID), rate));
             }

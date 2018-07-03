@@ -97,7 +97,7 @@ public class FileWriter implements Runnable {
         File datafile = new File(filename);
 
         if (datafile.exists()) {
-            logger.warn("File {} exists", filename);
+            logger.debug("File {} exists", filename);
 
             // TODO Then try opening the file
             FileBlockHandler fileBlockHandler = new FileBlockHandler(dataChunk);

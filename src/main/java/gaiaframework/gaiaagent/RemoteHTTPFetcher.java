@@ -236,7 +236,7 @@ public class RemoteHTTPFetcher implements Runnable {
 
                 // TODO why?
                 if (rateMap.size() > 1) {
-                    logger.error("rateMap should not be > 1!");
+                    logger.debug("rateMap should not be > 1!");
                 }
 
                 if (rateMap.containsKey(owningFlowGroupInfo.parentFlowInfo.ID)) {
