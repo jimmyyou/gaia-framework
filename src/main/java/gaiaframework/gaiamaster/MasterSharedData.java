@@ -35,7 +35,7 @@ public class MasterSharedData {
 
     // handles coflow finish.
     public synchronized boolean onFinishCoflow(String coflowID) {
-        System.out.println("Master: trying to finish Coflow: " + coflowID);
+        logger.info("Master: trying to finish Coflow {}", coflowID);
 
 
         // use the get and set method, to make sure that:

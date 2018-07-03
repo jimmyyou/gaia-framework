@@ -60,16 +60,18 @@ public class YARNServer extends GaiaAbstractServer {
 //            SCPTransferFiles(indexFiles);
                 return;
             } else {
-                // Submit small flows (index files) to master
-                Coflow cf = new Coflow(cfID, flowGroups, indexFiles);
+
+                if (indexFiles.size() != 0) {
+                    logger.warn("Received some index file, ignoring");
+                }
+
+                Coflow cf = new Coflow(cfID, flowGroups);
                 logger.info("YARN Server submitting CF: {}", cf.toPrintableString());
 
                 cfQueue.put(cf);
                 logger.info("Coflow submitted, Trapping into waiting for coflow to finish");
-
-                // TODO also handle small flows
-                cf.isSmallFlowDoneLatch.await();
                 cf.blockTillFinish();
+                logger.info("Received Coflow_FIN, returning to YARN");
             }
 
         } catch (InterruptedException e) {
