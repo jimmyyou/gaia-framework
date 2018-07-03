@@ -2,9 +2,8 @@ package gaiaframework.gaiamaster;
 
 // New definition of FlowGroup
 
-import edu.umich.gaialib.FlowInfo;
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
-import gaiaframework.network.FlowGroup_Old;
+import gaiaframework.network.FlowGroup_Old_Compressed;
 import gaiaframework.network.Pathway;
 import gaiaframework.util.Constants;
 
@@ -131,31 +130,31 @@ public class FlowGroup {
         return transmitted;
     }
 
-/*    public static FlowGroup_Old toFlowGroup_Old(FlowGroup fg, int intID) {
-        FlowGroup_Old fgo = new FlowGroup_Old(fg.getId(), intID,
+/*    public static FlowGroup_Old_Compressed toFlowGroup_Old(FlowGroup fg, int intID) {
+        FlowGroup_Old_Compressed fgo = new FlowGroup_Old_Compressed(fg.getId(), intID,
                 fg.getOwningCoflowID(), fg.getSrcLocation(), fg.getDstLocation(),
                 fg.getTotalVolume() - fg.getTransmitted(), fg.filename, fg.flowInfos);
 
-//        fgo.setVolume( fg.getTotalVolume()-fg.getTransmitted_agg() );
+//        fgo.setRemainingVolume( fg.getTotalVolume()-fg.getTransmitted_agg() );
 
         return fgo;
     }*/
 
     // newer version of converter
-    public FlowGroup_Old toFlowGroup_Old(int intID) {
-        FlowGroup_Old fgo = new FlowGroup_Old(this, intID);
+    public FlowGroup_Old_Compressed toFlowGroup_Old(int intID) {
+        FlowGroup_Old_Compressed fgo = new FlowGroup_Old_Compressed(this, intID);
 
         return fgo;
     }
 
-    public FlowGroup(FlowGroup_Old fgo) {
+/*    public FlowGroup(FlowGroup_Old_Compressed fgo) {
         this.id = fgo.getId();
         this.srcLocation = fgo.getSrc_loc();
         this.dstLocation = fgo.getDst_loc();
         this.owningCoflowID = fgo.getCoflow_id();
-        this.totalVolume = fgo.getVolume();
+        this.totalVolume = fgo.getRemainingVolume();
         this.transmitted = fgo.getTransmitted_volume();
-    }
+    }*/
 
     public long getStartTime() {
         return startTime;

@@ -8,8 +8,9 @@ import org.graphstream.graph.*;
 
 import gaiaframework.util.Constants;
 
-public class Pathway {
+public class Pathway implements Cloneable {
     public ArrayList<String> node_list = new ArrayList<String>();
+    private double bandwidth = 0.0;
 
     public double getBandwidth() {
         return bandwidth;
@@ -19,9 +20,8 @@ public class Pathway {
         this.bandwidth = bandwidth;
     }
 
-    private double bandwidth = 0.0;
-
-    public Pathway() {}
+    public Pathway() {
+    }
 
     public Pathway(Path p) {
         List<Node> path_nodes = p.getNodePath();
@@ -31,8 +31,8 @@ public class Pathway {
     }
 
     public Pathway(Pathway p) {
-        bandwidth = p.bandwidth;
-        node_list = new ArrayList<String>(p.node_list);
+        this.bandwidth = p.bandwidth;
+        node_list.addAll(p.node_list);
     }
 
     // Returns the first node in the node_list

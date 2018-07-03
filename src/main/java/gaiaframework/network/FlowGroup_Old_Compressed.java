@@ -1,20 +1,22 @@
 package gaiaframework.network;
 
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
+import gaiaframework.gaiamaster.Coflow;
 import gaiaframework.gaiamaster.FlowGroup;
 
 import java.util.ArrayList;
 import java.util.List;
 
 // This is actually a FlowGroup, owned by a CoFlow.
-public class FlowGroup_Old {
+public class FlowGroup_Old_Compressed {
     private String id;
     private int int_id;
     private String coflow_id; // id of owning coflow
     private String src_loc;
     private String dst_loc;
-    private double volume;
-    private double transmitted_volume;
+    private double remainingVolume;
+    @Deprecated
+    private double transmitted_volume; // It will always be zero
     private double rate; // in Mbps
     public ArrayList<Pathway> paths = new ArrayList<Pathway>();
     private boolean done = false;
@@ -28,16 +30,20 @@ public class FlowGroup_Old {
     public List<String> srcIPs;
     public List<String> dstIPs;
 
+    // TODO change this, after compression there is no single file
     private String filename;
 
+    public Coflow cf;
+    public List<FlowGroup> fgList;
+
     // New constructor
-    public FlowGroup_Old(FlowGroup fg, int intID) {
+    public FlowGroup_Old_Compressed(FlowGroup fg, int intID) {
         this.id = fg.getId();
         this.int_id = intID;
         this.coflow_id = fg.getOwningCoflowID();
         this.src_loc = fg.getSrcLocation();
         this.dst_loc = fg.getDstLocation();
-        this.volume = fg.getTotalVolume() - fg.getTransmitted();
+        this.remainingVolume = fg.getTotalVolume() - fg.getTransmitted();
         this.rate = (double)0.0;
         this.transmitted_volume = (double)0.0;
         this.flowState = FlowState.INIT;
@@ -62,26 +68,28 @@ public class FlowGroup_Old {
 
     private FlowState flowState;
 
-    public FlowGroup_Old(String id, int int_id, String coflow_id, String src_loc, String dst_loc, double volume) {
+    public FlowGroup_Old_Compressed(String id, int int_id, Coflow coflow, String src_loc, String dst_loc, double remainingVolume, List<FlowGroup> fgList) {
         this.id = id;
         this.int_id = int_id;
-        this.coflow_id = coflow_id;
+        this.cf = coflow;
+        this.coflow_id = coflow.getId();
         this.src_loc = src_loc;
         this.dst_loc = dst_loc;
-        this.volume = volume;
+        this.remainingVolume = remainingVolume;
         this.rate = (double)0.0;
         this.transmitted_volume = (double)0.0;
         this.flowState = FlowState.INIT;
+        this.fgList = fgList;
     }
 
-    public FlowGroup_Old(String id, int int_id, String coflow_id, String src_loc, String dst_loc, double volume,
-                         String filename, List<ShuffleInfo.FlowInfo> flowInfos) {
+    public FlowGroup_Old_Compressed(String id, int int_id, String coflow_id, String src_loc, String dst_loc, double remainingVolume,
+                                    String filename, List<ShuffleInfo.FlowInfo> flowInfos) {
         this.id = id;
         this.int_id = int_id;
         this.coflow_id = coflow_id;
         this.src_loc = src_loc;
         this.dst_loc = dst_loc;
-        this.volume = volume;
+        this.remainingVolume = remainingVolume;
         this.rate = (double)0.0;
         this.transmitted_volume = (double)0.0;
         this.flowState = FlowState.INIT;
@@ -89,8 +97,9 @@ public class FlowGroup_Old {
         this.flowInfos = flowInfos;
     }
 
+    @Deprecated // Use getRemainingVolume()
     public double remaining_volume() {
-        return volume - transmitted_volume;
+        return remainingVolume - transmitted_volume;
     }
 
     ////// getters and setters /////
@@ -134,12 +143,12 @@ public class FlowGroup_Old {
         this.dst_loc = dst_loc;
     }
 
-    public double getVolume() {
-        return volume;
+    public double getRemainingVolume() {
+        return remainingVolume;
     }
 
-    public void setVolume(double volume) {
-        this.volume = volume;
+    public void setRemainingVolume(double remainingVolume) {
+        this.remainingVolume = remainingVolume;
     }
 
     public double getTransmitted_volume() {
@@ -200,5 +209,5 @@ public class FlowGroup_Old {
 
     public FlowState getFlowState() { return flowState; }
 
-    public FlowGroup_Old setFlowState(FlowState flowState) { this.flowState = flowState; return this; }
+    public FlowGroup_Old_Compressed setFlowState(FlowState flowState) { this.flowState = flowState; return this; }
 };
