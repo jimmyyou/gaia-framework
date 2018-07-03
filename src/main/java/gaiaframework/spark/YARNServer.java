@@ -388,6 +388,7 @@ public class YARNServer extends GaiaAbstractServer {
         // use this method to remove co-located
         for (String key : coSiteFGs.keySet()) {
             outputFlowGroups.remove(key);
+            logger.warn("Removing co-sited FG {}", key);
         }
 
         return outputFlowGroups;
