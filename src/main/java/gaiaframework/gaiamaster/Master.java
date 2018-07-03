@@ -275,7 +275,7 @@ public class Master {
 
         long currentTime = System.currentTimeMillis();
         List<FlowGroup_Old_Compressed> scheduledFGOs = new ArrayList<>(0);
-        List<FlowGroup_Old_Compressed> FGOsToSend = new ArrayList<>();
+        List<FlowGroup_Old_Compressed> decompressedFGOsToSend = new ArrayList<>();
 
         // snapshoting and converting
         HashMap<String, Coflow_Old_Compressed> outcf = new HashMap<>();
@@ -309,8 +309,8 @@ public class Master {
             try {
                 scheduledFGOs = scheduler.scheduleRRF(currentTime);
 
-                FGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
-                sendControlMessages_Async(FGOsToSend);
+                decompressedFGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
+                sendControlMessages_Async(decompressedFGOsToSend);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -326,8 +326,8 @@ public class Master {
             try {
                 scheduledFGOs = scheduler.scheduleRRF(currentTime);
 
-                FGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
-                sendControlMessages_Async(FGOsToSend);
+                decompressedFGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
+                sendControlMessages_Async(decompressedFGOsToSend);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -342,8 +342,8 @@ public class Master {
             try {
                 scheduledFGOs = scheduler.scheduleRRF(currentTime);
 
-                FGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
-                sendControlMessages_Async(FGOsToSend);
+                decompressedFGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
+                sendControlMessages_Async(decompressedFGOsToSend);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -355,7 +355,7 @@ public class Master {
         long deltaTime = System.currentTimeMillis() - currentTime;
 
         StringBuilder fgoContent = new StringBuilder("\n");
-        for (FlowGroup_Old_Compressed fgo : FGOsToSend) {
+        for (FlowGroup_Old_Compressed fgo : decompressedFGOsToSend) {
             fgoContent.append(fgo.getId()).append(' ').append(fgo.paths).append(' ').append(fgo.getFlowState()).append('\n');
         }
         logger.info("schedule(): took {} ms. Active CF: {} Scheduled FG: {} FG content:{}", deltaTime, masterSharedData.coflowPool.size(), scheduledFGOs.size(), fgoContent);
@@ -368,9 +368,17 @@ public class Master {
         List<FlowGroup_Old_Compressed> fgoToSend = new ArrayList<>();
         HashMap<String, FlowGroup_Old_Compressed> fgoHashMap = new HashMap<>();
 
+        StringBuilder fgoContent = new StringBuilder("\n");
+        for (FlowGroup_Old_Compressed fgo : scheduledCompressedFGs) {
+            fgoContent.append(fgo.getId()).append(' ').append(fgo.paths).append(' ').append(fgo.getFlowState()).append('\n');
+        }
+        logger.info("FGOs to decomp {}",fgoContent);
+
         // first decompress convert List to hashMap
         int cnt = 0;
         for (FlowGroup_Old_Compressed fgo : scheduledCompressedFGs) {
+
+            logger.info("Decompressing {}", fgo);
 
             // decompress here
             for (FlowGroup decompressedFG : fgo.fgList) {
