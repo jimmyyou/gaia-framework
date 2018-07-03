@@ -379,7 +379,7 @@ public class YARNServer extends GaiaAbstractServer {
                 // Filter coSited flows
                 outputFlowGroups.put(fgID, fg);
             } else { // co-sited FGs
-                logger.warn("Got an co-sited flow");
+                logger.warn("Got an co-sited flow {} {}", fgID, fg.getFilename());
                 coSiteFGs.put(fgID, fg);
             }
 
