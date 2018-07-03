@@ -3,7 +3,6 @@ package gaiaframework.gaiaagent;
 // Similar to LocalFileReader, but use HTTP to fetch data instead
 // fetches from ShuffleHandler of Hadoop
 
-import com.google.common.primitives.Longs;
 import com.google.common.util.concurrent.RateLimiter;
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.transmission.DataChunkMessage;
@@ -13,19 +12,17 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.DataInputStream;
 import java.io.EOFException;
-import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * This is the fetcher thread that request file blocks from an HTTP server.
- * A Fetcher only works on one block (for one reducer) of file (specified by @startOffset and @totalLength)
+ * A Fetcher only works on one block (for one reducer) of file (specified by @startOffset and @totalBlockLength)
  */
 public class RemoteHTTPFetcher implements Runnable {
     private static final Logger logger = LogManager.getLogger();
@@ -43,7 +40,7 @@ public class RemoteHTTPFetcher implements Runnable {
 //    LinkedBlockingQueue<DataChunkMessage> dataQueue;
 
     long startOffset;
-    long totalLength;
+    long totalBlockLength;
 
     long readBytes = 0;
 
@@ -59,7 +56,7 @@ public class RemoteHTTPFetcher implements Runnable {
 
     public RemoteHTTPFetcher(FlowGroupInfo flowGroupInfo, ShuffleInfo.FlowInfo flowInfo, LinkedBlockingQueue<DataChunkMessage> dataQueue, String srcHostIP, String dstHostIP) {
         this.startOffset = flowInfo.getStartOffSet();
-        this.totalLength = flowInfo.getFlowSize();
+        this.totalBlockLength = flowInfo.getFlowSize();
         this.blockId = flowInfo.getReduceAttemptID();
 
         this.srcFilename = flowInfo.getDataFilename();
@@ -110,7 +107,7 @@ public class RemoteHTTPFetcher implements Runnable {
             DataInputStream input = new DataInputStream(connection.getInputStream());
 
             // Get file length first
-            long filelength = connection.getHeaderFieldLong("x-FileLength", 0);
+//            long filelength = connection.getHeaderFieldLong("x-FileLength", 0);
 
             int total_bytes_sent = 0;
             while (true) {
@@ -147,8 +144,8 @@ public class RemoteHTTPFetcher implements Runnable {
 
                 // see if we can read any more bytes?
 
-                if (data_length + total_bytes_sent > totalLength) {
-                    data_length = (int) (totalLength - total_bytes_sent);
+                if (data_length + total_bytes_sent > totalBlockLength) {
+                    data_length = (int) (totalBlockLength - total_bytes_sent);
                 }
 
                 byte[] buf = new byte[data_length];
@@ -192,18 +189,18 @@ public class RemoteHTTPFetcher implements Runnable {
                     }
 
                     // First chunk and other chunks are essientially the same (async)
-                    DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, blockId, (total_bytes_sent), totalLength, 0, chunkBuf);
+                    DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, blockId, (total_bytes_sent), totalBlockLength, 0, chunkBuf);
                     agentSharedData.workerQueues.get(faID)[pathID].put(new CTRL_to_WorkerMsg(dm));
 
                     total_bytes_sent += thisChunkSize;
                     cur_bytes_sent += thisChunkSize;
 
-                    logger.info("Sent {} for {}, fileLength {}", total_bytes_sent, dstFilename, filelength);
+//                    logger.info("Sent {} for {}, fileLength {}", total_bytes_sent, dstFilename, filelength);
 
                 }
 
                 transmit(data_length);
-                if (total_bytes_sent >= totalLength) {
+                if (total_bytes_sent >= totalBlockLength) {
                     setFinished();
                     logger.info("Finished sending for {}", srcFilename);
                     break;
@@ -262,7 +259,7 @@ public class RemoteHTTPFetcher implements Runnable {
     private URL getURL() {
 //        http://localhost:20020/home/jimmy/Downloads/profile.xml?start=0&len=5
         StringBuilder str_url = new StringBuilder("http://").append(srcIP).append(':').append(Constants.DEFAULT_HTTP_SERVER_PORT)
-                .append(srcFilename).append("?start=").append(startOffset).append("&len=").append(totalLength);
+                .append(srcFilename).append("?start=").append(startOffset).append("&len=").append(totalBlockLength);
 
         try {
             URL url = new URL(str_url.toString());
