@@ -372,13 +372,13 @@ public class Master {
         for (FlowGroup_Old_Compressed fgo : scheduledCompressedFGs) {
             fgoContent.append(fgo.getId()).append(' ').append(fgo.paths).append(' ').append(fgo.getFlowState()).append('\n');
         }
-        logger.info("FGOs to decomp {}",fgoContent);
+        logger.debug("FGOs to decomp {}",fgoContent);
 
         // first decompress convert List to hashMap
         int cnt = 0;
         for (FlowGroup_Old_Compressed fgo : scheduledCompressedFGs) {
 
-            logger.info("Decompressing {}", fgo);
+            logger.debug("Decompressing {}", fgo);
 
             // decompress here
             for (FlowGroup decompressedFG : fgo.fgList) {
@@ -393,7 +393,7 @@ public class Master {
                     decompressedPathway.setBandwidth(p.getBandwidth() * ratio);
                     fgo_decompressed.paths.add(decompressedPathway);
                 }
-                logger.info("Decompress: {} has {} of {}, paths: {}", decompressedFG.getId(), ratio, fgo.getId(), fgo_decompressed.paths);
+                logger.debug("Decompress: {} has {} of {}, paths: {}", decompressedFG.getId(), ratio, fgo.getId(), fgo_decompressed.paths);
 
 //                fgoHashMap.put(fgo.getId(), fgo);
                 fgoHashMap.put(decompressedFG.getId(), fgo_decompressed);
