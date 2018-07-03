@@ -68,9 +68,8 @@ public class Master {
 
                         masterSharedData.addCoflow(cfID, cf);
                         masterSharedData.flag_CF_ADD = true;
-
-                        // TODO handle small flows
-                        submitSmallFlows(cf);
+                        
+//                        submitSmallFlows(cf);
                     } else {
                         logger.info("Coflow {} can't meet deadline, aborting", cfID);
 
@@ -92,6 +91,8 @@ public class Master {
      * @param coflow
      */
     private void submitSmallFlows(Coflow coflow) {
+
+        if (coflow.smallFlows == null || coflow.smallFlows.size() == 0) return;
 
         for (FlowGroup smallfg : coflow.smallFlows.values()) {
 
