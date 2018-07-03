@@ -73,7 +73,6 @@ message FlowUpdate {
         //        map <int32, double> pathToRate = 3;
         //        string filename = 5;
 
-        // TODO add IP information
         repeated ShuffleInfo.FlowInfo flowInfos = 5;
         repeated string srcIP = 6;
         repeated string dstIP = 7;

@@ -58,10 +58,10 @@ public class Constants {
 
     public static HashMap<String, String> node_id_to_trace_id;
 
-    // Return the id of the job owning the Stage, Coflow_Old, or FlowGroup
+    // Return the id of the job owning the Stage, Coflow_Old_Compressed, or FlowGroup
     // identified by id.
     public static String get_job_id(String id) {
-        // Stage, Coflow_Old, and FlowGroup ids begin in the form <job_id>:
+        // Stage, Coflow_Old_Compressed, and FlowGroup ids begin in the form <job_id>:
         return id.split(":")[0];
     }
 

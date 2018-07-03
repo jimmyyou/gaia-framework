@@ -3,7 +3,7 @@ package gaiaframework.gaiamaster;
 
 import gaiaframework.gaiaprotos.GaiaMessageProtos;
 import gaiaframework.gaiaprotos.SendingAgentServiceGrpc;
-import gaiaframework.network.FlowGroup_Old;
+import gaiaframework.network.FlowGroup_Old_Compressed;
 import gaiaframework.network.NetGraph;
 import gaiaframework.network.Pathway;
 import io.grpc.ManagedChannel;
@@ -79,7 +79,7 @@ public class MasterRPCClient {
         return blockingStub.prepareConnections(req);
     }
 
-    public void setFlow(Collection<FlowGroup_Old> fgos, NetGraph ng, String saID) {
+    public void setFlow(Collection<FlowGroup_Old_Compressed> fgos, NetGraph ng, String saID) {
 
         GaiaMessageProtos.FlowUpdate fum = buildFUM(fgos, ng, saID);
         logger.info("Built the FUM\n {}", fum);
@@ -122,36 +122,36 @@ public class MasterRPCClient {
         asyncStub.fetchSmallFlow(sfb.build(), SmallFlowReqObserver);
     }
 
-    public GaiaMessageProtos.FlowUpdate buildFUM(Collection<FlowGroup_Old> fgos, NetGraph ng, String saID) {
+    public GaiaMessageProtos.FlowUpdate buildFUM(Collection<FlowGroup_Old_Compressed> fgos, NetGraph ng, String saID) {
 
         GaiaMessageProtos.FlowUpdate.Builder fumBuilder = GaiaMessageProtos.FlowUpdate.newBuilder();
 
         // first sort all fgos according to the RA.
-        Map<String, List<FlowGroup_Old>> fgobyRA = fgos.stream().collect(Collectors.groupingBy(FlowGroup_Old::getDst_loc));
+        Map<String, List<FlowGroup_Old_Compressed>> fgobyRA = fgos.stream().collect(Collectors.groupingBy(FlowGroup_Old_Compressed::getDst_loc));
 
-        for (Map.Entry<String, List<FlowGroup_Old>> entrybyRA : fgobyRA.entrySet()) {
+        for (Map.Entry<String, List<FlowGroup_Old_Compressed>> entrybyRA : fgobyRA.entrySet()) {
 
 //            String raID = entrybyRA.getKey();
 
             GaiaMessageProtos.FlowUpdate.RAUpdateEntry.Builder raueBuilder = GaiaMessageProtos.FlowUpdate.RAUpdateEntry.newBuilder();
             raueBuilder.setRaID(entrybyRA.getKey());
 
-            for (FlowGroup_Old fgo : entrybyRA.getValue()) { // for each FGO of this RA, we create an FlowUpdateEntry
+            for (FlowGroup_Old_Compressed fgo : entrybyRA.getValue()) { // for each FGO of this RA, we create an FlowUpdateEntry
                 assert (saID.equals(fgo.getSrc_loc()));
                 String fgoID = fgo.getId();
 
                 GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Builder fueBuilder = GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.newBuilder();
                 fueBuilder.setFlowID(fgoID);
 
-                if (fgo.getFlowState() == FlowGroup_Old.FlowState.INIT) {
+                if (fgo.getFlowState() == FlowGroup_Old_Compressed.FlowState.INIT) {
                     logger.error("ERROR: FUM message contains flows that have not been scheduled");
                     continue;
-                } else if (fgo.getFlowState() == FlowGroup_Old.FlowState.PAUSING) {
+                } else if (fgo.getFlowState() == FlowGroup_Old_Compressed.FlowState.PAUSING) {
                     fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.PAUSE);
-                } else if (fgo.getFlowState() == FlowGroup_Old.FlowState.STARTING ||
-                        fgo.getFlowState() == FlowGroup_Old.FlowState.CHANGING) { // STARTING && CHANGING
+                } else if (fgo.getFlowState() == FlowGroup_Old_Compressed.FlowState.STARTING ||
+                        fgo.getFlowState() == FlowGroup_Old_Compressed.FlowState.CHANGING) { // STARTING && CHANGING
 
-                    if (fgo.getFlowState() == FlowGroup_Old.FlowState.STARTING) {
+                    if (fgo.getFlowState() == FlowGroup_Old_Compressed.FlowState.STARTING) {
                         fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.START);
 
                         // This is not the list of filenames, so should not be used here.

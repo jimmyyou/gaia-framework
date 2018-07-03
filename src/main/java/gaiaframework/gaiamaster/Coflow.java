@@ -2,16 +2,18 @@ package gaiaframework.gaiamaster;
 
 // The new coflow definition. used by GAIA master, YARN emulator etc.
 
-import gaiaframework.network.Coflow_Old;
-import gaiaframework.network.FlowGroup_Old;
+import gaiaframework.network.Coflow_Old_Compressed;
+import gaiaframework.network.FlowGroup_Old_Compressed;
 import gaiaframework.util.Constants;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 
 public class Coflow {
     // final fields
@@ -70,32 +72,61 @@ public class Coflow {
     // TODO verify the two converters
     // converter between Old Coflow and new coflow, for use by Scheduler.
     // scheduler takes in ID, flowgroups (with IntID, srcLoc, dstLoc, volume remain.)
-    public static Coflow_Old toCoflow_Old_with_Trimming(Coflow cf) {
-        Coflow_Old ret = new Coflow_Old(cf.getId(), new String[]{"null"}); // location not specified here.
+    public static Coflow_Old_Compressed toCoflow_Old_Compressed_with_Trimming(Coflow cf) {
+        Coflow_Old_Compressed ret = new Coflow_Old_Compressed(cf.getId(), new String[]{"null"}); // location not specified here.
 
-        HashMap<String, FlowGroup_Old> flows = new HashMap<String, FlowGroup_Old>();
+        HashMap<String, FlowGroup_Old_Compressed> flows = new HashMap<String, FlowGroup_Old_Compressed>();
+        List<FlowGroup> fgToCompress = new LinkedList<>();
 
         int cnt = 0;
         for (FlowGroup fg : cf.getFlowGroups().values()) {
             if (fg.isFinished() || fg.getTransmitted() + Constants.DOUBLE_EPSILON >= fg.getTotalVolume()) {
-                continue;                // Trim the Coflow_Old, so we don't schedule FGs that are already finished.
+                continue;                // Trim the Coflow_Old_Compressed, so we don't schedule FGs that are already finished.
             }
 
-//            FlowGroup_Old fgo = FlowGroup.toFlowGroup_Old(fg, (cnt++));
-            FlowGroup_Old fgo = fg.toFlowGroup_Old((cnt++));
-            flows.put(fg.getId(), fgo);
+            fgToCompress.add(fg);
+
         }
 
-        ret.flows = flows;
+        Map<FlowGroup_Old_Compressed, List<FlowGroup>> compressedListMap = new HashMap<>();
+        Map<String, List<FlowGroup>> fgbySrcLoc = fgToCompress.stream().collect(Collectors.groupingBy(FlowGroup::getSrcLocation));
 
+        for (Map.Entry<String, List<FlowGroup>> fgSrcE : fgbySrcLoc.entrySet()) {
+            String srcLoc = fgSrcE.getKey();
+
+            Map<String, List<FlowGroup>> fgSrcEbyDstLoc = fgSrcE.getValue().stream().collect(Collectors.groupingBy(FlowGroup::getDstLocation));
+
+            for (Map.Entry<String, List<FlowGroup>> fge : fgSrcEbyDstLoc.entrySet()) {
+                String dstLoc = fge.getKey();
+                List<FlowGroup> fgeList = fge.getValue();
+
+                if (!fgeList.isEmpty()) {
+                    double totalVolume = fgeList.stream().mapToDouble(FlowGroup::getTotalVolume).sum();
+                    String fgoID = cf.id + "_" + cnt;
+
+//                    String id, int int_id, String coflow_id, String src_loc, String dst_loc, double volume
+                    FlowGroup_Old_Compressed fgo = new FlowGroup_Old_Compressed(fgoID, cnt, cf, srcLoc, dstLoc, totalVolume, fgeList);
+
+                    compressedListMap.put(fgo, fgeList);
+                    flows.put(fgoID, fgo);
+
+                    cnt++;
+                }
+            }
+        }
+
+//        FlowGroup_Old_Compressed fgo = fg.toFlowGroup_Old((cnt++));
+//        flows.put(fg.getId(), fgo);
+
+        ret.flows = flows;
         ret.ddl_Millis = cf.ddl_Millis;
 
         return ret;
     }
-/*    public Coflow (Coflow_Old cfo){
+/*    public Coflow (Coflow_Old_Compressed cfo){
         this.id = cfo.id;
         this.aggFlowGroups = new HashMap<String , FlowGroup>();
-        for(Map.Entry<String, FlowGroup_Old> entry : cfo.flows.entrySet()){
+        for(Map.Entry<String, FlowGroup_Old_Compressed> entry : cfo.flows.entrySet()){
             FlowGroup fg = new FlowGroup(entry.getValue());
             aggFlowGroups.put( fg.getId() , fg);
         }

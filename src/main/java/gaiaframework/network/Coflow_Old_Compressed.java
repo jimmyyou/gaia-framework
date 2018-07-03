@@ -6,14 +6,14 @@ import java.util.HashMap;
 // A coflow represents a (set of) shuffles within a job. It is one or more edges within a DAG.
 // It is defined as a set of shuffles with a common destination stage.
 // We use the destination stage as an anchor(key) for this coflow.
-public class Coflow_Old {
+public class Coflow_Old_Compressed {
 
     public int ddl_Millis = -1;
 
     public String getId() { return id; }
 
     public String id;
-    public HashMap<String, FlowGroup_Old> flows = new HashMap<String, FlowGroup_Old>();
+    public HashMap<String, FlowGroup_Old_Compressed> flows = new HashMap<String, FlowGroup_Old_Compressed>();
     public double volume_ = 0.0;
     public long start_timestamp = -1;
 
@@ -46,21 +46,21 @@ public class Coflow_Old {
 
     // Coflows that this coflow depends on (must complete before this
     // coflow starts).
-    public ArrayList<Coflow_Old> child_coflows = new ArrayList<Coflow_Old>();
+    public ArrayList<Coflow_Old_Compressed> child_coflows = new ArrayList<Coflow_Old_Compressed>();
 
     // Coflows which depend on this Coflow (this Coflow must complete
     // before parent Coflows start).
-    public ArrayList<Coflow_Old> parent_coflows = new ArrayList<Coflow_Old>();
+    public ArrayList<Coflow_Old_Compressed> parent_coflows = new ArrayList<Coflow_Old_Compressed>();
 
     // The volume to be shuffled to parent coflow, keyed by parent coflow id
     public HashMap<String, Double> volume_for_parent = new HashMap<String, Double>();
 
-    public Coflow_Old(String id, String[] task_locs) {
+    public Coflow_Old_Compressed(String id, String[] task_locs) {
         this.id = id;
         task_locs_ = task_locs;
     }
 
-    public void create_flows() {
+/*    public void create_flows() {
         volume_ = 0.0;
 
         String flow_id_prefix = id + ":";
@@ -68,7 +68,7 @@ public class Coflow_Old {
 
         // This shuffle transmits data to other tasks in the DAG. Tasks are
         // grouped together into the shuffles resulting from them.
-        for (Coflow_Old child : child_coflows) {
+        for (Coflow_Old_Compressed child : child_coflows) {
 
             // A child will have tasks in multiple locations. We assume that
             // there is one flow between each pair of locations within our
@@ -85,7 +85,7 @@ public class Coflow_Old {
                     // transmission is needed, so we don't create a flow.
                     if (src_loc != dst_loc) {
                         String flow_id = flow_id_prefix + flow_id_suffix;
-                        flows.put(flow_id, new FlowGroup_Old(flow_id, flow_id_suffix, id, src_loc, dst_loc, volume_per_flow));
+                        flows.put(flow_id, new FlowGroup_Old_Compressed(flow_id, flow_id_suffix, id, src_loc, dst_loc, volume_per_flow));
 //                        System.out.println("CoFlow: created flow id: " + flow_id + " owned by coflow id: " + id + " with volume " + volume_per_flow);
                         volume_ += volume_per_flow;
                         flow_id_suffix++;
@@ -100,7 +100,7 @@ public class Coflow_Old {
 
         } // for child_coflows_
 
-    }
+    }*/
 
     // Sets the coflow's start time to be that of the earliest starting flow.
     // Assumes all flows are done.
@@ -108,7 +108,7 @@ public class Coflow_Old {
         // TODO: what if there are no flows. creating a new function.
         start_timestamp = Long.MAX_VALUE;
         for (String k : flows.keySet()) {
-            FlowGroup_Old f = flows.get(k);
+            FlowGroup_Old_Compressed f = flows.get(k);
             if (f.getStart_timestamp() < start_timestamp) {
                 start_timestamp = f.getStart_timestamp();
             }
@@ -136,7 +136,7 @@ public class Coflow_Old {
     // Returns whether the Coflow can begin or not. A Coflow can begin
     // only if all of the Coflows on which it depends have completed.
     public boolean ready() {
-        for (Coflow_Old s : child_coflows) {
+        for (Coflow_Old_Compressed s : child_coflows) {
             if (!s.done) {
                 return false;
             }
@@ -149,10 +149,10 @@ public class Coflow_Old {
         StringBuilder sb = new StringBuilder();
 
         sb.append(this.id).append(' ').append(this.volume_).append('\n');
-        for(FlowGroup_Old fgo : this.flows.values()){
+        for(FlowGroup_Old_Compressed fgo : this.flows.values()){
 
             sb.append(fgo.getId()).append(' ');
-            sb.append(fgo.remaining_volume()).append(' ');
+            sb.append(fgo.getRemainingVolume()).append(' ');
             sb.append(fgo.getFilename()).append('\n');
         }
 
