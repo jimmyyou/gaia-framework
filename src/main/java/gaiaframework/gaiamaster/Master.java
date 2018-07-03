@@ -385,12 +385,12 @@ public class Master {
 
                 FlowGroup_Old_Compressed fgo_decompressed = decompressedFG.toFlowGroup_Old(cnt++);
                 double ratio = (decompressedFG.getTotalVolume() - decompressedFG.getTransmitted()) / fgo.getRemainingVolume();
-                logger.info("Decompress: {} has {} of {}", decompressedFG.getId(), ratio, fgo.getId());
 
                 fgo_decompressed.paths = (ArrayList<Pathway>) fgo.paths.clone();
                 for (Pathway p : fgo_decompressed.paths) {
                     p.setBandwidth(p.getBandwidth() * ratio);
                 }
+                logger.info("Decompress: {} has {} of {}, paths: {}", decompressedFG.getId(), ratio, fgo.getId(), fgo_decompressed.paths);
 
 //                fgoHashMap.put(fgo.getId(), fgo);
                 fgoHashMap.put(decompressedFG.getId(), fgo_decompressed);
