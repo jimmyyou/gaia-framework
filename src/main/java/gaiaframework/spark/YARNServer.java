@@ -55,7 +55,7 @@ public class YARNServer extends GaiaAbstractServer {
         try {
 
             if (flowGroups.size() == 0) {
-                logger.error("FATAL: CF {} is empty, skipping", cfID);
+                logger.error("FATAL: CF {} is empty, skipping and returning to YARN", cfID);
                 // TODO Check this in the future, should not happen.
                 SCPTransferFiles_Serial(indexFiles);
 //            SCPTransferFiles(indexFiles);

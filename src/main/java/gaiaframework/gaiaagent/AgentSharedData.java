@@ -186,6 +186,8 @@ public class AgentSharedData {
     // maintains AggFlowGroupInfo + FlowGroupInfo + WorkerInfo
     // FIXME haven't changed yet. may not need changing.
     private void addAllSubscription(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fue, AggFlowGroupInfo aggFlowGroupInfo) {
+
+        // For each path, get its rate.
         for (gaiaframework.gaiaprotos.GaiaMessageProtos.FlowUpdate.PathRateEntry pathToRate : fue.getPathToRateList()) {
 
             int pathID = pathToRate.getPathID();
@@ -201,8 +203,9 @@ public class AgentSharedData {
             aggFlowGroupInfo.addWorkerInfo(faID, pathID, rate);  // reverse look-up ArrayList
 
             if (infoMap.containsKey(fgID)) { // check whether this FlowGroup is in subscriptionMap.
+                logger.warn("WARNSetting fg {} rate {}, previous {}", fgID, rate, infoMap.get(fgID).getRate());
                 infoMap.get(fgID).setRate(rate);
-                logger.error("FATAL: this should not happen");
+//                logger.error("FATAL: this should not happen");
             } else { // create this info
                 infoMap.put(fgID, new SubscriptionInfo(fgID, aggFlowGroups.get(fgID), rate));
             }
