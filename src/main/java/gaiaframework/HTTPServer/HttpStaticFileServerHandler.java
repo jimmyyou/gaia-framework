@@ -104,7 +104,6 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         QueryStringDecoder decoder = new QueryStringDecoder(uri_raw);
 
         String path_raw = decoder.path();
-        System.out.println("request uri: " + uri_raw + " path: " + path_raw);
 
         long startOffset = -1;
         long length = -1;
@@ -126,7 +125,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
             return;
         }
 
-        logger.info("Query has off = {}, len = {}", startOffset, length);
+        logger.info("Query has path = {}, off = {}, len = {}", path_raw, startOffset, length);
 
         final String path = sanitizeUri(path_raw);
         if (path == null) {
@@ -230,15 +229,15 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
             @Override
             public void operationProgressed(ChannelProgressiveFuture future, long progress, long total) {
                 if (total < 0) { // total unknown
-                    System.out.println(future.channel() + " Transfer progress: " + progress);
+                    logger.debug(future.channel() + " Transfer progress: " + progress);
                 } else {
-                    System.out.println(future.channel() + " Transfer progress: " + progress + " / " + total);
+                    logger.debug(future.channel() + " Transfer progress: " + progress + " / " + total);
                 }
             }
 
             @Override
             public void operationComplete(ChannelProgressiveFuture future) {
-                System.out.println(future.channel() + " Transfer complete.");
+                logger.info(future.channel() + " Transfer complete.");
             }
         });
 
