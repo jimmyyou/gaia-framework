@@ -76,7 +76,6 @@ public class FileWriter implements Runnable {
                 boolean isFinished = fileBlockHandler.writeDataAndCheck(dataChunk);
 
                 if (isFinished) {
-                    logger.info("File-block {} finished", handlerId);
                     activeFileBlocks.remove(handlerId);
                 }
 

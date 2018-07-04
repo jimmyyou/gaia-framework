@@ -163,6 +163,7 @@ public class FileBlockHandler {
     }
 
     private void finishAndClose() throws IOException {
+        logger.info("Finishing FileBlock {}", this.filename);
         dataFile.close();
     }
 
