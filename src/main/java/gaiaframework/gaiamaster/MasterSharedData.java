@@ -5,6 +5,7 @@ import gaiaframework.spark.YARNMessages;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -16,6 +17,7 @@ public class MasterSharedData {
     // index for searching flowGroup in this data structure.
     // only need to add entry, no need to delete entry. TODO verify this.
     private volatile ConcurrentHashMap<String, Coflow> flowIDtoCoflow;
+    volatile ConcurrentHashMap<String, Coflow> fileNametoCoflow;
 
     volatile boolean flag_CF_ADD = false;
     volatile boolean flag_CF_FIN = false;
@@ -57,6 +59,9 @@ public class MasterSharedData {
         // first add index
         for (FlowGroup fg : cf.getFlowGroups().values()) {
             flowIDtoCoflow.put(fg.getId(), cf);
+
+            // Duplicate key is OK because we will check it.
+            fileNametoCoflow.put(fg.getFilename(), cf);
         }
         //  then add coflow
         coflowPool.put(id, cf);
@@ -75,6 +80,7 @@ public class MasterSharedData {
     public MasterSharedData() {
         this.coflowPool = new ConcurrentHashMap<>();
         this.flowIDtoCoflow = new ConcurrentHashMap<>();
+        this.fileNametoCoflow = new ConcurrentHashMap<>();
     }
 
     public void onFinishFlowGroup(String fid, long timestamp) {
@@ -133,23 +139,5 @@ public class MasterSharedData {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    /**
-     * Invoked when File Transfer of a fg is finished, search for the fg and invoke fg finish.
-     *
-     * @param filename
-     */
-    synchronized void onFileFinish(String filename) {
-        int off1 = filename.lastIndexOf('-');
-        int off2 = filename.lastIndexOf('.');
-        String reducerID = filename.substring(off1 + 1, off2);
-        String origFilename = filename.substring(0, off1).concat(".data");
-
-        // TODO Find the FG in the CFPool and then
-
-        // TODO create a new RPCClient in Receiving Agent to notify the Master of the File Transfer finish
-
-
     }
 }

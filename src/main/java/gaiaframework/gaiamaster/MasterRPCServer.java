@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.util.Map;
 
 public class MasterRPCServer {
     private static final Logger logger = LogManager.getLogger();
@@ -104,15 +105,14 @@ public class MasterRPCServer {
                                io.grpc.stub.StreamObserver<gaiaframework.gaiaprotos.GaiaMessageProtos.FlowStatus_ACK> responseObserver) {
 
             handleFinishFile(request);
-
-            responseObserver.onNext(GaiaMessageProtos.FlowStatus_ACK.getDefaultInstance());
+//            responseObserver.onNext(GaiaMessageProtos.FlowStatus_ACK.getDefaultInstance());
             responseObserver.onCompleted();
         }
 
     } // End of MasterServiceImpl
 
     private void handleFinishFile(GaiaMessageProtos.FileFinishMsg request) {
-        masterSharedData.onFileFinish(request.getFilename());
+        onFileFinish(request.getFilename());
 
     }
 
@@ -138,21 +138,20 @@ public class MasterRPCServer {
 //        }
     }
 
-    public void handleFlowStatusReport(GaiaMessageProtos.FlowStatusReport statusReport){
+    public void handleFlowStatusReport(GaiaMessageProtos.FlowStatusReport statusReport) {
 
-        for ( GaiaMessageProtos.FlowStatusReport.FlowStatus status : statusReport.getStatusList()) {
+        for (GaiaMessageProtos.FlowStatusReport.FlowStatus status : statusReport.getStatusList()) {
             // first get the current flowGroup ID
             String fid = status.getId();
-            if(status.getFinished()){
-                onFinishFlowGroup( fid , System.currentTimeMillis());
+            if (status.getFinished()) {
+                onFinishFlowGroup(fid, System.currentTimeMillis());
                 continue;
             } else {
                 // set the transmitted.
                 FlowGroup fg = masterSharedData.getFlowGroup(fid);
-                if(fg != null){
-                    fg.setTransmitted( status.getTransmitted() );
-                }
-                else{
+                if (fg != null) {
+                    fg.setTransmitted(status.getTransmitted());
+                } else {
                     logger.warn("Received status report but the FlowGroup {} does not exist", fid);
                 }
             }
@@ -165,7 +164,42 @@ public class MasterRPCServer {
         logger.info("Received FLOW_FIN for {}", fid);
         // set the current status
 
-        masterSharedData.onFinishFlowGroup(fid, timestamp);
+        // Moved to onFileFinish
+//        masterSharedData.onFinishFlowGroup(fid, timestamp);
+
+    }
+
+    /**
+     * Invoked when File Transfer of a fg is finished, search for the fg and invoke fg finish.
+     *
+     * @param filename
+     */
+    synchronized void onFileFinish(String filename) {
+        int off1 = filename.lastIndexOf('-');
+        int off2 = filename.lastIndexOf('.');
+        String reducerID = filename.substring(off1 + 1, off2);
+        String origFilename = filename.substring(0, off1).concat(".data");
+
+        // Find the FG in the CFPool and then finish the FG
+        if (masterSharedData.fileNametoCoflow.containsKey(origFilename)) {
+            Coflow cf = masterSharedData.fileNametoCoflow.get(origFilename);
+            boolean foundFG = false;
+            for (Map.Entry<String, FlowGroup> fge : cf.getFlowGroups().entrySet()) {
+                if (fge.getValue().redID.equals(reducerID)) {
+
+                    foundFG = true;
+                    logger.info("Received FILE_FIN for {}", fge.getKey());
+                    masterSharedData.onFinishFlowGroup(fge.getKey(), System.currentTimeMillis());
+                }
+            }
+
+            if (!foundFG) {
+                logger.error("FATAL: FG not found for {}", origFilename);
+            }
+
+        } else {
+            logger.error("FATAL: CF not found for {}", origFilename);
+        }
 
     }
 
