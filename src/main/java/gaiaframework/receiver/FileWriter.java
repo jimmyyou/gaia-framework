@@ -121,6 +121,7 @@ public class FileWriter implements Runnable {
 
             @Override
             public void onNext(GaiaMessageProtos.FlowStatus_ACK flowStatus_ack) {
+                latch.countDown();
             }
 
             @Override
@@ -129,7 +130,6 @@ public class FileWriter implements Runnable {
 
             @Override
             public void onCompleted() {
-                latch.countDown();
             }
         };
 

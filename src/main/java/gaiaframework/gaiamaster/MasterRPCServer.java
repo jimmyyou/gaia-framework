@@ -105,7 +105,7 @@ public class MasterRPCServer {
                                io.grpc.stub.StreamObserver<gaiaframework.gaiaprotos.GaiaMessageProtos.FlowStatus_ACK> responseObserver) {
 
             handleFinishFile(request);
-//            responseObserver.onNext(GaiaMessageProtos.FlowStatus_ACK.getDefaultInstance());
+            responseObserver.onNext(GaiaMessageProtos.FlowStatus_ACK.getDefaultInstance());
             responseObserver.onCompleted();
         }
 
