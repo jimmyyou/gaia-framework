@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-import java.util.stream.DoubleStream;
 
 public class Coflow {
     // final fields
@@ -80,7 +79,7 @@ public class Coflow {
 
         int cnt = 0;
         for (FlowGroup fg : cf.getFlowGroups().values()) {
-            if (fg.isFinished() || fg.getTransmitted() + Constants.DOUBLE_EPSILON >= fg.getTotalVolume()) {
+            if (fg.isSendingFinished() || fg.getTransmitted() + Constants.DOUBLE_EPSILON >= fg.getTotalVolume()) {
                 continue;                // Trim the Coflow_Old_Compressed, so we don't schedule FGs that are already finished.
             }
 

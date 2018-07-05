@@ -5,13 +5,21 @@ package gaiaframework.receiver;
 
 // TODO use multiple threads to parallelly handle I/O
 
+import com.google.common.util.concurrent.Uninterruptibles;
+import gaiaframework.gaiaprotos.GaiaMessageProtos;
+import gaiaframework.gaiaprotos.MasterServiceGrpc;
 import gaiaframework.transmission.DataChunkMessage;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class FileWriter implements Runnable {
     private static final Logger logger = LogManager.getLogger();
@@ -21,6 +29,7 @@ public class FileWriter implements Runnable {
     HashMap<String, FileBlockHandler> activeFileBlocks = new HashMap<String, FileBlockHandler>();
 
     boolean isOutputEnabled = true;
+    private ManagedChannel grpcChannel;
 
     public FileWriter(LinkedBlockingQueue<DataChunkMessage> dataChunkQueue, boolean isOutputEnabled) {
         this.dataChunkQueue = dataChunkQueue;
@@ -29,7 +38,11 @@ public class FileWriter implements Runnable {
 
     @Override
     public void run() {
-        logger.info("Filewriter Thread started");
+
+        // FIXME not use hardcoded in the future
+        grpcChannel = ManagedChannelBuilder.forAddress("dc1master", 8888).usePlaintext().build();
+
+        logger.info("Filewriter Thread started, and grpcChannel established");
 
         DataChunkMessage dataChunk;
         while (true) {
@@ -76,6 +89,7 @@ public class FileWriter implements Runnable {
                 boolean isFinished = fileBlockHandler.writeDataAndCheck(dataChunk);
                 if (isFinished) {
                     activeFileBlocks.remove(handlerId);
+                    sendFileFIN(filename);
                 }
 
             } else {
@@ -92,9 +106,38 @@ public class FileWriter implements Runnable {
                 activeFileBlocks.put(handlerId, fileBlockHandler);
             } else {
                 // TODO Send out FIN
+                sendFileFIN(filename);
             }
         }
 
+    }
+
+    void sendFileFIN(String filename) {
+        MasterServiceGrpc.MasterServiceStub stub = MasterServiceGrpc.newStub(grpcChannel);
+        GaiaMessageProtos.FileFinishMsg request = GaiaMessageProtos.FileFinishMsg.newBuilder().setFilename(filename).build();
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        StreamObserver<GaiaMessageProtos.FlowStatus_ACK> responseObserver = new StreamObserver<GaiaMessageProtos.FlowStatus_ACK>() {
+
+            @Override
+            public void onNext(GaiaMessageProtos.FlowStatus_ACK flowStatus_ack) {
+                latch.countDown();
+            }
+
+            @Override
+            public void onError(Throwable t) {
+            }
+
+            @Override
+            public void onCompleted() {
+            }
+        };
+
+        stub.finishFile(request, responseObserver);
+
+        if (!Uninterruptibles.awaitUninterruptibly(latch, 3, TimeUnit.SECONDS)) {
+            throw new RuntimeException("timeout!");
+        }
     }
 
 

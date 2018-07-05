@@ -5,6 +5,7 @@ import gaiaframework.spark.YARNMessages;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -16,6 +17,7 @@ public class MasterSharedData {
     // index for searching flowGroup in this data structure.
     // only need to add entry, no need to delete entry. TODO verify this.
     private volatile ConcurrentHashMap<String, Coflow> flowIDtoCoflow;
+    volatile ConcurrentHashMap<String, Coflow> fileNametoCoflow;
 
     volatile boolean flag_CF_ADD = false;
     volatile boolean flag_CF_FIN = false;
@@ -57,6 +59,9 @@ public class MasterSharedData {
         // first add index
         for (FlowGroup fg : cf.getFlowGroups().values()) {
             flowIDtoCoflow.put(fg.getId(), cf);
+
+            // Duplicate key is OK because we will check it.
+            fileNametoCoflow.put(fg.getFilename(), cf);
         }
         //  then add coflow
         coflowPool.put(id, cf);
@@ -75,6 +80,7 @@ public class MasterSharedData {
     public MasterSharedData() {
         this.coflowPool = new ConcurrentHashMap<>();
         this.flowIDtoCoflow = new ConcurrentHashMap<>();
+        this.fileNametoCoflow = new ConcurrentHashMap<>();
     }
 
     public void onFinishFlowGroup(String fid, long timestamp) {
@@ -103,7 +109,7 @@ public class MasterSharedData {
         boolean flag = true;
 
         for (FlowGroup ffg : cf.getFlowGroups().values()) {
-            flag = flag && ffg.isFinished();
+            flag = flag && ffg.isSendingFinished();
         }
 
         // if so set coflow status, send COFLOW_FIN

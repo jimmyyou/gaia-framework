@@ -26,6 +26,7 @@ service SendingAgentService {
 service MasterService {
     rpc UpdateFlowStatus (stream FlowStatusReport) returns (FlowStatus_ACK) {}
     rpc UpdatePathStatus (PathStatusReport) returns (PathStatus_ACK) {}
+    rpc FinishFile( FileFinishMsg ) returns(FlowStatus_ACK) {}
     //    rpc StreamUpdatePathStatus (stream PathStatusReport) returns (PathStatus_ACK) {}
 }
 
@@ -123,6 +124,10 @@ message Exp_CTRL {
 message Exp_CTRL_ACK {}
 
 message SmallFlow_ACK {}
+
+message FileFinishMsg {
+    string filename = 1;
+}
 
 /*message ShuffleInfoReq{
 

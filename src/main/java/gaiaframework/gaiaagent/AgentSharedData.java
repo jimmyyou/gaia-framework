@@ -39,7 +39,7 @@ public class AgentSharedData {
     AtomicBoolean isSendingHeartBeat = new AtomicBoolean(false);
 
     CountDownLatch cnt_StartedConnections = null;
-    AtomicInteger activeConnections = new AtomicInteger(0);
+    final AtomicInteger activeConnections = new AtomicInteger(0);
 
     LinkedBlockingQueue<GaiaMessageProtos.FlowUpdate> fumQueue = new LinkedBlockingQueue<>();
 
