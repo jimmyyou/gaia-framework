@@ -74,7 +74,6 @@ public class FileWriter implements Runnable {
 
             if (fileBlockHandler != null) {
                 boolean isFinished = fileBlockHandler.writeDataAndCheck(dataChunk);
-
                 if (isFinished) {
                     activeFileBlocks.remove(handlerId);
                 }
@@ -82,52 +81,44 @@ public class FileWriter implements Runnable {
             } else {
                 logger.error("Received dataChunk for file {}, but FileBlockHandler == null", dataChunk.getFilename());
             }
-        } else {
+        } else { // We don't have the handler, so we check whether the file exists
             boolean created = CreateOrOpenFile_Spec(handlerId, dataChunk);
             logger.info("dataChunk file created = {}, start={}, blen={}, flen={}", created, dataChunk.getStartIndex(), dataChunk.getTotalBlockLength(), dataChunk.getTotalFileLength());
+
+            // And then creat the handler
+            FileBlockHandler fileBlockHandler = new FileBlockHandler(dataChunk);
+            boolean finished = fileBlockHandler.writeDataAndCheck(dataChunk);
+            if (!finished) {
+                activeFileBlocks.put(handlerId, fileBlockHandler);
+            } else {
+                // TODO Send out FIN
+            }
         }
 
     }
 
 
-// Try to create/open the file and write data and put handler into HashMap
+    // Try to create/open the file and write data and put handler into HashMap
     private boolean CreateOrOpenFile_Spec(String handlerId, DataChunkMessage dataChunk) {
         String filename = dataChunk.getFilename();
         File datafile = new File(filename);
 
         if (datafile.exists()) {
             logger.debug("File {} exists", filename);
+            return false;
+        } else {
 
-            // TODO Then try opening the file
-            FileBlockHandler fileBlockHandler = new FileBlockHandler(dataChunk);
-
-            boolean finished = fileBlockHandler.writeDataAndCheck(dataChunk);
-
-            if (!finished) {
-                activeFileBlocks.put(handlerId, fileBlockHandler);
+            // create the File, and put into the map
+            logger.info("Creating file and dir for {}", filename);
+            File dir = datafile.getParentFile();
+            if (!dir.exists()) {
+                logger.info("Creating dir {}, success = {}", dir, dir.mkdirs());
+            } else {
+                logger.info("Dir {} exists", dir);
             }
 
-            return false;
+            return true;
         }
-
-        // create the File, and put into the map
-        logger.info("Creating file and dir for {}", filename);
-        File dir = datafile.getParentFile();
-        if (!dir.exists()) {
-            logger.info("Creating dir {}, success = {}", dir, dir.mkdirs());
-        } else {
-            logger.info("Dir {} exists", dir);
-        }
-
-        FileBlockHandler fileBlockHandler = new FileBlockHandler(dataChunk);
-
-        boolean finished = fileBlockHandler.writeDataAndCheck(dataChunk);
-
-        if (!finished) {
-            activeFileBlocks.put(handlerId, fileBlockHandler);
-        }
-
-        return true;
     }
 
 /*    private void NaiveCreateFile(DataChunkMessage dataChunk) {
