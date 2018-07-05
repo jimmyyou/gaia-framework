@@ -117,9 +117,10 @@ public class FileWriter implements Runnable {
         while (retry) {
             try {
                 sendFileFIN(filename);
+                logger.info("Sent File_FIN {}", filename);
             } catch (RuntimeException e) {
                 e.printStackTrace();
-                logger.warn("WARN: retry on FileFIN {}", filename);
+                logger.warn("WARN: retry on File_FIN {}", filename);
             } finally {
                 retry = false;
             }
