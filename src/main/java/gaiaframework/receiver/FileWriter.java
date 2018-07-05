@@ -89,7 +89,7 @@ public class FileWriter implements Runnable {
                 boolean isFinished = fileBlockHandler.writeDataAndCheck(dataChunk);
                 if (isFinished) {
                     activeFileBlocks.remove(handlerId);
-                    sendFileFIN(filename);
+                    sendFileFIN_WithRetry(filename);
                 }
 
             } else {
@@ -106,13 +106,27 @@ public class FileWriter implements Runnable {
                 activeFileBlocks.put(handlerId, fileBlockHandler);
             } else {
                 // TODO Send out FIN
-                sendFileFIN(filename);
+                sendFileFIN_WithRetry(filename);
             }
         }
 
     }
 
-    void sendFileFIN(String filename) {
+    void sendFileFIN_WithRetry(String filename){
+        boolean retry = true;
+        while (retry) {
+            try {
+                sendFileFIN(filename);
+            } catch (RuntimeException e) {
+                e.printStackTrace();
+                logger.warn("WARN: retry on FileFIN {}", filename);
+            } finally {
+                retry = false;
+            }
+        }
+    }
+
+    void sendFileFIN(String filename) throws RuntimeException{
         MasterServiceGrpc.MasterServiceStub stub = MasterServiceGrpc.newStub(grpcChannel);
         GaiaMessageProtos.FileFinishMsg request = GaiaMessageProtos.FileFinishMsg.newBuilder().setFilename(filename).build();
 
