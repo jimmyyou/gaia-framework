@@ -29,7 +29,7 @@ public class FlowGroup {
     private double totalVolume;
     private long endTime = -1;
 
-    private boolean finished = false; // set true along with setting endTime.
+    private boolean isSendingFinished = false; // set true along with setting endTime.
 
     // make this field volatile! Or maybe atomic?
     private volatile double transmitted;
@@ -85,14 +85,14 @@ public class FlowGroup {
     }
 
     // This method is called upon receiving Status Update, this method must be call if a Flow is finishing
-    // if a flow is already marked finished, we don't invoke coflowFIN
+    // if a flow is already marked isSendingFinished, we don't invoke coflowFIN
     public synchronized boolean getAndSetFinish(long timestamp) {
-        if (finished && this.transmitted + Constants.DOUBLE_EPSILON >= totalVolume) { // if already finished, do nothing
+        if (isSendingFinished && this.transmitted + Constants.DOUBLE_EPSILON >= totalVolume) { // if already isSendingFinished, do nothing
             return true;
         } else { // if we are the first thread to finish it
             this.transmitted = this.totalVolume;
             this.endTime = timestamp;
-            this.finished = true;
+            this.isSendingFinished = true;
             this.flowState = FlowState.FIN;
             return false;
         }
@@ -164,8 +164,8 @@ public class FlowGroup {
         return endTime;
     }
 
-    public boolean isFinished() {
-        return finished;
+    public boolean isSendingFinished() {
+        return isSendingFinished;
     }
 
     public FlowState getFlowState() {

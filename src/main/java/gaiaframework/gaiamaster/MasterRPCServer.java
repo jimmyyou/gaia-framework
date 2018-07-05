@@ -99,7 +99,22 @@ public class MasterRPCServer {
             responseObserver.onCompleted();
         }
 
+        @Override
+        public void finishFile(gaiaframework.gaiaprotos.GaiaMessageProtos.FileFinishMsg request,
+                               io.grpc.stub.StreamObserver<gaiaframework.gaiaprotos.GaiaMessageProtos.FlowStatus_ACK> responseObserver) {
+
+            handleFinishFile(request);
+
+            responseObserver.onNext(GaiaMessageProtos.FlowStatus_ACK.getDefaultInstance());
+            responseObserver.onCompleted();
+        }
+
     } // End of MasterServiceImpl
+
+    private void handleFinishFile(GaiaMessageProtos.FileFinishMsg request) {
+        masterSharedData.onFileFinish(request.getFilename());
+
+    }
 
     private void handlePathUpdate(GaiaMessageProtos.PathStatusReport request) {
         // TODO handle path Update

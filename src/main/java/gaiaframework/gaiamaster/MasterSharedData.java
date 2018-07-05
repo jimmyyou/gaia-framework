@@ -103,7 +103,7 @@ public class MasterSharedData {
         boolean flag = true;
 
         for (FlowGroup ffg : cf.getFlowGroups().values()) {
-            flag = flag && ffg.isFinished();
+            flag = flag && ffg.isSendingFinished();
         }
 
         // if so set coflow status, send COFLOW_FIN
@@ -133,5 +133,23 @@ public class MasterSharedData {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Invoked when File Transfer of a fg is finished, search for the fg and invoke fg finish.
+     *
+     * @param filename
+     */
+    synchronized void onFileFinish(String filename) {
+        int off1 = filename.lastIndexOf('-');
+        int off2 = filename.lastIndexOf('.');
+        String reducerID = filename.substring(off1 + 1, off2);
+        String origFilename = filename.substring(0, off1).concat(".data");
+
+        // TODO Find the FG in the CFPool and then
+
+        // TODO create a new RPCClient in Receiving Agent to notify the Master of the File Transfer finish
+
+
     }
 }
