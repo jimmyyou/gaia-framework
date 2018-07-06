@@ -182,9 +182,16 @@ public class MasterRPCServer {
 
         // Find the FG in the CFPool and then finish the FG
         if (masterSharedData.fileNametoCoflow.containsKey(origFilename)) {
+
             Coflow cf = masterSharedData.fileNametoCoflow.get(origFilename);
+
+            logger.info("Found CF {} for file {}", cf.getId(), origFilename);
+
             boolean foundFG = false;
             for (Map.Entry<String, FlowGroup> fge : cf.getFlowGroups().entrySet()) {
+
+                logger.info("Red ID = {} , expected {} ", fge.getValue().redID, reducerID);
+
                 if (fge.getValue().redID.equals(reducerID)) {
 
                     foundFG = true;
