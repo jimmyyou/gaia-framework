@@ -92,7 +92,7 @@ public class RemoteHTTPFetcher implements Runnable {
         URL url = getURL();
 
         RateLimiter rateLimiter = RateLimiter.create(Constants.DEFAULT_TOKEN_RATE);
-        logger.info("Fetcher started with freq {}", Constants.DEFAULT_TOKEN_RATE);
+//        logger.info("Fetcher started with freq {}", Constants.DEFAULT_TOKEN_RATE);
 
         try {
             connection = (HttpURLConnection) url.openConnection();
@@ -133,7 +133,7 @@ public class RemoteHTTPFetcher implements Runnable {
                     // no need to change rate , calculate the length
                     rateLimiter.setRate(Constants.DEFAULT_TOKEN_RATE);
                     data_length = (int) (cur_rate / Constants.DEFAULT_TOKEN_RATE);
-                    logger.info("Current rate {}, data_length {}", cur_rate, data_length);
+//                    logger.info("Current rate {}, data_length {}", cur_rate, data_length);
                 } else {
                     data_length = Constants.BLOCK_SIZE_MB * 1024 * 1024;
                     double new_freq = cur_rate / 1024 / 1024 / Constants.BLOCK_SIZE_MB;

@@ -378,14 +378,14 @@ public class Master {
         int cnt = 0;
         for (FlowGroup_Old_Compressed fgo : scheduledCompressedFGs) {
 
-            logger.info("Decompressing {}", fgo.getId());
+//            logger.info("Decompressing {}", fgo.getId());
 
             // decompress here
             for (FlowGroup decompressedFG : fgo.fgList) {
 
                 FlowGroup_Old_Compressed fgo_decompressed = decompressedFG.toFlowGroup_Old(cnt++);
                 // FIXME: need to make the ratio sum up to 1. Another way to achieve this is to remember the remaining volume when snapshoting.
-                logger.info("Decompress: {} : {} - {} / {}", decompressedFG.getId(), decompressedFG.getTotalVolume(), decompressedFG.getTransmitted(), fgo.getRemainingVolume());
+//                logger.info("Decompress: {} : {} - {} / {}", decompressedFG.getId(), decompressedFG.getTotalVolume(), decompressedFG.getTransmitted(), fgo.getRemainingVolume());
                 double ratio = (decompressedFG.getTotalVolume() - decompressedFG.getTransmitted()) / fgo.getRemainingVolume();
 
                 // clone the paths, and set the BW
@@ -395,7 +395,7 @@ public class Master {
                     decompressedPathway.setBandwidth(p.getBandwidth() * ratio);
                     fgo_decompressed.paths.add(decompressedPathway);
                 }
-                logger.info("Decompress: {} has {} of {}, paths: {}", decompressedFG.getId(), ratio, fgo.getId(), fgo_decompressed.paths);
+//                logger.info("Decompress: {} has {} of {}, paths: {}", decompressedFG.getId(), ratio, fgo.getId(), fgo_decompressed.paths);
 
 //                fgoHashMap.put(fgo.getId(), fgo);
                 fgoHashMap.put(decompressedFG.getId(), fgo_decompressed);
@@ -408,7 +408,8 @@ public class Master {
             for (Map.Entry<String, FlowGroup> fge : cf.getFlowGroups().entrySet()) {
                 FlowGroup fg = fge.getValue();
                 if (fg.getFlowState() == FlowGroup.FlowState.FIN) {
-                    logger.info("find fg {} in FIN state, to be ignored", fg.getId());
+                    // FIXME repeated too many times here. (Because FGs are skewed.)
+//                    logger.info("find fg {} in FIN state, to be ignored", fg.getId());
                     continue; // ignore finished, they shall be removed shortly
                 } else if (fg.getFlowState() == FlowGroup.FlowState.RUNNING) { // may pause/change the running flow
                     if (fgoHashMap.containsKey(fg.getId())) { // we may need to change, if the path/rate are different TODO: speculatively send change message
