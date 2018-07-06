@@ -165,8 +165,8 @@ public class MasterRPCServer {
         logger.info("Received FLOW_FIN for {}", fid);
         // set the current status
 
-        // Moved to onFileFinish
-//        masterSharedData.onFinishFlowGroup(fid, timestamp);
+        // FIXME Moved to onFileFinish
+        masterSharedData.onFinishFlowGroup(fid, timestamp);
 
     }
 
@@ -198,7 +198,7 @@ public class MasterRPCServer {
 
                         foundFG = true;
                         logger.info("Received FILE_FIN for {} {} {}", fge.getKey(), origFilename, reducerID);
-                        masterSharedData.onFinishFlowGroup(fge.getKey(), System.currentTimeMillis());
+//                        masterSharedData.onFinishFlowGroup(fge.getKey(), System.currentTimeMillis());
                     }
                 }
             }
