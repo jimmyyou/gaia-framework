@@ -19,6 +19,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
 /**
  * This is the fetcher thread that request file blocks from an HTTP server.
@@ -204,7 +205,8 @@ public class RemoteHTTPFetcher implements Runnable {
                 transmit(data_length);
                 if (total_bytes_sent >= totalBlockLength) {
                     setFinished();
-                    logger.info("Finished sending for {}", srcFilename);
+                    List<String> raIDList = workerInfos.stream().map(AggFlowGroupInfo.WorkerInfo::getRaID).collect(Collectors.toList());
+                    logger.info("Finished sending for {} to {}", dstFilename, raIDList);
                     break;
                 }
 
