@@ -31,16 +31,22 @@ public class TestClientNew {
 //            TaskInfo taskInfor = new TaskInfo("taskIDr", "attemptIDr");
             reducersIP.put("R1", args[1]);
 
+            reducersIP.put("R2", args[1]);
+
             long startOffset = Long.parseLong(args[3]);
             shuffleSize = Long.parseLong(args[4]);
 
-            FlowInfo flowInfo = new FlowInfo("M1", "R1", args[2],
-                    startOffset, shuffleSize, args[0], args[1]);
+            FlowInfo flowInfo = new FlowInfo("M1", "R1", args[2], startOffset, shuffleSize, args[0], args[1]);
+
+            FlowInfo flowInfo2 = new FlowInfo("M1", "R2", args[2], startOffset + shuffleSize, shuffleSize, args[0], args[1]);
+
 
             Map<String, FlowInfo> fmap = new HashMap<String, FlowInfo>();
             fmap.put("user:job:map:reduce", flowInfo);
 
-            gaiaClient.submitShuffleInfo("tester", "tester", mappersIP, reducersIP, fmap);
+            fmap.put("user:job:map:reduce2", flowInfo2);
+
+            gaiaClient.submitShuffleInfo("apple", "b1", mappersIP, reducersIP, fmap);
         } finally {
             gaiaClient.shutdown();
         }
