@@ -61,8 +61,9 @@ public class MasterSharedData {
         for (FlowGroup fg : cf.getFlowGroups().values()) {
             flowIDtoCoflow.put(fg.getId(), cf);
 
-            // Duplicate key is OK because we will check it.
-            fileNametoCoflow.put(fg.getFilename(), cf);
+            if (!fileNametoCoflow.containsKey(fg.getFilename())) {
+                fileNametoCoflow.put(fg.getFilename(), cf);
+            }
         }
         //  then add coflow
         coflowPool.put(id, cf);
