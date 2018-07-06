@@ -197,7 +197,7 @@ public class AgentSharedData {
 
             if (rate < 1) {
 //                rate = 0.1;
-                System.err.println("WARNING: rate of FUM too low: " + fgID);
+                logger.info("WARNING: rate of FUM too low: {} {}", fgID, rate);
             }
 
             aggFlowGroupInfo.addWorkerInfo(faID, pathID, rate);  // reverse look-up ArrayList
