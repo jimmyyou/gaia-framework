@@ -190,13 +190,15 @@ public class MasterRPCServer {
             boolean foundFG = false;
             for (Map.Entry<String, FlowGroup> fge : cf.getFlowGroups().entrySet()) {
 
-                logger.info("Red ID = {} , expected {} ", fge.getValue().redID, reducerID);
+                if (fge.getValue().getFilename().equals(origFilename)) {
+                    logger.info("Red ID = {} , expected {} ", fge.getValue().redID, reducerID);
 
-                if (fge.getValue().redID.equals(reducerID)) {
+                    if (fge.getValue().redID.equals(reducerID)) {
 
-                    foundFG = true;
-                    logger.info("Received FILE_FIN for {} {} {}", fge.getKey(), origFilename, reducerID);
-                    masterSharedData.onFinishFlowGroup(fge.getKey(), System.currentTimeMillis());
+                        foundFG = true;
+                        logger.info("Received FILE_FIN for {} {} {}", fge.getKey(), origFilename, reducerID);
+                        masterSharedData.onFinishFlowGroup(fge.getKey(), System.currentTimeMillis());
+                    }
                 }
             }
 
