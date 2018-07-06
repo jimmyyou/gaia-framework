@@ -206,7 +206,7 @@ public class RemoteHTTPFetcher implements Runnable {
                 if (total_bytes_sent >= totalBlockLength) {
                     setFinished();
                     List<String> raIDList = workerInfos.stream().map(AggFlowGroupInfo.WorkerInfo::getRaID).collect(Collectors.toList());
-                    logger.info("Finished sending for {} to {}", dstFilename, raIDList);
+                    logger.info("Finished sending for {} to {}, workerInfoSize {}", dstFilename, raIDList, workerInfos.size());
                     break;
                 }
 
