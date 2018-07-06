@@ -423,6 +423,7 @@ public class CoflowScheduler extends Scheduler {
                 Coflow_Old_Compressed cfo = coflows.get(cfse.cf.getId());
                 // update the volume
                 cfse.cf = cfo; // TODO verify, also update the CCT?
+                logger.info("HandleFGFIN on {} \n copied to {}", cfo , cfse.cf);
             }
 
         }
