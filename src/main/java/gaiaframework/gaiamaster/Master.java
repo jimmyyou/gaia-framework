@@ -384,6 +384,7 @@ public class Master {
             for (FlowGroup decompressedFG : fgo.fgList) {
 
                 FlowGroup_Old_Compressed fgo_decompressed = decompressedFG.toFlowGroup_Old(cnt++);
+                logger.info("Decompress: {} : {} - {} / {}", decompressedFG.getId(), decompressedFG.getTotalVolume(), decompressedFG.getTransmitted(), fgo.getRemainingVolume());
                 double ratio = (decompressedFG.getTotalVolume() - decompressedFG.getTransmitted()) / fgo.getRemainingVolume();
 
                 // clone the paths, and set the BW
