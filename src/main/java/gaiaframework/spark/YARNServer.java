@@ -37,7 +37,7 @@ public class YARNServer extends GaiaAbstractServer {
         long cfStartTime = System.currentTimeMillis();
 
         // Create the CF and submit it.
-        String cfID = req.getUsername() + ":" + req.getJobID();
+        String cfID = req.getUsername() + "_" + req.getJobID();
 
         // Aggregate all the flows by their Data Center location
         // Gaia only sees Data Centers
