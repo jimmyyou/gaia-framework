@@ -17,6 +17,7 @@ public class FlowGroup_Old_Compressed {
     private double remainingVolume;
     @Deprecated
     private double transmitted_volume; // It will always be zero
+    @Deprecated
     private double rate; // in Mbps
     public ArrayList<Pathway> paths = new ArrayList<Pathway>();
     private boolean done = false;
@@ -159,10 +160,12 @@ public class FlowGroup_Old_Compressed {
         this.transmitted_volume = transmitted_volume;
     }
 
+    @Deprecated
     public double getRate() {
         return rate;
     }
 
+    @Deprecated
     public void setRate(double rate) {
         this.rate = rate;
     }

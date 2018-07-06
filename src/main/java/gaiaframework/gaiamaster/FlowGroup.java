@@ -114,6 +114,10 @@ public class FlowGroup {
         return totalVolume;
     }
 
+    public double getRemainingVolume() {
+        return totalVolume - transmitted;
+    }
+
     public String getSrcLocation() {
         return srcLocation;
     }

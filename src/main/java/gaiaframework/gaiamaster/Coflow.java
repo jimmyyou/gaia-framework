@@ -100,10 +100,11 @@ public class Coflow {
                 List<FlowGroup> fgeList = fge.getValue();
 
                 if (!fgeList.isEmpty()) {
-                    double totalVolume = fgeList.stream().mapToDouble(FlowGroup::getTotalVolume).sum();
+                    double totalVolume = fgeList.stream().mapToDouble(FlowGroup::getRemainingVolume).sum();
                     String fgoID = cf.id + "_" + cnt;
 
 //                    String id, int int_id, String coflow_id, String src_loc, String dst_loc, double volume
+
                     FlowGroup_Old_Compressed fgo = new FlowGroup_Old_Compressed(fgoID, cnt, cf, srcLoc, dstLoc, totalVolume, fgeList);
 
                     compressedListMap.put(fgo, fgeList);

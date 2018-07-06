@@ -384,6 +384,7 @@ public class Master {
             for (FlowGroup decompressedFG : fgo.fgList) {
 
                 FlowGroup_Old_Compressed fgo_decompressed = decompressedFG.toFlowGroup_Old(cnt++);
+                // FIXME: need to make the ratio sum up to 1. Another way to achieve this is to remember the remaining volume when snapshoting.
                 logger.info("Decompress: {} : {} - {} / {}", decompressedFG.getId(), decompressedFG.getTotalVolume(), decompressedFG.getTransmitted(), fgo.getRemainingVolume());
                 double ratio = (decompressedFG.getTotalVolume() - decompressedFG.getTransmitted()) / fgo.getRemainingVolume();
 
