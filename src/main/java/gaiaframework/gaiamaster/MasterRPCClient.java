@@ -89,7 +89,7 @@ public class MasterRPCClient {
         }
 
         fumStreamObserver.onNext(fum);
-        logger.info("FUM sent for saID = {}", saID);
+        logger.info("FUM sent ({} Byte) for saID = {}", fum.getSerializedSize(), saID);
 
     }
 

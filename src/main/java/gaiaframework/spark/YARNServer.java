@@ -33,7 +33,7 @@ public class YARNServer extends GaiaAbstractServer {
 
     @Override
     public void processReq(ShuffleInfo req) {
-        logger.info("received shuffle info: {}", req);
+        logger.info("received {} Byte shuffle info: {}", req.getSerializedSize(), req);
         long cfStartTime = System.currentTimeMillis();
 
         // Create the CF and submit it.
@@ -67,10 +67,10 @@ public class YARNServer extends GaiaAbstractServer {
                 }
 
                 Coflow cf = new Coflow(cfID, flowGroups);
-                logger.info("YARN Server submitting CF: {}", cf.toPrintableString());
+                logger.info("YARN Server submitting CF: {}", cf.getId());
 
                 cfQueue.put(cf);
-                logger.info("Coflow {} submitted, Trapping into waiting for coflow to finish");
+                logger.info("Coflow {} submitted, Trapping into waiting for coflow to finish", cf.getId());
                 cf.blockTillFinish();
                 long cfEndTime = System.currentTimeMillis();
                 logger.info("Coflow {} finished in {} ms, returning to YARN", cfID, (cfEndTime - cfStartTime));
