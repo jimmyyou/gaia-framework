@@ -378,7 +378,7 @@ public class Master {
         int cnt = 0;
         for (FlowGroup_Old_Compressed fgo : scheduledCompressedFGs) {
 
-            logger.info("Decompressing {}", fgo);
+            logger.info("Decompressing {}", fgo.getId());
 
             // decompress here
             for (FlowGroup decompressedFG : fgo.fgList) {

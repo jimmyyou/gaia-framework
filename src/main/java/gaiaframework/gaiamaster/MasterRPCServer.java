@@ -186,13 +186,13 @@ public class MasterRPCServer {
 
             Coflow cf = masterSharedData.fileNametoCoflow.get(origFilename);
 
-            logger.info("Found CF {} for file {}", cf.getId(), origFilename);
+//            logger.info("Found CF {} for file {}", cf.getId(), origFilename);
 
             boolean foundFG = false;
             for (Map.Entry<String, FlowGroup> fge : cf.getFlowGroups().entrySet()) {
 
                 if (fge.getValue().getFilename().equals(origFilename)) {
-                    logger.info("Red ID = {} , expected {} ", fge.getValue().redID, reducerID);
+//                    logger.info("Red ID = {} , expected {} ", fge.getValue().redID, reducerID);
 
                     if (fge.getValue().redID.equals(reducerID)) {
 
