@@ -195,7 +195,7 @@ public class MasterRPCServer {
                 if (fge.getValue().redID.equals(reducerID)) {
 
                     foundFG = true;
-                    logger.info("Received FILE_FIN for {}", fge.getKey());
+                    logger.info("Received FILE_FIN for {} {} {}", fge.getKey(), origFilename, reducerID);
                     masterSharedData.onFinishFlowGroup(fge.getKey(), System.currentTimeMillis());
                 }
             }

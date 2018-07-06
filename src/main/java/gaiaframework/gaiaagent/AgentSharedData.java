@@ -171,8 +171,10 @@ public class AgentSharedData {
      */
     public void startFlow(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fue) {
         // add this flowgroup when not existent // only accept volume from CTRL at this point.
+        logger.info("STARTING : {}", fgID);
+
         if (aggFlowGroups.containsKey(fgID)) {
-            logger.error("START failed: an existing flow {}", fgID);
+            logger.info("START failed: an existing flow {}", fgID);
             return;
         }
 
