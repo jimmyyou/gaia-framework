@@ -70,7 +70,7 @@ public class YARNServer extends GaiaAbstractServer {
                 logger.info("YARN Server submitting CF: {}", cf.toPrintableString());
 
                 cfQueue.put(cf);
-                logger.info("Coflow submitted, Trapping into waiting for coflow to finish");
+                logger.info("Coflow {} submitted, Trapping into waiting for coflow to finish");
                 cf.blockTillFinish();
                 long cfEndTime = System.currentTimeMillis();
                 logger.info("Coflow {} finished in {} ms, returning to YARN", cfID, (cfEndTime - cfStartTime));
