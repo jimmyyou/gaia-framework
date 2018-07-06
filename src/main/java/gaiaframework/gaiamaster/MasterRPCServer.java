@@ -112,7 +112,7 @@ public class MasterRPCServer {
     } // End of MasterServiceImpl
 
     private void handleFinishFile(GaiaMessageProtos.FileFinishMsg request) {
-        logger.info("Master Received FILE_FIN {}", request.getFilename());
+//        logger.info("Master Received FILE_FIN {}", request.getFilename());
         onFileFinish(request.getFilename());
 
     }
