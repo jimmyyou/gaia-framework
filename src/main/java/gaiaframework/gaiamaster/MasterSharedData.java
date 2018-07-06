@@ -5,6 +5,7 @@ import gaiaframework.spark.YARNMessages;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -17,7 +18,7 @@ public class MasterSharedData {
     // index for searching flowGroup in this data structure.
     // only need to add entry, no need to delete entry. TODO verify this.
     private volatile ConcurrentHashMap<String, Coflow> flowIDtoCoflow;
-    volatile ConcurrentHashMap<String, Coflow> fileNametoCoflow;
+    volatile HashMap<String, Coflow> fileNametoCoflow;
 
     volatile boolean flag_CF_ADD = false;
     volatile boolean flag_CF_FIN = false;
@@ -55,7 +56,7 @@ public class MasterSharedData {
         return false;
     }
 
-    public void addCoflow(String id, Coflow cf) { // trim the co-located flowgroup before adding!
+    public synchronized void addCoflow(String id, Coflow cf) { // trim the co-located flowgroup before adding!
         // first add index
         for (FlowGroup fg : cf.getFlowGroups().values()) {
             flowIDtoCoflow.put(fg.getId(), cf);
@@ -80,7 +81,7 @@ public class MasterSharedData {
     public MasterSharedData() {
         this.coflowPool = new ConcurrentHashMap<>();
         this.flowIDtoCoflow = new ConcurrentHashMap<>();
-        this.fileNametoCoflow = new ConcurrentHashMap<>();
+        this.fileNametoCoflow = new HashMap<>();
     }
 
     public void onFinishFlowGroup(String fid, long timestamp) {
@@ -93,7 +94,7 @@ public class MasterSharedData {
             return;
         }
         if (fg.getAndSetFinish(timestamp)) {
-            logger.warn("Finishing a flow that should have been finished");
+            logger.warn("Finishing a flow that should have been finished {}", fg.getId());
             return; // if already finished, do nothing.
         }
 

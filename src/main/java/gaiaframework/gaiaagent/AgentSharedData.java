@@ -241,7 +241,7 @@ public class AgentSharedData {
             removeAllSubscription(faID, fgID, fgi);
 
         } else {
-            logger.error("PAUSE failed: a non-existing flow!");
+            logger.error("PAUSE failed: a non-existing flow {}", fgID);
             return;
         }
 
