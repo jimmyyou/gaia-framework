@@ -228,7 +228,7 @@ public class AgentSharedData {
             addAllSubscription(faID, fgID, fge, fgi);
 
         } else {
-            logger.warn("CHANGE/RESUME failed: a non-existing flow!, {}", fgID); // after FG finished, this can happen
+            logger.info("CHANGE/RESUME failed: a non-existing flow!, {}", fgID); // after FG finished, this can happen
             return;
         }
 
