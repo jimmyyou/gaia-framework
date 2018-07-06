@@ -163,22 +163,24 @@ public class AgentSharedData {
 
     }
 
-    // methods to update the aggFlowGroups and subscriptionRateMaps
-    public void startFlow(String faID, String afgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fue) {
+    /**
+     * methods to update the aggFlowGroups and subscriptionRateMaps
+     * @param faID
+     * @param fgID
+     * @param fue
+     */
+    public void startFlow(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fue) {
         // add this flowgroup when not existent // only accept volume from CTRL at this point.
-        if (aggFlowGroups.containsKey(afgID)) {
-            logger.error("START failed: an existing flow!");
+        if (aggFlowGroups.containsKey(fgID)) {
+            logger.error("START failed: an existing flow {}", fgID);
             return;
         }
 
-        // TODO change here to consider all sub-flows
-//        fge.getFlowInfosList();
-
 //        AggFlowGroupInfo fgi = new AggFlowGroupInfo(fgID, fge.getRemainingVolume(), fge.getFilename()).setFlowState(AggFlowGroupInfo.FlowState.RUNNING);
-        AggFlowGroupInfo afgi = new AggFlowGroupInfo(this, afgID, fue, saID, faID).setFlowState(AggFlowGroupInfo.FlowState.RUNNING);
-        aggFlowGroups.put(afgID, afgi);
+        AggFlowGroupInfo afgi = new AggFlowGroupInfo(this, fgID, fue, saID, faID).setFlowState(AggFlowGroupInfo.FlowState.RUNNING);
+        aggFlowGroups.put(fgID, afgi);
 
-        addAllSubscription(faID, afgID, fue, afgi);
+        addAllSubscription(faID, fgID, fue, afgi);
 
     }
 
@@ -203,7 +205,7 @@ public class AgentSharedData {
             aggFlowGroupInfo.addWorkerInfo(faID, pathID, rate);  // reverse look-up ArrayList
 
             if (infoMap.containsKey(fgID)) { // check whether this FlowGroup is in subscriptionMap.
-                logger.warn("WARNSetting fg {} rate {}, previous {}", fgID, rate, infoMap.get(fgID).getRate());
+                logger.warn("WARN: Setting fg {} rate {}, previous {}", fgID, rate, infoMap.get(fgID).getRate());
                 infoMap.get(fgID).setRate(rate);
 //                logger.error("FATAL: this should not happen");
             } else { // create this info
