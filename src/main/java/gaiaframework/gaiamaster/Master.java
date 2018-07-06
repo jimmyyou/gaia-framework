@@ -358,7 +358,8 @@ public class Master {
         for (FlowGroup_Old_Compressed fgo : decompressedFGOsToSend) {
             fgoContent.append(fgo.getId()).append(' ').append(fgo.paths).append(' ').append(fgo.getFlowState()).append('\n');
         }
-        logger.info("schedule(): took {} ms. Active CF: {} Scheduled FG: {} FG content:{}", deltaTime, masterSharedData.coflowPool.size(), scheduledFGOs.size(), fgoContent);
+        logger.info("FG content: {}", fgoContent);
+        logger.info("schedule(): took {} ms. Active CF: {} Scheduled FG: {}/{}", deltaTime, masterSharedData.coflowPool.size(), scheduledFGOs.size(), decompressedFGOsToSend.size());
 
 //        printMasterState();
     }
