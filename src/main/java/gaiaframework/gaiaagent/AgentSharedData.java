@@ -217,7 +217,7 @@ public class AgentSharedData {
         } // end loop for pathID
     }
 
-    public void changeFlow(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge) {
+    public boolean changeFlow(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge) {
 
         if (aggFlowGroups.containsKey(fgID)) {
 
@@ -227,12 +227,11 @@ public class AgentSharedData {
             removeAllSubscription(faID, fgID, fgi);
             addAllSubscription(faID, fgID, fge, fgi);
 
+            return true;
         } else {
-            logger.info("CHANGE/RESUME failed: a non-existing flow!, {}", fgID); // after FG finished, this can happen
-            return;
+            logger.trace("CHANGE/RESUME failed: a non-existing flow {}", fgID); // after FG finished, this can happen
+            return false;
         }
-
-
     }
 
     public void pauseFlow(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge) {

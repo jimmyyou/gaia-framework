@@ -13,7 +13,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 @SuppressWarnings("Duplicates")
 
-public class CTRLMsgListenerThread implements Runnable{
+public class CTRLMsgListenerThread implements Runnable {
     private static final Logger logger = LogManager.getLogger();
 
     LinkedBlockingQueue<GaiaMessageProtos.FlowUpdate> ctrlQueue;
@@ -27,7 +27,7 @@ public class CTRLMsgListenerThread implements Runnable{
     @Override
     public void run() {
 
-        while (true){
+        while (true) {
             try {
                 GaiaMessageProtos.FlowUpdate m = ctrlQueue.take();
 
@@ -41,13 +41,14 @@ public class CTRLMsgListenerThread implements Runnable{
                     }
                 }*/ //
 
-                for( gaiaframework.gaiaprotos.GaiaMessageProtos.FlowUpdate.RAUpdateEntry rau : m.getRAUpdateList() ) {
+                int count_ChangeFailed = 0;
+                for (gaiaframework.gaiaprotos.GaiaMessageProtos.FlowUpdate.RAUpdateEntry rau : m.getRAUpdateList()) {
                     String raID = rau.getRaID();
 
-                    for ( gaiaframework.gaiaprotos.GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge : rau.getFgesList()) {
+                    for (gaiaframework.gaiaprotos.GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge : rau.getFgesList()) {
                         String fgID = fge.getFlowID();
 
-                        switch (fge.getOp()){
+                        switch (fge.getOp()) {
                             case START:
 
                                 agentSharedData.startFlow(raID, fgID, fge);
@@ -55,7 +56,10 @@ public class CTRLMsgListenerThread implements Runnable{
 
                             case CHANGE:
 
-                                agentSharedData.changeFlow(raID, fgID, fge);
+                                boolean res = agentSharedData.changeFlow(raID, fgID, fge);
+                                if (!res) {
+                                    count_ChangeFailed++;
+                                }
                                 break;
 
                             case PAUSE: // only pause the FG, no rate set
@@ -100,14 +104,14 @@ public class CTRLMsgListenerThread implements Runnable{
                     }
                 }*/
 //                think about the overhead of this notification
-                for(Map.Entry<String, LinkedBlockingQueue<CTRL_to_WorkerMsg>[] > qe :agentSharedData.workerQueues.entrySet()){
+                for (Map.Entry<String, LinkedBlockingQueue<CTRL_to_WorkerMsg>[]> qe : agentSharedData.workerQueues.entrySet()) {
                     LinkedBlockingQueue<CTRL_to_WorkerMsg>[] ql = qe.getValue();
-                    for (int i = 0 ; i < ql.length ; i++){
-                        ql[i].put( new CTRL_to_WorkerMsg());
+                    for (int i = 0; i < ql.length; i++) {
+                        ql[i].put(new CTRL_to_WorkerMsg());
                     }
                 }
 
-                logger.info("Sent SYNC message");
+                logger.info("Sent SYNC message, Changed Failed: {}", count_ChangeFailed);
 
             } catch (InterruptedException e) {
                 e.printStackTrace();
