@@ -462,9 +462,9 @@ public class CoflowScheduler extends Scheduler {
 
         nonDDLCFList.clear();
 
-        // API required by fanlai. Write current CCT to file
+/*        // API required by fanlai. Write current CCT to file
         BufferedWriter bwrt = new BufferedWriter(new java.io.FileWriter("/tmp/terra_coflows.txt"));
-        bwrt.write(String.valueOf(System.currentTimeMillis()) + "\n");
+        bwrt.write(String.valueOf(System.currentTimeMillis()) + "\n");*/
 
         // TODO check if admitted CF can meet ddl?
         // Part 0: first deal with CFs with deadline
@@ -554,7 +554,7 @@ public class CoflowScheduler extends Scheduler {
 
             // schedule this CF
             logger.info("CoflowScheduler: Coflow {} expected to complete in {} seconds" , c.getId() , e.cct);
-            bwrt.write(c.getId() + " " + e.cct + "\n");
+//            bwrt.write(c.getId() + " " + e.cct + "\n");
 
             MMCFOptimizer.MMCFOutput mmcf_out = MMCFOptimizer.glpk_optimize(c, net_graph_, links_); // This is the recursive part.
 
