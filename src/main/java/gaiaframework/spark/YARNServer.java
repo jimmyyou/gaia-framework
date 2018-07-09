@@ -81,10 +81,12 @@ public class YARNServer extends GaiaAbstractServer {
                 cfQueue.put(cf);
                 logger.info("Coflow {} submitted, total vol: {}", cf.getId(), cf.getTotalVolume());
                 bwrt.write("Coflow " + cf.getId() + " submitted, total vol: " + cf.getTotalVolume());
+                bwrt.flush();
                 cf.blockTillFinish();
                 long cfEndTime = System.currentTimeMillis();
                 logger.info("Coflow {} finished in {} ms, returning to YARN", cfID, (cfEndTime - cfStartTime));
                 bwrt.write("Coflow " + cf.getId() + " finished in (ms) " + (cfEndTime - cfStartTime));
+                bwrt.flush();
             }
 
         } catch (InterruptedException e) {
