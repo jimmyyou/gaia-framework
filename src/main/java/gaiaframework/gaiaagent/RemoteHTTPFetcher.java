@@ -270,7 +270,7 @@ public class RemoteHTTPFetcher implements Runnable {
             return url;
         } catch (MalformedURLException e) {
             e.printStackTrace();
-            logger.error("URL malformed");
+            logger.error("URL malformed: {}", str_url.toString());
 //            return null;
         }
 
