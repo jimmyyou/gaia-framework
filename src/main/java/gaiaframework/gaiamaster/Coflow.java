@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 public class Coflow {
     // final fields
     private final String id;
+    private final double totalVolume;
     CountDownLatch isDoneLatch;
     public CountDownLatch isSmallFlowDoneLatch;
 
@@ -38,21 +39,25 @@ public class Coflow {
         this.id = id;
         this.flowGroups = flowGroups;
         this.isDoneLatch = new CountDownLatch(1);
+        this.totalVolume = flowGroups.values().stream().mapToDouble(FlowGroup::getTotalVolume).sum();
     }
 
     /**
+
      * Create a Coflow with FlowGroups, and small flows (flows that are sent directly, without scheduling)
      *
      * @param id
      * @param flowGroups
      * @param smallFlows
      */
+    @Deprecated
     public Coflow(String id, HashMap<String, FlowGroup> flowGroups, HashMap<String, FlowGroup> smallFlows) {
         this.id = id;
         this.flowGroups = flowGroups;
         this.smallFlows = smallFlows;
         this.isDoneLatch = new CountDownLatch(1);
         this.isSmallFlowDoneLatch = new CountDownLatch(smallFlows.size());
+        this.totalVolume = flowGroups.values().stream().mapToDouble(FlowGroup::getTotalVolume).sum() + smallFlows.values().stream().mapToDouble(FlowGroup::getTotalVolume).sum();
     }
 
     public String getId() {
@@ -166,6 +171,8 @@ public class Coflow {
     public long getStartTime() {
         return startTime;
     }
+
+    public double getTotalVolume() { return totalVolume;}
 
     public void setStartTime(long startTime) {
         this.startTime = startTime;

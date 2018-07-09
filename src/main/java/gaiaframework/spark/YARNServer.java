@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.sound.midi.SysexMessage;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,12 +24,20 @@ public class YARNServer extends GaiaAbstractServer {
     private final boolean isDebugMode;
     LinkedBlockingQueue<Coflow> cfQueue;
     Configuration configuration;
+    BufferedWriter bwrt;
 
     public YARNServer(Configuration config, int port, LinkedBlockingQueue<Coflow> coflowQueue, boolean isDebugMode) {
         super(port);
         this.cfQueue = coflowQueue;
         this.configuration = config;
         this.isDebugMode = isDebugMode;
+
+        try {
+            bwrt = new BufferedWriter(new java.io.FileWriter("/tmp/terra.txt"));
+            bwrt.write("------- Server start at " + java.time.LocalDateTime.now() + " --------\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -70,14 +79,18 @@ public class YARNServer extends GaiaAbstractServer {
                 logger.info("YARN Server submitting CF: {}", cf.getId());
 
                 cfQueue.put(cf);
-                logger.info("Coflow {} submitted, total vol: {}", cf.getId(), flowGroups.values().stream().mapToDouble(FlowGroup::getTotalVolume).sum());
+                logger.info("Coflow {} submitted, total vol: {}", cf.getId(), cf.getTotalVolume());
+                bwrt.write("Coflow " + cf.getId() + " submitted, total vol: " + cf.getTotalVolume());
                 cf.blockTillFinish();
                 long cfEndTime = System.currentTimeMillis();
                 logger.info("Coflow {} finished in {} ms, returning to YARN", cfID, (cfEndTime - cfStartTime));
+                bwrt.write("Coflow " + cf.getId() + " finished in (ms) " + (cfEndTime - cfStartTime));
             }
 
         } catch (InterruptedException e) {
             logger.error("ERROR occurred while submitting coflow");
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
