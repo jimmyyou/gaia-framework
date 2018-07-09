@@ -38,15 +38,15 @@ public class TestClientNew {
 
             FlowInfo flowInfo = new FlowInfo("M1", "R1", args[2], startOffset, shuffleSize, args[0], args[1]);
 
-            FlowInfo flowInfo2 = new FlowInfo("M1", "R2", args[2], startOffset + shuffleSize, shuffleSize, args[0], args[1]);
+//            FlowInfo flowInfo2 = new FlowInfo("M1", "R2", args[2], startOffset + shuffleSize, shuffleSize, args[0], args[1]);
 
 
             Map<String, FlowInfo> fmap = new HashMap<String, FlowInfo>();
             fmap.put("user:job:map:reduce", flowInfo);
 
-            fmap.put("user:job:map:reduce2", flowInfo2);
+//            fmap.put("user:job:map:reduce2", flowInfo2);
 
-            gaiaClient.submitShuffleInfo("apple", "b1", mappersIP, reducersIP, fmap);
+            gaiaClient.submitShuffleInfo("apple", "job1", mappersIP, reducersIP, fmap);
         } finally {
             gaiaClient.shutdown();
         }
