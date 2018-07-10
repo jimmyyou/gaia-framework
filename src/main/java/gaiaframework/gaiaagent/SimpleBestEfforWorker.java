@@ -84,6 +84,7 @@ public class SimpleBestEfforWorker implements Runnable {
 
                     // TODO send data
                     oos.writeObject(m.dataChunkMessage);
+                    logger.info("Worker written data {} to {}", m.dataChunkMessage.getStartIndex(), localPort);
 
 
                 }
@@ -101,7 +102,7 @@ public class SimpleBestEfforWorker implements Runnable {
     private void connectSoc_Retry() {
 
         boolean isConnected = false;
-        while ( !isConnected ) {
+        while (!isConnected) {
             try {
                 dataSocket = new Socket(faIP, faPort, null, localPort);
 //                dataSocket.setSoTimeout(Constants.DEFAULT_SOCKET_TIMEOUT);
