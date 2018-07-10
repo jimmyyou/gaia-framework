@@ -114,7 +114,7 @@ public class RemoteHTTPFetcher implements Runnable {
             int total_bytes_sent = 0;
             while (true) {
 
-                int cur_bytes_sent = 0;
+                int iter_bytes_sent = 0;
 
                 // Each time before start fetching, first learn about current rate
                 List<AggFlowGroupInfo.WorkerInfo> workerInfos = new LinkedList<>();
@@ -173,7 +173,7 @@ public class RemoteHTTPFetcher implements Runnable {
                     logger.error("bytes read is smaller than expected, sent {}, read {}/{}", total_bytes_sent, bytes_read, data_length);
                 }*/
 
-                // send data through all paths
+                // send data through all paths. Iterate through all workerInfo, get path, raID etc.
                 for (int i = 0; i < workerInfos.size(); i++) {
 
                     String faID = workerInfos.get(i).getRaID();
@@ -182,22 +182,23 @@ public class RemoteHTTPFetcher implements Runnable {
                     int thisChunkSize = 0;
                     if (i < workerInfos.size() - 1) {
                         thisChunkSize = (int) (workerInfos.get(i).rate / totalRate * data_length);
-                    } else { // the last piece of this block
-                        thisChunkSize = data_length - cur_bytes_sent;
+                    } else { // the last piece of this block contains all remaining data
+                        thisChunkSize = data_length - iter_bytes_sent;
                     }
 
                     // copy the chunkbuf
                     byte[] chunkBuf = new byte[thisChunkSize];
                     for (int j = 0; j < thisChunkSize; j++) {
-                        chunkBuf[j] = buf[j + cur_bytes_sent];
+                        chunkBuf[j] = buf[j + iter_bytes_sent];
                     }
 
                     // First chunk and other chunks are essientially the same (async)
                     DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, blockId, (total_bytes_sent), totalBlockLength, 0, chunkBuf);
                     agentSharedData.workerQueues.get(faID)[pathID].put(new CTRL_to_WorkerMsg(dm));
+                    logger.info("Putting dm index {} into fa {} path {}: queue {}", total_bytes_sent, faID, pathID, agentSharedData.workerQueues.get(faID)[pathID]);
 
                     total_bytes_sent += thisChunkSize;
-                    cur_bytes_sent += thisChunkSize;
+                    iter_bytes_sent += thisChunkSize;
 
 //                    logger.info("Sent {} for {}, fileLength {}", total_bytes_sent, dstFilename, filelength);
 
