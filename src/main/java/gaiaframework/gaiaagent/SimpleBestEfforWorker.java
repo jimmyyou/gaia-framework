@@ -84,7 +84,7 @@ public class SimpleBestEfforWorker implements Runnable {
 
                     // TODO send data
                     oos.writeObject(m.dataChunkMessage);
-                    logger.info("Worker written data {} to {}", m.dataChunkMessage.getStartIndex(), localPort);
+                    logger.info("Worker written data {} to {}", m.dataChunkMessage.getStartIndex(), dataSocket.getLocalSocketAddress());
 
 
                 }
