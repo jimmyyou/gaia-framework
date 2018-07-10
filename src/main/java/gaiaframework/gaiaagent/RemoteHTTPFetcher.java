@@ -119,6 +119,7 @@ public class RemoteHTTPFetcher implements Runnable {
                 // Each time before start fetching, first learn about current rate
                 List<AggFlowGroupInfo.WorkerInfo> workerInfos = new LinkedList<>();
                 double totalRate = learnRate(workerInfos);
+                logger.info("Total rate {} for {}, workers {}", totalRate, srcFilename, workerInfos.size());
 
                 double cur_rate = totalRate;
 
