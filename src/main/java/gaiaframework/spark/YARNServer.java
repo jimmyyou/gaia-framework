@@ -79,8 +79,8 @@ public class YARNServer extends GaiaAbstractServer {
                 logger.info("YARN Server submitting CF: {}", cf.getId());
 
                 cfQueue.put(cf);
-                logger.info("Coflow {} submitted, total vol: {}", cf.getId(), cf.getTotalVolume());
-                bwrt.write("Coflow " + cf.getId() + " submitted, total vol: " + cf.getTotalVolume() + "\n");
+                logger.info("Coflow {} submitted, total vol: {}", cf.getId(), (long) cf.getTotalVolume());
+                bwrt.write("Coflow " + cf.getId() + " submitted, total vol: " + (long) cf.getTotalVolume() + "\n");
                 bwrt.flush();
                 cf.blockTillFinish();
                 long cfEndTime = System.currentTimeMillis();
