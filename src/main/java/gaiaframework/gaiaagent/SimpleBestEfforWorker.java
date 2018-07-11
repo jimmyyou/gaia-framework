@@ -84,7 +84,7 @@ public class SimpleBestEfforWorker implements Runnable {
 
                     // TODO send data
                     oos.writeObject(m.dataChunkMessage);
-                    logger.info("Worker written data {} to {}", m.dataChunkMessage.getStartIndex(), dataSocket.getLocalSocketAddress());
+//                    logger.info("Worker written data {} to {}", m.dataChunkMessage.getStartIndex(), dataSocket.getLocalSocketAddress());
 
 
                 }
@@ -108,7 +108,7 @@ public class SimpleBestEfforWorker implements Runnable {
 //                dataSocket.setSoTimeout(Constants.DEFAULT_SOCKET_TIMEOUT);
                 dataSocket.setKeepAlive(true);
 
-                logger.info("Worker {} connected to {} : {} from port {}, keepAlive {}", connID, faIP, faPort, localPort, dataSocket.getKeepAlive());
+                logger.info("Worker {} connected to {} : {} from {}, keepAlive {}", connID, faIP, faPort, dataSocket.getLocalSocketAddress(), dataSocket.getKeepAlive());
             } catch (IOException e) {
                 logger.error("Error while connecting to {} {} from port {}", faIP, faPort, localPort);
                 e.printStackTrace();
