@@ -33,36 +33,36 @@ graph [
     edge [
         source      0
         target      1
-        bandwidth   256
+        bandwidth   128
     ]
     edge [
         source      0
         target      2
-        bandwidth   256
+        bandwidth   128
     ]
     edge [
         source      1
         target      2
-        bandwidth   256
+        bandwidth   128
     ]
     edge [
         source      1
         target      3
-        bandwidth   256
+        bandwidth   128
     ]
     edge [
         source      2
         target      3
-        bandwidth   256
+        bandwidth   128
     ]
     edge [
         source      2
         target      4
-        bandwidth   256
+        bandwidth   128
     ]
     edge [
         source      3
         target      4
-        bandwidth   256
+        bandwidth   128
     ]
 ]
