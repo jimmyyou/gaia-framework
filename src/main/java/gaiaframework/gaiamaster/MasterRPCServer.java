@@ -177,9 +177,10 @@ public class MasterRPCServer {
      */
     synchronized void onFileFinish(String filename) {
         int off1 = filename.lastIndexOf('-');
+        int off0 = filename.lastIndexOf('-', off1 - 1);
         int off2 = filename.lastIndexOf('.');
-        String reducerID = filename.substring(off1 + 1, off2);
-        String origFilename = filename.substring(0, off1).concat(".data");
+        String reducerID = filename.substring(off0 + 1, off1);
+        String origFilename = filename.substring(0, off0).concat(".data");
 
         // Find the FG in the CFPool and then finish the FG
         if (masterSharedData.fileNametoCoflow.containsKey(origFilename)) {
