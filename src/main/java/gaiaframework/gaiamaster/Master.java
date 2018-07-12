@@ -408,9 +408,9 @@ public class Master {
             Coflow cf = ecf.getValue();
             for (Map.Entry<String, FlowGroup> fge : cf.getFlowGroups().entrySet()) {
                 FlowGroup fg = fge.getValue();
-                if (fg.getFlowState() == FlowGroup.FlowState.FIN) {
+                if (fg.getFlowState() == FlowGroup.FlowState.TRANSFER_FIN) {
                     // FIXME repeated too many times here. (Because FGs are skewed.)
-//                    logger.info("find fg {} in FIN state, to be ignored", fg.getId());
+//                    logger.info("find fg {} in TRANSFER_FIN state, to be ignored", fg.getId());
                     continue; // ignore finished, they shall be removed shortly
                 } else if (fg.getFlowState() == FlowGroup.FlowState.RUNNING) { // may pause/change the running flow
                     if (fgoHashMap.containsKey(fg.getId())) { // we may need to change, if the path/rate are different TODO: speculatively send change message

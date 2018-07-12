@@ -142,4 +142,25 @@ public class MasterSharedData {
             e.printStackTrace();
         }
     }
+
+    public void onFileFIN(FlowGroup fg, Coflow cf) {
+        if (fg == null) {
+            logger.error("FATAL: fg == null when file fin");
+            return;
+        }
+
+        if (fg.getAndSetFileFIN()) {
+            logger.warn("FILE_FIN for a flow that should have been FINned {}", fg.getId());
+            return; // if already finished, do nothing.
+        }
+
+        if (cf == null) {
+            logger.error("FATAL: FILE_FIN for null");
+            return;
+        }
+
+        cf.isCoflowFileFinishedLatch.countDown();
+        logger.info("Counting down for cf {} : {}", cf.getId(), cf.isCoflowFileFinishedLatch.getCount());
+
+    }
 }

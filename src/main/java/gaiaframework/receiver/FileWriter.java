@@ -105,7 +105,7 @@ public class FileWriter implements Runnable {
             if (!finished) {
                 activeFileBlocks.put(handlerId, fileBlockHandler);
             } else {
-                // TODO Send out FIN
+                // TODO Send out TRANSFER_FIN
                 sendFileFIN_WithRetry(filename);
             }
         }

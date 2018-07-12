@@ -97,13 +97,13 @@ public class AgentSharedData {
 
         // null pointer because of double sending FG_FIN
         if (aggFlowGroups.get(fgID) == null) {
-            // already sent the FIN message, do nothing
+            // already sent the TRANSFER_FIN message, do nothing
             return;
         }
 
         if (aggFlowGroups.get(fgID).getFlowState() == AggFlowGroupInfo.FlowState.FIN) {
-            // already sent the FIN message, do nothing
-            logger.warn("Already sent the FIN for {}", fgID);
+            // already sent the TRANSFER_FIN message, do nothing
+            logger.warn("Already sent the TRANSFER_FIN for {}", fgID);
             aggFlowGroups.remove(fgID);
             return;
         }

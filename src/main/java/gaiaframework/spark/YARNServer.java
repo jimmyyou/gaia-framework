@@ -82,7 +82,9 @@ public class YARNServer extends GaiaAbstractServer {
                 logger.info("Coflow {} submitted, total vol: {}", cf.getId(), (long) cf.getTotalVolume());
                 bwrt.write("Coflow " + cf.getId() + " submitted, total vol: " + (long) cf.getTotalVolume() + "\n");
                 bwrt.flush();
+
                 cf.blockTillFinish();
+
                 long cfEndTime = System.currentTimeMillis();
                 logger.info("Coflow {} finished in {} ms, returning to YARN", cfID, (cfEndTime - cfStartTime));
                 bwrt.write("Coflow " + cf.getId() + " finished in (ms) " + (cfEndTime - cfStartTime) + "\n");

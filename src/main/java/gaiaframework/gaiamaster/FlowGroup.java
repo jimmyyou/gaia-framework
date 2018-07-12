@@ -43,7 +43,8 @@ public class FlowGroup {
         NEW,
         RUNNING,
         PAUSED,
-        FIN
+        TRANSFER_FIN,
+        FILE_FIN
     }
 
     private FlowState flowState;
@@ -93,9 +94,22 @@ public class FlowGroup {
             this.transmitted = this.totalVolume;
             this.endTime = timestamp;
             this.isSendingFinished = true;
-            this.flowState = FlowState.FIN;
+            this.flowState = FlowState.TRANSFER_FIN;
             return false;
         }
+    }
+
+    public synchronized boolean getAndSetFileFIN() {
+        if (this.flowState == FlowState.TRANSFER_FIN) {
+            // If we are the first thread to receive FILE_FIN
+            this.flowState = FlowState.FILE_FIN;
+            return false;
+
+        } else if (this.flowState == FlowState.FILE_FIN) {
+            return true;
+        }
+
+        return false;
     }
 
     public synchronized void setStartTime(long timestamp) {

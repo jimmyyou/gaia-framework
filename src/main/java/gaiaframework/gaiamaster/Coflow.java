@@ -2,6 +2,7 @@ package gaiaframework.gaiamaster;
 
 // The new coflow definition. used by GAIA master, YARN emulator etc.
 
+import com.google.errorprone.annotations.DoNotCall;
 import gaiaframework.network.Coflow_Old_Compressed;
 import gaiaframework.network.FlowGroup_Old_Compressed;
 import gaiaframework.util.Constants;
@@ -20,6 +21,7 @@ public class Coflow {
     private final double totalVolume;
     CountDownLatch isDoneLatch;
     public CountDownLatch isSmallFlowDoneLatch;
+    CountDownLatch isCoflowFileFinishedLatch;
 
     // list of flowgroups: final? ArrayList or ConcurrentHashMap?
     private HashMap<String, FlowGroup> flowGroups;
@@ -39,6 +41,7 @@ public class Coflow {
         this.id = id;
         this.flowGroups = flowGroups;
         this.isDoneLatch = new CountDownLatch(1);
+        this.isCoflowFileFinishedLatch = new CountDownLatch(flowGroups.size());
         this.totalVolume = flowGroups.values().stream().mapToDouble(FlowGroup::getTotalVolume).sum();
     }
 
@@ -153,6 +156,10 @@ public class Coflow {
         return this.finished.getAndSet(newValue);
     }
 
+
+
+
+    @Deprecated @DoNotCall
     public void finishSF() {
         if (isSmallFlowDoneLatch.getCount() != 0) {
             isSmallFlowDoneLatch.countDown();
@@ -161,6 +168,7 @@ public class Coflow {
 
     public void blockTillFinish() throws InterruptedException {
         isDoneLatch.await();
+        isCoflowFileFinishedLatch.await();
     }
 
 //    public boolean getAndSetFinished(boolean newValue) { return this.finished.getAndSet(newValue); }
