@@ -46,7 +46,7 @@ public class TestClientNew {
 
 //            fmap.put("user:job:map:reduce2", flowInfo2);
 
-            gaiaClient.submitShuffleInfo("apple", "job1", mappersIP, reducersIP, fmap);
+            gaiaClient.submitShuffleInfo("apple", "shuffle_stage", mappersIP, reducersIP, fmap);
         } finally {
             gaiaClient.shutdown();
         }

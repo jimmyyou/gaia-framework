@@ -61,7 +61,8 @@ public class RemoteHTTPFetcher implements Runnable {
         this.blockId = flowInfo.getReduceAttemptID();
 
         this.srcFilename = flowInfo.getDataFilename();
-        int off1 = flowGroupInfo.parentFlowInfo.ID.indexOf("_");
+        int off0 = flowGroupInfo.parentFlowInfo.ID.indexOf("_");
+        int off1 = flowGroupInfo.parentFlowInfo.ID.indexOf("_", off0 + 1); // app-shuffle_stage:*
         int off2 = flowGroupInfo.parentFlowInfo.ID.indexOf(":");
         String stageID = flowGroupInfo.parentFlowInfo.ID.substring(off1 + 1, off2);
         this.dstFilename = getDstFilename(srcFilename, blockId + "-" + stageID);
