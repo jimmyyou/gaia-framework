@@ -124,7 +124,7 @@ public class RemoteHTTPFetcher implements Runnable {
                 // Each time before start fetching, first learn about current rate
                 List<AggFlowGroupInfo.WorkerInfo> workerInfos = new LinkedList<>();
                 double totalRate = learnRate(workerInfos);
-                logger.info("Total rate {} for {}, workers {}", totalRate, srcFilename, workerInfos.size());
+//                logger.info("Total rate {} for {}, workers {}", totalRate, srcFilename, workerInfos.size());
 
                 double cur_rate = totalRate;
 
@@ -200,7 +200,7 @@ public class RemoteHTTPFetcher implements Runnable {
                     // First chunk and other chunks are essientially the same (async)
                     DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, blockId, (total_bytes_sent), totalBlockLength, 0, chunkBuf);
                     agentSharedData.workerQueues.get(faID)[pathID].put(new CTRL_to_WorkerMsg(dm));
-                    logger.info("Putting dm index {} into fa {} path {}: queue {}", total_bytes_sent, faID, pathID, agentSharedData.workerQueues.get(faID)[pathID]);
+//                    logger.info("Putting dm index {} into fa {} path {}: queue {}", total_bytes_sent, faID, pathID, agentSharedData.workerQueues.get(faID)[pathID]);
 
                     total_bytes_sent += thisChunkSize;
                     iter_bytes_sent += thisChunkSize;

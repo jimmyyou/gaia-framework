@@ -35,6 +35,7 @@ public class YARNServer extends GaiaAbstractServer {
         try {
             bwrt = new BufferedWriter(new java.io.FileWriter("/tmp/terra.txt"));
             bwrt.write("------- Server start at " + java.time.LocalDateTime.now() + " --------\n");
+            bwrt.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
