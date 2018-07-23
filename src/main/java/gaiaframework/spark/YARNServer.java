@@ -8,7 +8,6 @@ import gaiaframework.util.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.sound.midi.SysexMessage;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,12 +41,12 @@ public class YARNServer extends GaiaAbstractServer {
     }
 
     @Override
-    public void processReq(ShuffleInfo req) {
+    public void processReq(String username, String jobID, List<ShuffleInfo.FlowInfo> flowsList) {
 
         long cfStartTime = System.currentTimeMillis();
 
         // Create the CF and submit it.
-        String cfID = req.getUsername() + "_" + req.getJobID();
+        String cfID = username + "_" + jobID;
 
         // Aggregate all the flows by their Data Center location
         // Gaia only sees Data Centers
@@ -57,7 +56,7 @@ public class YARNServer extends GaiaAbstractServer {
         HashMap<String, FlowGroup> flowGroups = new HashMap<>();
         HashMap<String, FlowGroup> indexFiles = new HashMap<>();
 
-        generateFlowGroups_noAgg(cfID, req, coSiteFGs, flowGroups, indexFiles);
+        generateFlowGroups_noAgg(cfID, flowsList, coSiteFGs, flowGroups, indexFiles);
 
         logger.error("{} co-located FG received by Gaia", coSiteFGs.size());
 
@@ -337,13 +336,13 @@ public class YARNServer extends GaiaAbstractServer {
     // dst - dstLoc
     // owningCoflowID - dstStage
     // Volume - divided_data_size
-    private HashMap<String, FlowGroup> generateFlowGroups_noAgg(String cfID, ShuffleInfo req, HashMap<String, FlowGroup> coSiteFGs,
+    private HashMap<String, FlowGroup> generateFlowGroups_noAgg(String cfID, List<ShuffleInfo.FlowInfo> flowList, HashMap<String, FlowGroup> coSiteFGs,
                                                                 HashMap<String, FlowGroup> outputFlowGroups, HashMap<String, FlowGroup> indexFileFGs) {
 
         // first store all flows into aggFlowGroups, then move the co-located ones to coLocatedFGs
 
         // for each FlowInfo, first find the fgID etc.
-        for (ShuffleInfo.FlowInfo flowInfo : req.getFlowsList()) {
+        for (ShuffleInfo.FlowInfo flowInfo : flowList) {
 
             String mapID = flowInfo.getMapAttemptID();
             String redID = flowInfo.getReduceAttemptID();
