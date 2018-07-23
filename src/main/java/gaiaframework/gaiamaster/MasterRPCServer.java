@@ -189,6 +189,7 @@ public class MasterRPCServer {
 
 //            logger.info("Found CF {} for file {}", cf.getId(), origFilename);
 
+            // FIXME TODO overhead too high
             boolean foundFG = false;
             for (Map.Entry<String, FlowGroup> fge : cf.getFlowGroups().entrySet()) {
 

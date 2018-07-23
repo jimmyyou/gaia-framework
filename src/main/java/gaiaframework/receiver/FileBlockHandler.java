@@ -163,8 +163,8 @@ public class FileBlockHandler {
     }
 
     private void finishAndClose() throws IOException {
-        logger.info("Finishing FileBlock {}", this.filename);
         dataFile.close();
+        logger.info("Finishing FileBlock {}", this.filename);
     }
 
     private void checkAndChangeFileSize(DataChunkMessage dataChunk) throws IOException {

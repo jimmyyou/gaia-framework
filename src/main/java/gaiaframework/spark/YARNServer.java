@@ -43,7 +43,7 @@ public class YARNServer extends GaiaAbstractServer {
 
     @Override
     public void processReq(ShuffleInfo req) {
-        logger.info("received {} Byte shuffle info: {}", req.getSerializedSize(), req);
+
         long cfStartTime = System.currentTimeMillis();
 
         // Create the CF and submit it.
