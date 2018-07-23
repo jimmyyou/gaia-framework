@@ -1,0 +1,62 @@
+// protocol between application master and Gaia Controller
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "edu.umich.gaialib.gaiaprotos";
+option java_outer_classname = "GaiaProtos";
+
+// The Gaia Shuffle Service definition
+service GaiaShuffle {
+    rpc SayHello (HelloRequest) returns (HelloReply) {}
+
+    // submit ShuffleInfo to Gaia
+    rpc submitShuffleInfo (ShuffleInfo) returns (ShuffleInfoReply) {}
+    rpc submitShuffleInfoStream (stream ShuffleInfo) returns (ShuffleInfoReply) {}
+}
+
+// The request message containing the user's name.
+message HelloRequest {
+    string name = 1;
+}
+
+// The response message containing the greetings
+message HelloReply {
+    string message = 1;
+}
+
+// The request message containing the user's name.
+message ShuffleInfo {
+    //    message MapperInfo {
+    //         string mapperID = 1;
+    //         string mapperIP = 2;
+    //    }
+    //
+    //    message ReducerInfo {
+    //         string reducerID = 1;
+    //         string reducerIP = 2;
+    //    }
+
+    message FlowInfo {
+        string dataFilename = 1;
+        string mapAttemptID = 2;
+        string reduceAttemptID = 3;
+        int64 startOffSet = 4;
+        int64 flowSize = 5;
+        string mapperIP = 6;
+        string reducerIP = 7;
+    }
+
+    string jobID = 1;
+    string username = 2;
+
+    //    repeated MapperInfo mappers = 3;
+    //    repeated ReducerInfo reducers = 4;
+    repeated FlowInfo flows = 5;
+
+}
+
+// The response message containing the greetings
+message ShuffleInfoReply {
+    string message = 1;
+}
