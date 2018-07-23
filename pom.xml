@@ -85,6 +85,8 @@
             <groupId>edu.umich.gaia</groupId>
             <artifactId>gaia-lib</artifactId>
             <version>1.0-SNAPSHOT</version>
+            <type>jar</type>
+            <classifier>shaded</classifier>
         </dependency>
         <dependency>
             <groupId>com.opencsv</groupId>
