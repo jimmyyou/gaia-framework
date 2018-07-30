@@ -93,34 +93,6 @@ public class MasterRPCClient {
 
     }
 
-    public void submitSmallFlow(FlowGroup smallfg, Coflow coflow) {
-
-        // TODO
-        GaiaMessageProtos.SmallFlow.Builder sfb = GaiaMessageProtos.SmallFlow.newBuilder()
-                .setFilename(smallfg.getFilename()).setSrcIP(smallfg.srcIPs.get(0));
-
-        StreamObserver<GaiaMessageProtos.SmallFlow_ACK> SmallFlowReqObserver = new StreamObserver<GaiaMessageProtos.SmallFlow_ACK>() {
-            @Override
-            public void onNext(GaiaMessageProtos.SmallFlow_ACK smallFlow_ack) {
-
-            }
-
-            @Override
-            public void onError(Throwable throwable) {
-
-            }
-
-            @Override
-            public void onCompleted() {
-                // TODO check here
-                logger.info("Finished Small Flow {}", smallfg.filename);
-                coflow.isSmallFlowDoneLatch.countDown();
-
-            }
-        };
-
-        asyncStub.fetchSmallFlow(sfb.build(), SmallFlowReqObserver);
-    }
 
     public GaiaMessageProtos.FlowUpdate buildFUM(Collection<FlowGroup_Old_Compressed> fgos, NetGraph ng, String saID) {
 

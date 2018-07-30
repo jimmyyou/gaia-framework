@@ -75,7 +75,8 @@ public class YARNServer extends GaiaAbstractServer {
                     logger.warn("Received some index file, ignoring");
                 }
 
-                Coflow cf = new Coflow(cfID, flowGroups);
+                Coflow cf = new Coflow(cfID, flowGroups); // TODO change this v2.0
+
                 logger.info("YARN Server submitting CF: {}", cf.getId());
 
                 cfQueue.put(cf);

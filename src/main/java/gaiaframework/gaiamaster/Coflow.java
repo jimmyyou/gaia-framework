@@ -20,7 +20,6 @@ public class Coflow {
     private final String id;
     private final double totalVolume;
     CountDownLatch isDoneLatch;
-    public CountDownLatch isSmallFlowDoneLatch;
     CountDownLatch isCoflowFileFinishedLatch;
 
     // list of flowgroups: final? ArrayList or ConcurrentHashMap?
@@ -137,15 +136,6 @@ public class Coflow {
         return this.finished.getAndSet(newValue);
     }
 
-
-
-
-    @Deprecated @DoNotCall
-    public void finishSF() {
-        if (isSmallFlowDoneLatch.getCount() != 0) {
-            isSmallFlowDoneLatch.countDown();
-        }
-    }
 
     public void blockTillFinish() throws InterruptedException {
         isDoneLatch.await();
