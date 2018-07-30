@@ -116,16 +116,13 @@ public class Master {
 
         printPaths(netGraph);
         if (configFile == null) {
-//            this.config = new Configuration(netGraph.nodes_.size(), netGraph.nodes_.size());
             this.config = new Configuration(netGraph.nodes_.size());
         } else {
-//            this.config = new Configuration(netGraph.nodes_.size(), netGraph.nodes_.size(), configFile);
             this.config = new Configuration(netGraph.nodes_.size(), configFile);
         }
 
         this.rpcServer = new MasterRPCServer(this.config, this.masterSharedData);
 
-//        this.masterSharedData.coflowPool = new ConcurrentHashMap<>();
         this.mainExec = Executors.newScheduledThreadPool(1);
 
         // setting up interface with YARN.
