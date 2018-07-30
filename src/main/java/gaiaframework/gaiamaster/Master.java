@@ -85,25 +85,6 @@ public class Master {
         }
     }
 
-    /**
-     * submit Small Flows to Sending Agents
-     *
-     * @param coflow
-     */
-    private void submitSmallFlows(Coflow coflow) {
-
-        if (coflow.smallFlows == null || coflow.smallFlows.size() == 0) return;
-
-        for (FlowGroup smallfg : coflow.smallFlows.values()) {
-
-            // Get SA-ID for destinationIP
-            String saID = config.findDCIDbyHostAddr(smallfg.dstIPs.get(0));
-
-            // submit request
-            logger.info("Submitting {} to SA - {}", smallfg.filename, saID);
-            rpcClientHashMap.get(saID).submitSmallFlow(smallfg, coflow);
-        }
-    }
 
     public Master(String gml_file, String scheduler_type, String outdir, String configFile,
                   double bw_factor, boolean isSettingFlowRules, boolean isDebugMode) throws IOException {

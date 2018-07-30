@@ -26,8 +26,6 @@ public class Coflow {
     // list of flowgroups: final? ArrayList or ConcurrentHashMap?
     private HashMap<String, FlowGroup> flowGroups;
 
-    HashMap<String, FlowGroup> smallFlows;
-
     // multiple FGs may finish concurrently leading to the finish of Coflow.
     private AtomicBoolean finished = new AtomicBoolean(false);
 
@@ -45,23 +43,6 @@ public class Coflow {
         this.totalVolume = flowGroups.values().stream().mapToDouble(FlowGroup::getTotalVolume).sum();
     }
 
-    /**
-
-     * Create a Coflow with FlowGroups, and small flows (flows that are sent directly, without scheduling)
-     *
-     * @param id
-     * @param flowGroups
-     * @param smallFlows
-     */
-    @Deprecated
-    public Coflow(String id, HashMap<String, FlowGroup> flowGroups, HashMap<String, FlowGroup> smallFlows) {
-        this.id = id;
-        this.flowGroups = flowGroups;
-        this.smallFlows = smallFlows;
-        this.isDoneLatch = new CountDownLatch(1);
-        this.isSmallFlowDoneLatch = new CountDownLatch(smallFlows.size());
-        this.totalVolume = flowGroups.values().stream().mapToDouble(FlowGroup::getTotalVolume).sum() + smallFlows.values().stream().mapToDouble(FlowGroup::getTotalVolume).sum();
-    }
 
     public String getId() {
         return id;
