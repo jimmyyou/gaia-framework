@@ -47,10 +47,6 @@ public class TerraMaster {
             is_emulation_ = true;
         }
 
-        if (cmd.hasOption("l")) {
-            isRunningOnList = true;
-        }
-
         if (cmd.hasOption("d")) {
             isDebugMode = true;
         }
@@ -67,13 +63,6 @@ public class TerraMaster {
             isSettingFlowRules = true;
         } else {
             logger.warn("Assuming flow rules has been set");
-        }
-
-        if (cmd.hasOption("j")) {
-            args_map.put("trace", cmd.getOptionValue("j"));
-        } else if (!cmd.hasOption('e')) { // if provided -e, no need for the trace.
-            System.out.println("ERROR: Must specify a path to a trace file using the -j flag");
-            System.exit(1);
         }
 
         if (cmd.hasOption("s")) {
@@ -125,9 +114,8 @@ public class TerraMaster {
 
             logger.info("GAIA: finished copying the model..");
 
-            Master m = new Master(args_map.get("gml"), args_map.get("trace"),
-                    args_map.get("scheduler"), args_map.get("outdir"), args_map.get("config"),
-                    Double.parseDouble(args_map.get("bw_factor")), isRunningOnList, isSettingFlowRules, isDebugMode);
+            Master m = new Master(args_map.get("gml"), args_map.get("scheduler"), args_map.get("outdir"), args_map.get("config"),
+                    Double.parseDouble(args_map.get("bw_factor")), isSettingFlowRules, isDebugMode);
 
             if (is_emulation_) {
                 m.emulate();

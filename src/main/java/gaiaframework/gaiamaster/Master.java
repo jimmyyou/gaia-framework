@@ -105,8 +105,8 @@ public class Master {
         }
     }
 
-    public Master(String gml_file, String trace_file, String scheduler_type, String outdir, String configFile,
-                  double bw_factor, boolean isRunningOnList, boolean isSettingFlowRules, boolean isDebugMode) throws IOException {
+    public Master(String gml_file, String scheduler_type, String outdir, String configFile,
+                  double bw_factor, boolean isSettingFlowRules, boolean isDebugMode) throws IOException {
 
         this.outdir = outdir;
         this.netGraph = new NetGraph(gml_file, bw_factor);
