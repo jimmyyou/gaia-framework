@@ -10,10 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
@@ -40,6 +37,13 @@ public class YARNServer extends GaiaAbstractServer {
         }
     }
 
+    /**
+     * A blocking method to generate and process Coflow requests, block until Coflow finish.
+     *
+     * @param username
+     * @param jobID
+     * @param flowsList
+     */
     @Override
     public void processReq(String username, String jobID, List<ShuffleInfo.FlowInfo> flowsList) {
 
@@ -47,6 +51,15 @@ public class YARNServer extends GaiaAbstractServer {
 
         // Create the CF and submit it.
         String cfID = username + "_" + jobID;
+
+        logger.info("Pruning req: {} \n{}", cfID, flowsList.toArray());
+        pruneFlowInfos(flowsList);
+
+/*        if (flowsList.size() > 0) {
+            Coflow cf = generateCoflow(cfID, flowsList);
+            //TODO
+        }*/
+
 
         // Aggregate all the flows by their Data Center location
         // Gaia only sees Data Centers
@@ -111,6 +124,66 @@ public class YARNServer extends GaiaAbstractServer {
 
     }
 
+    /**
+     * Prune a list of flowInfo of {co-located, co-sited, index files, zero-volumed}
+     * @param flowList
+     */
+    private void pruneFlowInfos(List<ShuffleInfo.FlowInfo> flowList) {
+
+        // iterate through the list and prune
+        Iterator<ShuffleInfo.FlowInfo> iter = flowList.iterator();
+
+        while (iter.hasNext()) {
+            ShuffleInfo.FlowInfo flowInfo = iter.next();
+
+//            String srcIP = hardCodedURLResolver(flowInfo.getMapperIP());
+//            String dstIP = hardCodedURLResolver(flowInfo.getReducerIP());
+            String srcIP = (flowInfo.getMapperIP());
+            String dstIP = (flowInfo.getReducerIP());
+
+            String srcLoc = getTaskLocationIDfromIP(srcIP);
+            String dstLoc = getTaskLocationIDfromIP(dstIP);
+
+            // Filter same host
+            if (srcIP.equals(dstIP)) {
+                logger.warn("Ignoring Co-located {}:{} {}", srcIP, dstIP, flowInfo.getDataFilename());
+                iter.remove();
+            }
+
+            // Filter same site
+            assert srcLoc != null;
+            if (srcLoc.equals(dstLoc)) {
+                logger.warn("Ignoring Co-sited {}:{} {}", srcIP, dstIP, flowInfo.getDataFilename());
+                iter.remove();
+            }
+
+            // Filter volume < 1 flow
+            long flowVolume = flowInfo.getFlowSize();
+            if (flowVolume <= 0) {
+                logger.warn("Ignoring size={} flow {}:{} {} ", flowVolume, srcIP, dstIP, flowInfo.getDataFilename());
+                iter.remove();
+            }
+
+            // Filter index files
+            if (flowInfo.getDataFilename().endsWith("index")) {
+                logger.warn("Ignoring index files {}:{} {}", srcIP, dstIP, flowInfo.getDataFilename());
+                iter.remove();
+            }
+        }
+    }
+
+    /**
+     * Generate Coflow from a List of ShuffleInfo.FlowInfo
+     *
+     * @param cfID
+     * @param flowList
+     * @return
+     */
+    private Coflow generateCoflow(String cfID, List<ShuffleInfo.FlowInfo> flowList) {
+
+        // TODO create FGs from FlowInfos.
+        return null;
+    }
 
 
     // generate aggFlowGroups from req using an IP to ID mapping
@@ -121,6 +194,7 @@ public class YARNServer extends GaiaAbstractServer {
     // dst - dstLoc
     // owningCoflowID - dstStage
     // Volume - divided_data_size
+    @Deprecated
     private HashMap<String, FlowGroup> generateFlowGroups_noAgg(String cfID, List<ShuffleInfo.FlowInfo> flowList, HashMap<String, FlowGroup> coSiteFGs,
                                                                 HashMap<String, FlowGroup> outputFlowGroups, HashMap<String, FlowGroup> indexFileFGs) {
 
