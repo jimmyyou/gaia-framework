@@ -22,16 +22,15 @@ public class FlowGroup {
     private final String srcLocation;
     private final String dstLocation;
     private final String owningCoflowID;
+    private final double totalVolume;
 
     // non-final fields
     private long startTime = -1;
-    private double totalVolume;
     private long endTime = -1;
 
-    private boolean isSendingFinished = false; // set true along with setting endTime.
-
-    // make this field volatile! Or maybe atomic?
     private volatile double transmitted;
+
+    private boolean isSendingFinished = false; // set true along with setting endTime.
 
     // the state of this flow
     public enum FlowGroupState {
@@ -44,19 +43,12 @@ public class FlowGroup {
 
     private FlowGroupState flowGroupState;
 
-    String filename = null;
-    String mapID;
-    String redID;
-
     @Deprecated
-    public FlowGroup(String id, String srcLocation, String dstLocation, String owningCoflowID, double totalVolume) {
-        this.id = id;
-        this.srcLocation = srcLocation;
-        this.dstLocation = dstLocation;
-        this.owningCoflowID = owningCoflowID;
-        this.totalVolume = totalVolume;
-        this.flowGroupState = FlowGroupState.NEW;
-    }
+    String filename = null;
+    @Deprecated
+    String mapID;
+    @Deprecated
+    String redID;
 
     @Deprecated
     public FlowGroup(String id, String srcLocation, String dstLocation, String owningCoflowID, double totalVolume, String filename, String mapID, String redID) {
@@ -72,26 +64,19 @@ public class FlowGroup {
     }
 
     public FlowGroup(String cfID, String srcLoc, String dstLoc, List<ShuffleInfo.FlowInfo> flowInfos) {
-        // FIXME
-        // TODO
         this.id = cfID + ":" + srcLoc + "-" + dstLoc;
         this.srcLocation = srcLoc;
         this.dstLocation = dstLoc;
         this.owningCoflowID = cfID;
         this.flowInfos = flowInfos;
+        this.totalVolume = flowInfos.stream().mapToLong(ShuffleInfo.FlowInfo::getFlowSize).sum();
+        // TODO: check the long to double conversion here
     }
 
 
+    @Deprecated
     public String getFilename() {
         return filename;
-    }
-
-    public String getMapID() {
-        return mapID;
-    }
-
-    public String getRedID() {
-        return redID;
     }
 
     // This method is called upon receiving Status Update, this method must be call if a Flow is finishing
@@ -174,15 +159,6 @@ public class FlowGroup {
         return fgo;
     }
 
-/*    public FlowGroup(FlowGroup_Old_Compressed fgo) {
-        this.id = fgo.getId();
-        this.srcLocation = fgo.getSrc_loc();
-        this.dstLocation = fgo.getDst_loc();
-        this.owningCoflowID = fgo.getCoflow_id();
-        this.totalVolume = fgo.getRemainingVolume();
-        this.transmitted = fgo.getTransmitted_volume();
-    }*/
-
     public long getStartTime() {
         return startTime;
     }
@@ -204,7 +180,4 @@ public class FlowGroup {
         return this;
     }
 
-    public void addTotalVolume(long volume) {
-        totalVolume += volume;
-    }
 }

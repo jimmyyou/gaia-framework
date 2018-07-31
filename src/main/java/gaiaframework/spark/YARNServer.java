@@ -56,42 +56,10 @@ public class YARNServer extends GaiaAbstractServer {
 
         if (flowsList.size() > 0) {
             Coflow cf = generateCoflow(cfID, groupedFlowInfo);
-            //TODO
-        }
+            // submit and wait
+            logger.info("YARN Server submitting CF: {}", cf.getId());
 
-
-        // Aggregate all the flows by their Data Center location
-        // Gaia only sees Data Centers
-        // How to deal with co-located flows?
-
-        HashMap<String, FlowGroup> coSiteFGs = new HashMap<>();
-        HashMap<String, FlowGroup> flowGroups = new HashMap<>();
-        HashMap<String, FlowGroup> indexFiles = new HashMap<>();
-
-        // TODO to remove
-        generateFlowGroups_noAgg(cfID, flowsList, coSiteFGs, flowGroups, indexFiles);
-
-        logger.error("{} co-located FG received by Gaia", coSiteFGs.size());
-
-
-        try {
-
-            if (flowGroups.size() == 0) {
-                logger.error("FATAL: CF {} is empty, skipping and returning to YARN", cfID);
-                // TODO Check this in the future, should not happen.
-//                SCPTransferFiles_Serial(indexFiles);
-//            SCPTransferFiles(indexFiles);
-                return;
-            } else {
-
-                if (indexFiles.size() != 0) {
-                    logger.warn("Received some index file, ignoring");
-                }
-
-                Coflow cf = new Coflow(cfID, flowGroups); // TODO change this v2.0
-
-                logger.info("YARN Server submitting CF: {}", cf.getId());
-
+            try {
                 cfQueue.put(cf);
                 logger.info("Coflow {} submitted, total vol: {}", cf.getId(), (long) cf.getTotalVolume());
                 bwrt.write("Coflow " + cf.getId() + " submitted, total vol: " + (long) cf.getTotalVolume() + "\n");
@@ -103,15 +71,16 @@ public class YARNServer extends GaiaAbstractServer {
                 logger.info("Coflow {} finished in {} ms, returning to YARN", cfID, (cfEndTime - cfStartTime));
                 bwrt.write("Coflow " + cf.getId() + " finished in (ms) " + (cfEndTime - cfStartTime) + "\n");
                 bwrt.flush();
+            } catch (InterruptedException e) {
+                logger.error("ERROR occurred while submitting coflow");
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-
-        } catch (InterruptedException e) {
-            logger.error("ERROR occurred while submitting coflow");
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } else {
+            logger.error("FATAL: CF {} is empty, skipping and returning to YARN", cfID);
+            return;
         }
-
 
         if (isDebugMode) {
             System.out.println("Finished Shuffle, continue?");
@@ -124,7 +93,6 @@ public class YARNServer extends GaiaAbstractServer {
 
     }
 
-    // TODO: write a unit test to test this
     /**
      * Prune a list of flowInfo of {co-located, co-sited, index files, zero-volumed}. And group them by {srcLoc, dstLoc}
      *
@@ -208,22 +176,24 @@ public class YARNServer extends GaiaAbstractServer {
      */
     private Coflow generateCoflow(String cfID, Map<String, Map<String, List<ShuffleInfo.FlowInfo>>> groupedFlowInfos) {
 
-        for(Map.Entry<String, Map<String, List<ShuffleInfo.FlowInfo>>> srcEntry : groupedFlowInfos.entrySet()){
+        HashMap<String, FlowGroup> fgMap = new HashMap<>();
+
+        for (Map.Entry<String, Map<String, List<ShuffleInfo.FlowInfo>>> srcEntry : groupedFlowInfos.entrySet()) {
             String srcLoc = srcEntry.getKey();
-            for(Map.Entry<String, List<ShuffleInfo.FlowInfo>> dstEntry : srcEntry.getValue().entrySet()){
+            for (Map.Entry<String, List<ShuffleInfo.FlowInfo>> dstEntry : srcEntry.getValue().entrySet()) {
                 String dstLoc = dstEntry.getKey();
                 List<ShuffleInfo.FlowInfo> flowInfos = dstEntry.getValue();
 
-                // TODO Create FG after extracted info
-//                FlowGroup = new FlowGroup(cfID, srcLoc, dstLoc, flowInfos);
-
+                // Create FG after extracted info, and add to coflow
+                FlowGroup flowGroup = new FlowGroup(cfID, srcLoc, dstLoc, flowInfos);
+                fgMap.put(flowGroup.getId(), flowGroup);
             }
         }
 
-        // TODO create FGs from FlowInfos.
-        return null;
+        return new Coflow(cfID, fgMap);
     }
 
+/*
 
     // generate aggFlowGroups from req using an IP to ID mapping
     // this is the version without aggregation
@@ -257,11 +227,13 @@ public class YARNServer extends GaiaAbstractServer {
 //            String srcLoc = getTaskLocationIDfromIP(srcIP);
 //            String dstLoc = getTaskLocationIDfromIP(dstIP);
 
+*/
 /*            String srcLoc = getTaskLocationID(mapID, req);
             String dstLoc = getTaskLocationID(redID, req);
 
             String srcIP = getRawAddrfromTaskID(mapID, req).split(":")[0];
-            String dstIP = getRawAddrfromTaskID(redID, req).split(":")[0];*/
+            String dstIP = getRawAddrfromTaskID(redID, req).split(":")[0];*//*
+
 
 
 //            String afgID = cfID + ":" + srcLoc + '-' + dstLoc;
@@ -310,30 +282,8 @@ public class YARNServer extends GaiaAbstractServer {
 
         return outputFlowGroups;
     }
+*/
 
-
-    // TODO need to change this mechanism in the future // if same mapID and same dstLoc -> redundant
-    private HashMap<String, FlowGroup> removeRedundantFlowGroups(HashMap<String, FlowGroup> inFlowGroups) {
-        HashMap<String, FlowGroup> ret = new HashMap<>();
-
-        for (Map.Entry<String, FlowGroup> fe : inFlowGroups.entrySet()) {
-
-            boolean reduandant = false;
-            for (Map.Entry<String, FlowGroup> rete : ret.entrySet()) {
-                if (rete.getValue().getDstLocation().equals(fe.getValue().getDstLocation()) &&
-                        rete.getValue().getMapID().equals(fe.getValue().getMapID())) {
-                    reduandant = true;
-                }
-            }
-            // check if this fe needs to be put in ret
-
-            if (!reduandant) {
-                ret.put(fe.getKey(), fe.getValue());
-            }
-        }
-
-        return ret;
-    }
 
     // 1. find the IP for this task using ShuffleInfo (first look in MapIP, then in ReduceIP)
     // 2. find the DCID for this IP?
