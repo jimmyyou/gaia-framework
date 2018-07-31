@@ -68,7 +68,7 @@ public class YARNServer extends GaiaAbstractServer {
         HashMap<String, FlowGroup> flowGroups = new HashMap<>();
         HashMap<String, FlowGroup> indexFiles = new HashMap<>();
 
-        // TODO to remove 
+        // TODO to remove
         generateFlowGroups_noAgg(cfID, flowsList, coSiteFGs, flowGroups, indexFiles);
 
         logger.error("{} co-located FG received by Gaia", coSiteFGs.size());

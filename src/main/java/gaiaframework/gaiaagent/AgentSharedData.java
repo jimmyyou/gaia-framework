@@ -178,7 +178,7 @@ public class AgentSharedData {
             return;
         }
 
-//        AggFlowGroupInfo fgi = new AggFlowGroupInfo(fgID, fge.getRemainingVolume(), fge.getFilename()).setFlowState(AggFlowGroupInfo.FlowState.RUNNING);
+//        AggFlowGroupInfo fgi = new AggFlowGroupInfo(fgID, fge.getRemainingVolume(), fge.getFilename()).setFlowGroupState(AggFlowGroupInfo.FlowGroupState.RUNNING);
         AggFlowGroupInfo afgi = new AggFlowGroupInfo(this, fgID, fue, saID, faID).setFlowState(AggFlowGroupInfo.FlowState.RUNNING);
         aggFlowGroups.put(fgID, afgi);
 
@@ -305,7 +305,7 @@ public class AgentSharedData {
             }
 
 //            if (fgi.getTransmitted_agg() == 0){
-//                logger.info("FG {} tx=0, status {}",fgi.getID(), fgi.getFlowState());
+//                logger.info("FG {} tx=0, status {}",fgi.getID(), fgi.getFlowGroupState());
 //                continue;
 //            }
 

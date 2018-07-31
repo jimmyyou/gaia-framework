@@ -8,10 +8,8 @@ package gaiaframework.gaiamaster;
 
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.network.FlowGroup_Old_Compressed;
-import gaiaframework.network.Pathway;
 import gaiaframework.util.Constants;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -35,20 +33,8 @@ public class FlowGroup {
     // make this field volatile! Or maybe atomic?
     private volatile double transmitted;
 
-    String filename = null;
-    String mapID;
-    String redID;
-
-    public FlowGroup(String cfID, String srcLoc, String dstLoc, List<ShuffleInfo.FlowInfo> flowInfos) {
-        // FIXME
-        this.id = cfID + ":" + srcLoc + "-" + dstLoc;
-        this.srcLocation = srcLoc;
-        this.dstLocation = dstLoc;
-        this.owningCoflowID = cfID;
-    }
-
     // the state of this flow
-    public enum FlowState {
+    public enum FlowGroupState {
         NEW,
         RUNNING,
         PAUSED,
@@ -56,10 +42,45 @@ public class FlowGroup {
         FILE_FIN
     }
 
-    private FlowState flowState;
+    private FlowGroupState flowGroupState;
 
-    // The subflow info, is essientially immutable data? Nope.
-    private ArrayList<Pathway> paths = new ArrayList<Pathway>();
+    String filename = null;
+    String mapID;
+    String redID;
+
+    @Deprecated
+    public FlowGroup(String id, String srcLocation, String dstLocation, String owningCoflowID, double totalVolume) {
+        this.id = id;
+        this.srcLocation = srcLocation;
+        this.dstLocation = dstLocation;
+        this.owningCoflowID = owningCoflowID;
+        this.totalVolume = totalVolume;
+        this.flowGroupState = FlowGroupState.NEW;
+    }
+
+    @Deprecated
+    public FlowGroup(String id, String srcLocation, String dstLocation, String owningCoflowID, double totalVolume, String filename, String mapID, String redID) {
+        this.id = id;
+        this.srcLocation = srcLocation;
+        this.dstLocation = dstLocation;
+        this.owningCoflowID = owningCoflowID;
+        this.totalVolume = totalVolume;
+        this.flowGroupState = FlowGroupState.NEW;
+        this.filename = filename;
+        this.mapID = mapID;
+        this.redID = redID;
+    }
+
+    public FlowGroup(String cfID, String srcLoc, String dstLoc, List<ShuffleInfo.FlowInfo> flowInfos) {
+        // FIXME
+        // TODO
+        this.id = cfID + ":" + srcLoc + "-" + dstLoc;
+        this.srcLocation = srcLoc;
+        this.dstLocation = dstLoc;
+        this.owningCoflowID = cfID;
+        this.flowInfos = flowInfos;
+    }
+
 
     public String getFilename() {
         return filename;
@@ -73,27 +94,6 @@ public class FlowGroup {
         return redID;
     }
 
-    public FlowGroup(String id, String srcLocation, String dstLocation, String owningCoflowID, double totalVolume) {
-        this.id = id;
-        this.srcLocation = srcLocation;
-        this.dstLocation = dstLocation;
-        this.owningCoflowID = owningCoflowID;
-        this.totalVolume = totalVolume;
-        this.flowState = FlowState.NEW;
-    }
-
-    public FlowGroup(String id, String srcLocation, String dstLocation, String owningCoflowID, double totalVolume, String filename, String mapID, String redID) {
-        this.id = id;
-        this.srcLocation = srcLocation;
-        this.dstLocation = dstLocation;
-        this.owningCoflowID = owningCoflowID;
-        this.totalVolume = totalVolume;
-        this.flowState = FlowState.NEW;
-        this.filename = filename;
-        this.mapID = mapID;
-        this.redID = redID;
-    }
-
     // This method is called upon receiving Status Update, this method must be call if a Flow is finishing
     // if a flow is already marked isSendingFinished, we don't invoke coflowFIN
     public synchronized boolean getAndSetFinish(long timestamp) {
@@ -103,18 +103,18 @@ public class FlowGroup {
             this.transmitted = this.totalVolume;
             this.endTime = timestamp;
             this.isSendingFinished = true;
-            this.flowState = FlowState.TRANSFER_FIN;
+            this.flowGroupState = FlowGroupState.TRANSFER_FIN;
             return false;
         }
     }
 
     public synchronized boolean getAndSetFileFIN() {
-        if (this.flowState == FlowState.TRANSFER_FIN) {
+        if (this.flowGroupState == FlowGroupState.TRANSFER_FIN) {
             // If we are the first thread to receive FILE_FIN
-            this.flowState = FlowState.FILE_FIN;
+            this.flowGroupState = FlowGroupState.FILE_FIN;
             return false;
 
-        } else if (this.flowState == FlowState.FILE_FIN) {
+        } else if (this.flowGroupState == FlowGroupState.FILE_FIN) {
             return true;
         }
 
@@ -195,12 +195,12 @@ public class FlowGroup {
         return isSendingFinished;
     }
 
-    public FlowState getFlowState() {
-        return flowState;
+    public FlowGroupState getFlowGroupState() {
+        return flowGroupState;
     }
 
-    public FlowGroup setFlowState(FlowState flowState) {
-        this.flowState = flowState;
+    public FlowGroup setFlowGroupState(FlowGroupState flowGroupState) {
+        this.flowGroupState = flowGroupState;
         return this;
     }
 

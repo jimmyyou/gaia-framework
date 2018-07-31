@@ -386,26 +386,26 @@ public class Master {
             Coflow cf = ecf.getValue();
             for (Map.Entry<String, FlowGroup> fge : cf.getFlowGroups().entrySet()) {
                 FlowGroup fg = fge.getValue();
-                if (fg.getFlowState() == FlowGroup.FlowState.TRANSFER_FIN) {
+                if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.TRANSFER_FIN) {
                     // FIXME repeated too many times here. (Because FGs are skewed.)
 //                    logger.info("find fg {} in TRANSFER_FIN state, to be ignored", fg.getId());
                     continue; // ignore finished, they shall be removed shortly
-                } else if (fg.getFlowState() == FlowGroup.FlowState.RUNNING) { // may pause/change the running flow
+                } else if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.RUNNING) { // may pause/change the running flow
                     if (fgoHashMap.containsKey(fg.getId())) { // we may need to change, if the path/rate are different TODO: speculatively send change message
                         fgoToSend.add(fgoHashMap.get(fg.getId()).setFlowState(FlowGroup_Old_Compressed.FlowState.CHANGING)); // running flow needs to change
                     } else { // we need to pause
-                        fg.setFlowState(FlowGroup.FlowState.PAUSED);
+                        fg.setFlowGroupState(FlowGroup.FlowGroupState.PAUSED);
                         fgoToSend.add(fg.toFlowGroup_Old(0).setFlowState(FlowGroup_Old_Compressed.FlowState.PAUSING));
-//                        fgoToSend.add ( FlowGroup.toFlowGroup_Old(fg, 0).setFlowState(FlowGroup_Old_Compressed.FlowState.PAUSING) );
+//                        fgoToSend.add ( FlowGroup.toFlowGroup_Old(fg, 0).setFlowGroupState(FlowGroup_Old_Compressed.FlowGroupState.PAUSING) );
                     }
                 } else { // case: NEW/PAUSED
                     if (fgoHashMap.containsKey(fg.getId())) { // we take action only if the flow get (re)scheduled
-                        if (fg.getFlowState() == FlowGroup.FlowState.NEW) { // start the flow
-                            fg.setFlowState(FlowGroup.FlowState.RUNNING);
+                        if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.NEW) { // start the flow
+                            fg.setFlowGroupState(FlowGroup.FlowGroupState.RUNNING);
                             fgoToSend.add(fgoHashMap.get(fg.getId()).setFlowState(FlowGroup_Old_Compressed.FlowState.STARTING));
                             masterSharedData.flowStartCnt++;
-                        } else if (fg.getFlowState() == FlowGroup.FlowState.PAUSED) { // RESUME the flow
-                            fg.setFlowState(FlowGroup.FlowState.RUNNING);
+                        } else if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.PAUSED) { // RESUME the flow
+                            fg.setFlowGroupState(FlowGroup.FlowGroupState.RUNNING);
                             fgoToSend.add(fgoHashMap.get(fg.getId()).setFlowState(FlowGroup_Old_Compressed.FlowState.CHANGING));
                         }
 
@@ -457,11 +457,11 @@ public class Master {
 
             for (Map.Entry<String, FlowGroup> fge : cf.getFlowGroups().entrySet()) {
                 FlowGroup fg = fge.getValue();
-                str.append(' ').append(fge.getKey()).append(' ').append(fg.getFlowState())
+                str.append(' ').append(fge.getKey()).append(' ').append(fg.getFlowGroupState())
                         .append(' ').append(fg.getTransmitted()).append(' ').append(fg.getTotalVolume()).append('\n');
-                if (fg.getFlowState() == FlowGroup.FlowState.PAUSED) {
+                if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.PAUSED) {
                     paused++;
-                } else if (fg.getFlowState() == FlowGroup.FlowState.RUNNING) {
+                } else if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.RUNNING) {
                     running++;
                 }
             }
