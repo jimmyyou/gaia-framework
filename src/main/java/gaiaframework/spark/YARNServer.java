@@ -12,7 +12,6 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.stream.Collectors;
 
 public class YARNServer extends GaiaAbstractServer {
 
@@ -53,12 +52,12 @@ public class YARNServer extends GaiaAbstractServer {
         String cfID = username + "_" + jobID;
 
         logger.info("Pruning req: {} \n{}", cfID, flowsList.toArray());
-        pruneFlowInfos(flowsList);
+        pruneAndGroupFlowInfos(flowsList);
 
-/*        if (flowsList.size() > 0) {
+        if (flowsList.size() > 0) {
             Coflow cf = generateCoflow(cfID, flowsList);
             //TODO
-        }*/
+        }
 
 
         // Aggregate all the flows by their Data Center location
@@ -124,14 +123,18 @@ public class YARNServer extends GaiaAbstractServer {
 
     }
 
+    // TODO: write a unit test to test this
     /**
-     * Prune a list of flowInfo of {co-located, co-sited, index files, zero-volumed}
+     * Prune a list of flowInfo of {co-located, co-sited, index files, zero-volumed}. And group them by {srcLoc, dstLoc}
+     *
      * @param flowList
+     * @return groupedFlowInfo
      */
-    private void pruneFlowInfos(List<ShuffleInfo.FlowInfo> flowList) {
+    private Map<String, Map<String, List<ShuffleInfo.FlowInfo>>> pruneAndGroupFlowInfos(List<ShuffleInfo.FlowInfo> flowList) {
 
         // iterate through the list and prune
         Iterator<ShuffleInfo.FlowInfo> iter = flowList.iterator();
+        Map<String, Map<String, List<ShuffleInfo.FlowInfo>>> groupedFlowInfo = new HashMap<>();
 
         while (iter.hasNext()) {
             ShuffleInfo.FlowInfo flowInfo = iter.next();
@@ -148,6 +151,7 @@ public class YARNServer extends GaiaAbstractServer {
             if (srcIP.equals(dstIP)) {
                 logger.warn("Ignoring Co-located {}:{} {}", srcIP, dstIP, flowInfo.getDataFilename());
                 iter.remove();
+                continue;
             }
 
             // Filter same site
@@ -155,6 +159,7 @@ public class YARNServer extends GaiaAbstractServer {
             if (srcLoc.equals(dstLoc)) {
                 logger.warn("Ignoring Co-sited {}:{} {}", srcIP, dstIP, flowInfo.getDataFilename());
                 iter.remove();
+                continue;
             }
 
             // Filter volume < 1 flow
@@ -162,14 +167,35 @@ public class YARNServer extends GaiaAbstractServer {
             if (flowVolume <= 0) {
                 logger.warn("Ignoring size={} flow {}:{} {} ", flowVolume, srcIP, dstIP, flowInfo.getDataFilename());
                 iter.remove();
+                continue;
             }
 
             // Filter index files
             if (flowInfo.getDataFilename().endsWith("index")) {
                 logger.warn("Ignoring index files {}:{} {}", srcIP, dstIP, flowInfo.getDataFilename());
                 iter.remove();
+                continue;
+            }
+
+            // Group the flowInfos
+            if (groupedFlowInfo.containsKey(srcLoc)) {
+                if (groupedFlowInfo.get(srcLoc).containsKey(dstLoc)) {
+                    groupedFlowInfo.get(srcLoc).get(dstLoc).add(flowInfo);
+                } else {
+                    LinkedList<ShuffleInfo.FlowInfo> tmpList = new LinkedList<>();
+                    tmpList.add(flowInfo);
+                    groupedFlowInfo.get(srcLoc).put(dstLoc, tmpList);
+                }
+            } else {
+                HashMap<String, List<ShuffleInfo.FlowInfo>> tmpMap = new HashMap<String, List<ShuffleInfo.FlowInfo>>();
+                LinkedList<ShuffleInfo.FlowInfo> tmpList = new LinkedList<>();
+                tmpList.add(flowInfo);
+                tmpMap.put(dstLoc, tmpList);
+                groupedFlowInfo.put(srcLoc, tmpMap);
             }
         }
+
+        return groupedFlowInfo;
     }
 
     /**
