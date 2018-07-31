@@ -4,6 +4,7 @@ import edu.umich.gaialib.GaiaAbstractServer;
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.gaiamaster.Coflow;
 import gaiaframework.gaiamaster.FlowGroup;
+import gaiaframework.gaiamaster.MasterSharedData;
 import gaiaframework.util.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,19 +12,18 @@ import org.apache.logging.log4j.Logger;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class YARNServer extends GaiaAbstractServer {
 
     private static final Logger logger = LogManager.getLogger();
     private final boolean isDebugMode;
-    LinkedBlockingQueue<Coflow> cfQueue;
+    MasterSharedData msData;
     Configuration configuration;
     BufferedWriter bwrt;
 
-    public YARNServer(Configuration config, int port, LinkedBlockingQueue<Coflow> coflowQueue, boolean isDebugMode) {
+    public YARNServer(Configuration config, int port, MasterSharedData masterSharedData, boolean isDebugMode) {
         super(port);
-        this.cfQueue = coflowQueue;
+        this.msData = masterSharedData;
         this.configuration = config;
         this.isDebugMode = isDebugMode;
 
@@ -60,7 +60,8 @@ public class YARNServer extends GaiaAbstractServer {
             logger.info("YARN Server submitting CF: {}", cf.getId());
 
             try {
-                cfQueue.put(cf);
+                msData.onAddCoflow(cfID, cf);
+
                 logger.info("Coflow {} submitted, total vol: {}", cf.getId(), (long) cf.getTotalVolume());
                 bwrt.write("Coflow " + cf.getId() + " submitted, total vol: " + (long) cf.getTotalVolume() + "\n");
                 bwrt.flush();

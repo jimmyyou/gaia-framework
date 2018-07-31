@@ -8,7 +8,6 @@ import gaiaframework.network.FlowGroup_Old_Compressed;
 import gaiaframework.network.NetGraph;
 import gaiaframework.network.Pathway;
 import gaiaframework.scheduler.CoflowScheduler;
-import gaiaframework.spark.YARNMessages;
 import gaiaframework.spark.YARNServer;
 import gaiaframework.util.Configuration;
 import gaiaframework.util.Constants;
@@ -22,7 +21,7 @@ import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-@SuppressWarnings("Duplicates")
+//@SuppressWarnings("Duplicates")
 
 public class Master {
     private static final Logger logger = LogManager.getLogger();
@@ -47,44 +46,7 @@ public class Master {
 
     protected final ExecutorService saControlExec;
 
-    protected LinkedBlockingQueue<Coflow> coflowEventQueue;
     protected YARNServer yarnServer;
-
-//    protected LinkedBlockingQueue<AgentMessage> agentEventQueue = new LinkedBlockingQueue<>();
-
-
-    // TODO to remove this event queue.
-    protected class CoflowListener implements Runnable {
-        @Override
-        public void run() {
-            System.out.println("Master: CoflowListener is up");
-            while (true) {
-                try {
-                    Coflow cf = coflowEventQueue.take();
-                    String cfID = cf.getId();
-                    System.out.println("Master: Received Coflow from YARN with ID = " + cfID);
-
-                    // first check the deadline then decide whether to add
-//                    if (scheduler.checkDDL(cf)) {
-
-                    masterSharedData.addCoflow(cfID, cf);
-                    masterSharedData.flag_CF_ADD = true;
-
-////                        submitSmallFlows(cf);
-//                    } else {
-//                        logger.info("Coflow {} can't meet deadline, aborting", cfID);
-//
-//                        masterSharedData.yarnEventQueue.put(new YARNMessages(cfID, YARNMessages.Type.COFLOW_DROP));
-//                    }
-
-                    // TODO: track flowgroup starttime.
-
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
 
 
     public Master(String gml_file, String scheduler_type, String outdir, String configFile,
@@ -106,11 +68,6 @@ public class Master {
         this.rpcServer = new MasterRPCServer(this.config, this.masterSharedData);
 
         this.mainExec = Executors.newScheduledThreadPool(1);
-
-        // setting up interface with YARN.
-        this.coflowEventQueue = new LinkedBlockingQueue<Coflow>();
-//        this.yarnServer = new Thread(new YARNEmulator(trace_file , netGraph , masterSharedData.yarnEventQueue , coflowEventQueue, outdir, isRunningOnList));
-        this.coflowListener = new Thread(new CoflowListener());
 
         // setting up the scheduler
         scheduler = new CoflowScheduler(netGraph);
@@ -207,7 +164,7 @@ public class Master {
         ScheduledFuture<?> mainHandler = mainExec.scheduleAtFixedRate(runSchedule, 0, Constants.SCHEDULE_INTERVAL_MS, MILLISECONDS);
 
         // Start the input
-        yarnServer = new YARNServer(config, Constants.DEFAULT_YARN_PORT, coflowEventQueue, isDebugMode);
+        yarnServer = new YARNServer(config, Constants.DEFAULT_YARN_PORT, masterSharedData, isDebugMode);
         try {
             yarnServer.start();
         } catch (IOException e) {
@@ -352,7 +309,7 @@ public class Master {
         for (FlowGroup_Old_Compressed fgo : scheduledCompressedFGs) {
             fgoContent.append(fgo.getId()).append(' ').append(fgo.paths).append(' ').append(fgo.getFlowState()).append('\n');
         }
-        logger.info("FGOs to decomp {}",fgoContent);
+        logger.info("FGOs to decomp {}", fgoContent);
 
         // first decompress convert List to hashMap
         int cnt = 0;

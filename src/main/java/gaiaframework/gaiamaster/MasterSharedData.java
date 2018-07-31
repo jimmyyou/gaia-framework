@@ -56,7 +56,8 @@ public class MasterSharedData {
         return false;
     }
 
-    public synchronized void addCoflow(String id, Coflow cf) { // trim the co-located flowgroup before adding!
+    // FIXME: remove deprecated API
+    public synchronized void onAddCoflow(String id, Coflow cf) { // trim the co-located flowgroup before adding!
         // first add index
         for (FlowGroup fg : cf.getFlowGroups().values()) {
             flowIDtoCoflow.put(fg.getId(), cf);
@@ -67,6 +68,7 @@ public class MasterSharedData {
         }
         //  then add coflow
         coflowPool.put(id, cf);
+        this.flag_CF_ADD = true;
     }
 
 
