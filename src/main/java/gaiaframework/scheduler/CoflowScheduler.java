@@ -91,7 +91,6 @@ public class CoflowScheduler extends Scheduler {
     }
 
 
-
     public class CoflowSchedulerEntry {
         Double cct;
         Coflow_Old_Compressed cf;
@@ -109,9 +108,9 @@ public class CoflowScheduler extends Scheduler {
 
     }
 
-    public boolean checkDDL(Coflow cf) {
+/*    public boolean checkDDL(Coflow cf) {
 
-        if (cf.ddl_Millis < 0){
+        if (cf.ddl_Millis < 0) {
             return true;
         }
 
@@ -135,7 +134,7 @@ public class CoflowScheduler extends Scheduler {
             mmcf_out = MMCFOptimizer.glpk_optimize(cfo, net_graph_, linksWithDDLCF);
 
             // we only check the ddl Once!
-            if (mmcf_out.completion_time_ > 0 && mmcf_out.completion_time_ * 1000  <= cf.ddl_Millis){
+            if (mmcf_out.completion_time_ > 0 && mmcf_out.completion_time_ * 1000 <= cf.ddl_Millis) {
                 logger.info("Admitting DDL Coflow {}", cf.getId());
 
                 // TODO verify the admission logic
@@ -150,13 +149,12 @@ public class CoflowScheduler extends Scheduler {
                     }
                 }
 
-                if ( !all_flows_scheduled) {
+                if (!all_flows_scheduled) {
                     logger.error("Admitted a wrong DDL coflow {}", cf.getId());
                 }
 
                 return true;
-            }
-            else {
+            } else {
                 logger.info("DDL Coflow {} rejected: deadline {} and CCT {}", cf.getId(), cf.ddl_Millis, mmcf_out.completion_time_);
                 logger.error("DDL Coflow {} rejected: deadline {} and CCT {}", cf.getId(), cf.ddl_Millis, mmcf_out.completion_time_);
             }
@@ -166,8 +164,8 @@ public class CoflowScheduler extends Scheduler {
             return false;
         }
 
-            return false;
-        }
+        return false;
+    }*/
 
 //    public void finish_flow(FlowGroup_Old_Compressed f) {
 //        for (Pathway p : f.paths) {
@@ -198,12 +196,11 @@ public class CoflowScheduler extends Scheduler {
                 p.node_list.add(l.src_loc_);
                 p.node_list.add(l.dst_loc_);
 //                p.bandwidth = l.cur_bw_;
-                p.setBandwidth( l.cur_bw_);
+                p.setBandwidth(l.cur_bw_);
 
                 if (l.dst_loc_.equals(f.getDst_loc())) {
                     completed_paths.add(p);
-                }
-                else {
+                } else {
                     potential_paths.add(p);
                 }
 
@@ -257,11 +254,11 @@ public class CoflowScheduler extends Scheduler {
                     else if (Math.round((p.getBandwidth() - l.cur_bw_) * 100.0) / 100.0 >= 0.01) {
                         Pathway new_p = new Pathway();
 //                        new_p.bandwidth = p.getBandwidth() - l.cur_bw_;
-                        new_p.setBandwidth( p.getBandwidth() - l.cur_bw_) ;
-                        new_p.node_list = (ArrayList<String>)p.node_list.clone();
+                        new_p.setBandwidth(p.getBandwidth() - l.cur_bw_);
+                        new_p.node_list = (ArrayList<String>) p.node_list.clone();
                         potential_paths.add(new_p);
 //                        p.bandwidth = l.cur_bw_;
-                        p.setBandwidth( l.cur_bw_ );
+                        p.setBandwidth(l.cur_bw_);
                         p.node_list.add(l.dst_loc_);
                         link_added = true;
 
@@ -372,20 +369,20 @@ public class CoflowScheduler extends Scheduler {
 
     // init the coflow and calculate the CCT under empty network
     // called upon adding a coflow
-    public void coflowInit(Coflow_Old_Compressed cf){
+    public void coflowInit(Coflow_Old_Compressed cf) {
 
         // check if this cf has already finished
         boolean isEmpty = true;
 
-        for ( Map.Entry<String, FlowGroup_Old_Compressed> e : cf.flows.entrySet() ){
-            if( e.getValue().remaining_volume() > 0 + Constants.DOUBLE_EPSILON){
+        for (Map.Entry<String, FlowGroup_Old_Compressed> e : cf.flows.entrySet()) {
+            if (e.getValue().remaining_volume() > 0 + Constants.DOUBLE_EPSILON) {
                 isEmpty = false;
                 break;
             }
         }
 
-        if(isEmpty){
-            logger.error("Trying to init empty CF {}, skipping" , cf.getId());
+        if (isEmpty) {
+            logger.error("Trying to init empty CF {}, skipping", cf.getId());
             return;
         }
 
@@ -396,10 +393,9 @@ public class CoflowScheduler extends Scheduler {
             mmcf_out = MMCFOptimizer.glpk_optimize(cf, net_graph_, linksAtStart); // LP when links are empty
             if (mmcf_out.completion_time_ != -1.0) { // If this Coflow is valid, add to a list
                 cfList.add(new CoflowSchedulerEntry(cf, mmcf_out));
-            }
-            else {
-                logger.error("Unable to init CF {}, completion time = {}, fg_size {} , max volume {}" ,cf.toPrintableString() ,
-                        mmcf_out.completion_time_ , cf.flows.size(), cf.flows.values().stream().max(Comparator.comparingDouble(s -> s.remaining_volume())).get().remaining_volume()
+            } else {
+                logger.error("Unable to init CF {}, completion time = {}, fg_size {} , max volume {}", cf.toPrintableString(),
+                        mmcf_out.completion_time_, cf.flows.size(), cf.flows.values().stream().max(Comparator.comparingDouble(s -> s.remaining_volume())).get().remaining_volume()
                 );
 //                System.exit(1); // don't fail
             }
@@ -410,16 +406,15 @@ public class CoflowScheduler extends Scheduler {
     }
 
     // uponFlowGroupFIN, we set the flowGroupVolume to zero.
-    public void handleFlowGroupFIN(HashMap<String, Coflow_Old_Compressed> coflows){
+    public void handleFlowGroupFIN(HashMap<String, Coflow_Old_Compressed> coflows) {
         // iterate through CFList, if non-existent, remove, else update the cct.
         ListIterator<CoflowSchedulerEntry> iter = cfList.listIterator();
 
-        while (iter.hasNext()){
+        while (iter.hasNext()) {
             CoflowSchedulerEntry cfse = iter.next();
-            if ( !coflows.containsKey(cfse.cf.getId()) ){
+            if (!coflows.containsKey(cfse.cf.getId())) {
                 iter.remove();
-            }
-            else {
+            } else {
                 Coflow_Old_Compressed cfo = coflows.get(cfse.cf.getId());
                 // update the volume
                 cfse.cf = cfo; // TODO verify, also update the CCT?
@@ -430,18 +425,17 @@ public class CoflowScheduler extends Scheduler {
     }
 
     // Upon finish of Coflow, we simply remove the CF from the list, and update the CCT
-    public void handleCoflowFIN(HashMap<String, Coflow_Old_Compressed> coflows){
+    public void handleCoflowFIN(HashMap<String, Coflow_Old_Compressed> coflows) {
 
         // iterate through CFList, if non-existent, remove, else update the cct.
         Iterator<CoflowSchedulerEntry> iter = cfList.iterator();
         System.out.println("CF in scheduler: " + cfList.size());
 
-        while (iter.hasNext()){
+        while (iter.hasNext()) {
             CoflowSchedulerEntry cfse = iter.next();
-            if ( !coflows.containsKey(cfse.cf.getId()) ){
+            if (!coflows.containsKey(cfse.cf.getId())) {
                 iter.remove();
-            }
-            else {
+            } else {
                 Coflow_Old_Compressed cfo = coflows.get(cfse.cf.getId());
                 // update the volume
                 cfse.cf = cfo; // TODO verify, also update the CCT?
@@ -468,25 +462,25 @@ public class CoflowScheduler extends Scheduler {
 
         // TODO check if admitted CF can meet ddl?
         // Part 0: first deal with CFs with deadline
-        for ( CoflowSchedulerEntry e : cfList){
+        for (CoflowSchedulerEntry e : cfList) {
 
             Coflow_Old_Compressed c = e.cf;
 
             // Skip DDL CFs!!
-            if (c.ddl_Millis == -1){
+            if (c.ddl_Millis == -1) {
                 nonDDLCFList.add(e);
                 continue;
             }
 
             // first fast check, we need to check every CF, even if we only have small BW left.
-            if ( !fastCheckCF(e) ){
+            if (!fastCheckCF(e)) {
                 unscheduled_coflows.add(c);
                 logger.error("Admitted DDLCF {} failed fastCheck!", c.getId());
                 continue;
             }
 
             // schedule this CF
-            logger.info("CoflowScheduler: Coflow {} expected to complete in {} seconds" , c.getId() , e.cct);
+            logger.info("CoflowScheduler: Coflow {} expected to complete in {} seconds", c.getId(), e.cct);
 
             MMCFOptimizer.MMCFOutput mmcf_out = MMCFOptimizer.glpk_optimize(c, net_graph_, links_); // This is the recursive part.
 
@@ -503,7 +497,7 @@ public class CoflowScheduler extends Scheduler {
             // check if successfully scheduled
             if (mmcf_out.completion_time_ == -1.0 || !all_flows_scheduled) {
                 unscheduled_coflows.add(c);
-                logger.error("Admitted DDLCF {} has cct {}", c.getId() , mmcf_out.completion_time_);
+                logger.error("Admitted DDLCF {} has cct {}", c.getId(), mmcf_out.completion_time_);
                 continue;
             }
 
@@ -518,7 +512,7 @@ public class CoflowScheduler extends Scheduler {
                 }
 
                 ArrayList<Link> link_vals = mmcf_out.flow_link_bw_map_.get(f.getInt_id());
-                assert(link_vals != null);
+                assert (link_vals != null);
 
                 // This portion is similar to FlowGroup::make() in Sim
                 make_paths(f, link_vals);
@@ -527,7 +521,7 @@ public class CoflowScheduler extends Scheduler {
                 for (Pathway p : f.paths) {
                     for (int i = 0; i < p.node_list.size() - 1; i++) {
                         int src = Integer.parseInt(p.node_list.get(i));
-                        int dst = Integer.parseInt(p.node_list.get(i+1));
+                        int dst = Integer.parseInt(p.node_list.get(i + 1));
                         links_[src][dst].subscribers_.add(p);
                     }
                 }
@@ -542,18 +536,18 @@ public class CoflowScheduler extends Scheduler {
         }
 
         // Part 1: recursively schedule CFs in the priority queue
-        for ( CoflowSchedulerEntry e : nonDDLCFList){
+        for (CoflowSchedulerEntry e : nonDDLCFList) {
 
             Coflow_Old_Compressed c = e.cf;
 
             // first fast check, we need to check every CF, even if we only have small BW left.
-            if ( !fastCheckCF(e) ){
+            if (!fastCheckCF(e)) {
                 unscheduled_coflows.add(c);
                 continue;
             }
 
             // schedule this CF
-            logger.info("CoflowScheduler: Coflow {} expected to complete in {} seconds" , c.getId() , e.cct);
+            logger.info("CoflowScheduler: Coflow {} expected to complete in {} seconds", c.getId(), e.cct);
 //            bwrt.write(c.getId() + " " + e.cct + "\n");
 
             MMCFOptimizer.MMCFOutput mmcf_out = MMCFOptimizer.glpk_optimize(c, net_graph_, links_); // This is the recursive part.
@@ -585,7 +579,7 @@ public class CoflowScheduler extends Scheduler {
                 }
 
                 ArrayList<Link> link_vals = mmcf_out.flow_link_bw_map_.get(f.getInt_id());
-                assert(link_vals != null);
+                assert (link_vals != null);
 
                 // This portion is similar to FlowGroup::make() in Sim
                 make_paths(f, link_vals);
@@ -594,7 +588,7 @@ public class CoflowScheduler extends Scheduler {
                 for (Pathway p : f.paths) {
                     for (int i = 0; i < p.node_list.size() - 1; i++) {
                         int src = Integer.parseInt(p.node_list.get(i));
-                        int dst = Integer.parseInt(p.node_list.get(i+1));
+                        int dst = Integer.parseInt(p.node_list.get(i + 1));
                         links_[src][dst].subscribers_.add(p);
                     }
                 }
@@ -617,7 +611,7 @@ public class CoflowScheduler extends Scheduler {
 
         // TODO verify the remain-flows part
         if (!unscheduled_coflows.isEmpty() && remaining_bw() > 0.0) {
-            scheduleRemainFlows(unscheduled_coflows , scheduledFGs, timestamp);
+            scheduleRemainFlows(unscheduled_coflows, scheduledFGs, timestamp);
         }
 
         return scheduledFGs;
@@ -650,7 +644,7 @@ public class CoflowScheduler extends Scheduler {
             SubscribedLink[] path_links = new SubscribedLink[p.node_list.size() - 1];
             for (int i = 0; i < p.node_list.size() - 1; i++) {
                 int lsrc = Integer.parseInt(p.node_list.get(i));
-                int ldst = Integer.parseInt(p.node_list.get(i+1));
+                int ldst = Integer.parseInt(p.node_list.get(i + 1));
                 SubscribedLink l = links_[lsrc][ldst];
 
                 double bw = l.remaining_bw();
@@ -662,7 +656,7 @@ public class CoflowScheduler extends Scheduler {
 
             if (min_bw > 0) {
 //                p.bandwidth = min_bw;
-                p.setBandwidth( min_bw);
+                p.setBandwidth(min_bw);
 
                 for (SubscribedLink l : path_links) {
                     l.subscribers_.add(p);
@@ -680,16 +674,16 @@ public class CoflowScheduler extends Scheduler {
                     f.setStart_timestamp(timestamp);
                 }
 //                flows_.put(f.getId(), f);
-                logger.info("Selected remaining flow: {}" , f.getId());
+                logger.info("Selected remaining flow: {}", f.getId());
                 scheduledFGs.add(f);
             }
         }
     }
 
-    public boolean fastCheckCF(CoflowSchedulerEntry cfse){
+    public boolean fastCheckCF(CoflowSchedulerEntry cfse) {
         // check the FGs, if anyone of them can't be allocated, return false
-        for( Map.Entry<String, FlowGroup_Old_Compressed> e : cfse.cf.flows.entrySet() ){
-            if ( !fastCheckFG(e.getValue()) ){
+        for (Map.Entry<String, FlowGroup_Old_Compressed> e : cfse.cf.flows.entrySet()) {
+            if (!fastCheckFG(e.getValue())) {
                 return false;
             }
         }
@@ -709,29 +703,28 @@ public class CoflowScheduler extends Scheduler {
 
         Set<Integer> nodeIDDone = new HashSet<>();
 
-        while ( !nodeIDtoCheck.isEmpty() ){
+        while (!nodeIDtoCheck.isEmpty()) {
             int curID = nodeIDtoCheck.remove();
             nodeIDDone.add(curID);
 
             // check nearby nodes from curID
             SubscribedLink[] nodeArray = links_[curID];
-            if (nodeArray != null){
+            if (nodeArray != null) {
                 for (int j = 0; j < net_graph_.nodes_.size(); j++) {
                     if (links_[curID][j] != null) {
-                        if(links_[curID][j].remaining_bw() >= Constants.LINK_AVAILABLE_THR){
+                        if (links_[curID][j].remaining_bw() >= Constants.LINK_AVAILABLE_THR) {
 
-                            if ( j == dstID ){
+                            if (j == dstID) {
                                 return true;
                             }
 
-                            if ( !nodeIDDone.contains(j)) {
+                            if (!nodeIDDone.contains(j)) {
                                 nodeIDtoCheck.add(j);
                             }
                         }
                     }
                 }
-            }
-            else {
+            } else {
                 logger.error("nodeArray==null !");
             }
         }
@@ -745,14 +738,14 @@ public class CoflowScheduler extends Scheduler {
         return scheduleRRF(timestamp);
     }
 
-    public void sortCFList(){
+    public void sortCFList() {
         cfList.sort(smallCCTFirst);
     }
 
     // called upon CF_ADD
-    public void resetCFList(HashMap<String, Coflow_Old_Compressed> CFs){
+    public void resetCFList(HashMap<String, Coflow_Old_Compressed> CFs) {
         cfList.clear();
-        for (Map.Entry<String, Coflow_Old_Compressed> entry : CFs.entrySet()){
+        for (Map.Entry<String, Coflow_Old_Compressed> entry : CFs.entrySet()) {
             coflowInit(entry.getValue()); // FIXME: sometimes at some point GAIA tries to init a finished CF...
             // fixed by checking in coflowInit()
         }
@@ -762,15 +755,15 @@ public class CoflowScheduler extends Scheduler {
     }
 
     // print the CFList that is going into the scheduler
-    public void printCFList(){
+    public void printCFList() {
         StringBuilder str = new StringBuilder("-----CF List-----\n");
 
-        for (CoflowSchedulerEntry cfe : cfList){
+        for (CoflowSchedulerEntry cfe : cfList) {
             Coflow_Old_Compressed cf = cfe.cf;
 
             str.append(cf.getId()).append(' ').append(cfe.cct).append('\n');
 
-            for ( Map.Entry<String, FlowGroup_Old_Compressed> fge : cf.flows.entrySet()){
+            for (Map.Entry<String, FlowGroup_Old_Compressed> fge : cf.flows.entrySet()) {
                 FlowGroup_Old_Compressed fgo = fge.getValue();
                 str.append(' ').append(fge.getKey()).append(' ').append(fgo.getFlowState())
                         .append(' ').append(fgo.getTransmitted_volume()).append(' ').append(fgo.getRemainingVolume()).append('\n');
@@ -793,12 +786,12 @@ public class CoflowScheduler extends Scheduler {
         }
     }
 
-    void subscribeFlowToLinkWithDDFCF(FlowGroup_Old_Compressed f){
+    void subscribeFlowToLinkWithDDFCF(FlowGroup_Old_Compressed f) {
         // Subscribe the flow's paths to the links it uses
         for (Pathway p : f.paths) {
             for (int i = 0; i < p.node_list.size() - 1; i++) {
                 int src = Integer.parseInt(p.node_list.get(i));
-                int dst = Integer.parseInt(p.node_list.get(i+1));
+                int dst = Integer.parseInt(p.node_list.get(i + 1));
                 linksWithDDLCF[src][dst].subscribers_.add(p);
             }
         }

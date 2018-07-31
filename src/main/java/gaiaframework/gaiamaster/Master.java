@@ -65,17 +65,17 @@ public class Master {
                     System.out.println("Master: Received Coflow from YARN with ID = " + cfID);
 
                     // first check the deadline then decide whether to add
-                    if (scheduler.checkDDL(cf)) {
+//                    if (scheduler.checkDDL(cf)) {
 
-                        masterSharedData.addCoflow(cfID, cf);
-                        masterSharedData.flag_CF_ADD = true;
+                    masterSharedData.addCoflow(cfID, cf);
+                    masterSharedData.flag_CF_ADD = true;
 
-//                        submitSmallFlows(cf);
-                    } else {
-                        logger.info("Coflow {} can't meet deadline, aborting", cfID);
-
-                        masterSharedData.yarnEventQueue.put(new YARNMessages(cfID, YARNMessages.Type.COFLOW_DROP));
-                    }
+////                        submitSmallFlows(cf);
+//                    } else {
+//                        logger.info("Coflow {} can't meet deadline, aborting", cfID);
+//
+//                        masterSharedData.yarnEventQueue.put(new YARNMessages(cfID, YARNMessages.Type.COFLOW_DROP));
+//                    }
 
                     // TODO: track flowgroup starttime.
 
