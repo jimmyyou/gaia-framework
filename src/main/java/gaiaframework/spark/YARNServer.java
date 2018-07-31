@@ -52,10 +52,10 @@ public class YARNServer extends GaiaAbstractServer {
         String cfID = username + "_" + jobID;
 
         logger.info("Pruning req: {} \n{}", cfID, flowsList.toArray());
-        pruneAndGroupFlowInfos(flowsList);
+        Map<String, Map<String, List<ShuffleInfo.FlowInfo>>> groupedFlowInfo = pruneAndGroupFlowInfos(flowsList);
 
         if (flowsList.size() > 0) {
-            Coflow cf = generateCoflow(cfID, flowsList);
+            Coflow cf = generateCoflow(cfID, groupedFlowInfo);
             //TODO
         }
 
@@ -68,6 +68,7 @@ public class YARNServer extends GaiaAbstractServer {
         HashMap<String, FlowGroup> flowGroups = new HashMap<>();
         HashMap<String, FlowGroup> indexFiles = new HashMap<>();
 
+        // TODO to remove 
         generateFlowGroups_noAgg(cfID, flowsList, coSiteFGs, flowGroups, indexFiles);
 
         logger.error("{} co-located FG received by Gaia", coSiteFGs.size());
@@ -202,10 +203,22 @@ public class YARNServer extends GaiaAbstractServer {
      * Generate Coflow from a List of ShuffleInfo.FlowInfo
      *
      * @param cfID
-     * @param flowList
+     * @param groupedFlowInfos
      * @return
      */
-    private Coflow generateCoflow(String cfID, List<ShuffleInfo.FlowInfo> flowList) {
+    private Coflow generateCoflow(String cfID, Map<String, Map<String, List<ShuffleInfo.FlowInfo>>> groupedFlowInfos) {
+
+        for(Map.Entry<String, Map<String, List<ShuffleInfo.FlowInfo>>> srcEntry : groupedFlowInfos.entrySet()){
+            String srcLoc = srcEntry.getKey();
+            for(Map.Entry<String, List<ShuffleInfo.FlowInfo>> dstEntry : srcEntry.getValue().entrySet()){
+                String dstLoc = dstEntry.getKey();
+                List<ShuffleInfo.FlowInfo> flowInfos = dstEntry.getValue();
+
+                // TODO Create FG after extracted info
+//                FlowGroup = new FlowGroup(cfID, srcLoc, dstLoc, flowInfos);
+
+            }
+        }
 
         // TODO create FGs from FlowInfos.
         return null;
@@ -271,8 +284,8 @@ public class YARNServer extends GaiaAbstractServer {
             FlowGroup fg = new FlowGroup(fgID, srcLoc, dstLoc, cfID, flowVolume,
                     flowInfo.getDataFilename(), mapID, redID);
             fg.flowInfos.add(flowInfo);
-            fg.srcIPs.add(srcIP);
-            fg.dstIPs.add(dstIP);
+//            fg.srcIPs.add(srcIP);
+//            fg.dstIPs.add(dstIP);
 
 
             // Filter index files

@@ -1,6 +1,10 @@
 package gaiaframework.gaiamaster;
 
-// New definition of FlowGroup
+/**
+ * FlowGroup v2.0 includes all flows from one site to another site in a coflow.
+ * FlowGroup will directly be used in scheduler (scheduler does not see individual flows).
+ * TerraMaster does not learn about progress of individual flows, only about progress of FlowGroups
+ */
 
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.network.FlowGroup_Old_Compressed;
@@ -13,10 +17,7 @@ import java.util.List;
 
 public class FlowGroup {
 
-    // new
     public List<ShuffleInfo.FlowInfo> flowInfos = new LinkedList<>();
-    public List<String> srcIPs = new LinkedList<>();
-    public List<String> dstIPs = new LinkedList<>();
 
     // final fields
     private final String id;
@@ -37,6 +38,14 @@ public class FlowGroup {
     String filename = null;
     String mapID;
     String redID;
+
+    public FlowGroup(String cfID, String srcLoc, String dstLoc, List<ShuffleInfo.FlowInfo> flowInfos) {
+        // FIXME
+        this.id = cfID + ":" + srcLoc + "-" + dstLoc;
+        this.srcLocation = srcLoc;
+        this.dstLocation = dstLoc;
+        this.owningCoflowID = cfID;
+    }
 
     // the state of this flow
     public enum FlowState {

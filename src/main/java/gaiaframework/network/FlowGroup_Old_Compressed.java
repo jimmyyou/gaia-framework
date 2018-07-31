@@ -51,8 +51,6 @@ public class FlowGroup_Old_Compressed {
         this.filename = fg.getFilename();
         this.flowInfos = fg.flowInfos;
 
-        this.srcIPs = fg.srcIPs;
-        this.dstIPs = fg.dstIPs;
     }
 
     // the state of this flow
