@@ -434,9 +434,8 @@ public class Master {
      * Broadcast FlowInfo to corresponding SA/FA.
      * @param cf
      */
+    @Deprecated
     public void broadcastFlowInfo(Coflow cf) {
-        // TODO call the rpc, and set the FlowInfos
-
 
     }
 

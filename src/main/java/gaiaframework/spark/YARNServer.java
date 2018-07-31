@@ -64,8 +64,8 @@ public class YARNServer extends GaiaAbstractServer {
 
             try {
                 // first broadcast flowInfos,
-                ms.broadcastFlowInfo(cf);
-                // then submit coflow to scheduler
+//                ms.broadcastFlowInfo(cf);
+                // submit coflow to scheduler, no need to broadcast flowInfos, only broadcast the first time we schedule
                 msData.onSubmitCoflow(cfID, cf);
 
                 logger.info("Coflow {} submitted, total vol: {}", cf.getId(), (long) cf.getTotalVolume());
