@@ -59,6 +59,7 @@ public class Coflow {
     // TODO verify the two converters
     // converter between Old Coflow and new coflow, for use by Scheduler.
     // scheduler takes in ID, flowgroups (with IntID, srcLoc, dstLoc, volume remain.)
+    @Deprecated
     public static Coflow_Old_Compressed toCoflow_Old_Compressed_with_Trimming(Coflow cf) {
         Coflow_Old_Compressed ret = new Coflow_Old_Compressed(cf.getId(), new String[]{"null"}); // location not specified here.
 

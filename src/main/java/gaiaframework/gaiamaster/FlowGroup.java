@@ -153,6 +153,7 @@ public class FlowGroup {
     }*/
 
     // newer version of converter
+    @Deprecated
     public FlowGroup_Old_Compressed toFlowGroup_Old(int intID) {
         FlowGroup_Old_Compressed fgo = new FlowGroup_Old_Compressed(this, intID);
 
