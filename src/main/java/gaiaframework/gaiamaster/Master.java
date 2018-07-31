@@ -164,7 +164,7 @@ public class Master {
         ScheduledFuture<?> mainHandler = mainExec.scheduleAtFixedRate(runSchedule, 0, Constants.SCHEDULE_INTERVAL_MS, MILLISECONDS);
 
         // Start the input
-        yarnServer = new YARNServer(config, Constants.DEFAULT_YARN_PORT, masterSharedData, isDebugMode);
+        yarnServer = new YARNServer(config, Constants.DEFAULT_YARN_PORT, masterSharedData, isDebugMode, this);
         try {
             yarnServer.start();
         } catch (IOException e) {
@@ -428,6 +428,16 @@ public class Master {
         str.append("stats s: ").append(masterSharedData.flowStartCnt).append(" f: ").append(masterSharedData.flowFINCnt)
                 .append(" p: ").append(paused).append(" r: ").append(running).append('\n');
         logger.info(str);
+    }
+
+    /**
+     * Broadcast FlowInfo to corresponding SA/FA.
+     * @param cf
+     */
+    public void broadcastFlowInfo(Coflow cf) {
+        // TODO call the rpc, and set the FlowInfos
+
+
     }
 
 
