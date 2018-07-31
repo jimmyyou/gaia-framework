@@ -53,6 +53,7 @@ public class Master {
 //    protected LinkedBlockingQueue<AgentMessage> agentEventQueue = new LinkedBlockingQueue<>();
 
 
+    // TODO to remove this event queue.
     protected class CoflowListener implements Runnable {
         @Override
         public void run() {

@@ -27,9 +27,9 @@ public abstract class Scheduler {
         }
     }
     
-    public abstract void finish_flow(FlowGroup_Old_Compressed f);
-
-    public abstract void progress_flow(FlowGroup_Old_Compressed f);
+//    public abstract void finish_flow(FlowGroup_Old_Compressed f);
+//
+//    public abstract void progress_flow(FlowGroup_Old_Compressed f);
 
     public void reset_links() {
         for (int i = 0; i < net_graph_.nodes_.size(); i++) {
@@ -41,8 +41,8 @@ public abstract class Scheduler {
         }
     }
 
-    public abstract HashMap<String, FlowGroup_Old_Compressed> schedule_flows(HashMap<String, Coflow_Old_Compressed> coflows,
-                                                                             long timestamp) throws Exception;
+/*    public abstract HashMap<String, FlowGroup_Old_Compressed> schedule_flows(HashMap<String, Coflow_Old_Compressed> coflows,
+                                                                             long timestamp) throws Exception;*/
 
-    public abstract void update_flows(HashMap<String, FlowGroup_Old_Compressed> flows);
+//    public abstract void update_flows(HashMap<String, FlowGroup_Old_Compressed> flows);
 }

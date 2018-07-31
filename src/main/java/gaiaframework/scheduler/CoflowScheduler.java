@@ -169,15 +169,15 @@ public class CoflowScheduler extends Scheduler {
             return false;
         }
 
-    public void finish_flow(FlowGroup_Old_Compressed f) {
-        for (Pathway p : f.paths) {
-            for (int i = 0; i < p.node_list.size() - 1; i++) {
-                int src = Integer.parseInt(p.node_list.get(i));
-                int dst = Integer.parseInt(p.node_list.get(i+1));
-                links_[src][dst].subscribers_.remove(p);
-            }
-        }
-    }
+//    public void finish_flow(FlowGroup_Old_Compressed f) {
+//        for (Pathway p : f.paths) {
+//            for (int i = 0; i < p.node_list.size() - 1; i++) {
+//                int src = Integer.parseInt(p.node_list.get(i));
+//                int dst = Integer.parseInt(p.node_list.get(i+1));
+//                links_[src][dst].subscribers_.remove(p);
+//            }
+//        }
+//    }
 
     public void make_paths(FlowGroup_Old_Compressed f, ArrayList<Link> link_vals) {
         // TODO: Consider just choosing the shortest path (measured by hops)
@@ -312,11 +312,11 @@ public class CoflowScheduler extends Scheduler {
         f.paths = completed_paths;
     }
 
-    public void progress_flow(FlowGroup_Old_Compressed f) {
-        for (Pathway p : f.paths) {
-            f.setTransmitted_volume(f.getTransmitted_volume() + p.getBandwidth() * Constants.SIMULATION_TIMESTEP_SEC);
-        }
-    }
+//    public void progress_flow(FlowGroup_Old_Compressed f) {
+//        for (Pathway p : f.paths) {
+//            f.setTransmitted_volume(f.getTransmitted_volume() + p.getBandwidth() * Constants.SIMULATION_TIMESTEP_SEC);
+//        }
+//    }
 
     public double remaining_bw() {
         double remaining_bw = 0.0;
@@ -331,7 +331,7 @@ public class CoflowScheduler extends Scheduler {
         return remaining_bw;
     }
 
-    @Deprecated
+/*    @Deprecated
     public HashMap<String, FlowGroup_Old_Compressed> schedule_flows(HashMap<String, Coflow_Old_Compressed> coflows,
                                                                     long timestamp) throws Exception {
         flows_.clear();
@@ -345,7 +345,7 @@ public class CoflowScheduler extends Scheduler {
         }
 
         return flows_;
-    }
+    }*/
 
     public ArrayList<Map.Entry<Coflow_Old_Compressed, Double>> sort_coflows(HashMap<String, Coflow_Old_Compressed> coflows) throws Exception {
         HashMap<Coflow_Old_Compressed, Double> cct_map = new HashMap<Coflow_Old_Compressed, Double>();
@@ -451,7 +451,7 @@ public class CoflowScheduler extends Scheduler {
     }
 
     // Updates the rates of flows, called upon receiving flow_status update.
-    public void update_flows(HashMap<String, FlowGroup_Old_Compressed> flows) {}
+//    public void update_flows(HashMap<String, FlowGroup_Old_Compressed> flows) {}
 
     // this function is RRF scheduling, given that CFs are already sorted
     public List<FlowGroup_Old_Compressed> scheduleRRF(long timestamp) throws Exception {
