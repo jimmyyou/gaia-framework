@@ -19,14 +19,20 @@ service SendingAgentService {
     rpc ChangeFlow (stream FlowUpdate) returns (FUM_ACK) {}
     rpc ControlExperiment (Exp_CTRL) returns (Exp_CTRL_ACK) {}
     rpc FetchSmallFlow (SmallFlow) returns (SmallFlow_ACK) {}
+    rpc SetFlowInfoList (FlowGroupInfoMsg) returns (GeneralACK) {}
     //    rpc GetShuffleSize(ShuffleInfoReq) returns (ShuffleFiles) {}
+}
+
+service ForwardingAgentService {
+    rpc SetFlowInfoList (FlowGroupInfoMsg) returns (GeneralACK) {}
+    rpc FinishFile (FileFinishMsg) returns (FlowStatus_ACK) {}
 }
 
 // service for reporting to Master
 service MasterService {
     rpc UpdateFlowStatus (stream FlowStatusReport) returns (FlowStatus_ACK) {}
     rpc UpdatePathStatus (PathStatusReport) returns (PathStatus_ACK) {}
-    rpc FinishFile( FileFinishMsg ) returns(FlowStatus_ACK) {}
+    rpc FinishFile (FileFinishMsg) returns (FlowStatus_ACK) {}
     //    rpc StreamUpdatePathStatus (stream PathStatusReport) returns (PathStatus_ACK) {}
 }
 
@@ -101,6 +107,11 @@ message PAMessage {
     int32 port_no = 4;
 }
 
+message FlowGroupInfoMsg{
+    string fgID = 1;
+    repeated ShuffleInfo.FlowInfo flowInfos = 2;
+}
+
 message PAM_REQ {
     //    bool finished = 1;
 }
@@ -110,6 +121,8 @@ message FUM_ACK {}
 message FlowStatus_ACK {}
 
 message PathStatus_ACK {}
+
+message GeneralACK {}
 
 message Exp_CTRL {
     enum CTRL_Operation {
