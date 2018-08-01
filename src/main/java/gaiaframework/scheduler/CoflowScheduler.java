@@ -405,6 +405,13 @@ public class CoflowScheduler extends Scheduler {
 
     }
 
+    /**
+     * update internal snapshot of Coflows. Called upon CF_FIN or FG_FIN (and anytime?)
+     */
+    public void updateCFList() {
+
+    }
+
     // uponFlowGroupFIN, we set the flowGroupVolume to zero.
     public void handleFlowGroupFIN(HashMap<String, Coflow_Old_Compressed> coflows) {
         // iterate through CFList, if non-existent, remove, else update the cct.

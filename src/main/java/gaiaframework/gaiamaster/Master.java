@@ -211,7 +211,8 @@ public class Master {
     /**
      * Called upon schedule timer tick (default 500ms).
      * Reads from the current coflow status and schedule.
-     * we still need to take snapshot every 500ms.
+     * we still need to take snapshot every 500ms. Because we need to ensure that the remaining volume is accurate.
+     * Otherwise, the CF that are scheduled later may see a smaller volume hence are prioritized.
      *
      */
 
@@ -223,9 +224,9 @@ public class Master {
         List<FlowGroup_Old_Compressed> scheduledFGOs = new ArrayList<>(0);
         List<FlowGroup_Old_Compressed> decompressedFGOsToSend = new ArrayList<>();
 
-        // snapshoting and converting
-        // TODO
-        HashMap<String, Coflow_Old_Compressed> outcf = new HashMap<>();
+        // TODO snapshot???
+
+//        HashMap<String, Coflow_Old_Compressed> outcf = new HashMap<>();
 //        for (Map.Entry<String, Coflow> ecf : masterSharedData.coflowPool.entrySet()) {
 //            Coflow_Old_Compressed cfo = Coflow.toCoflow_Old_Compressed_with_Trimming(ecf.getValue());
 //            outcf.put(cfo.getId(), cfo);
@@ -249,13 +250,14 @@ public class Master {
             masterSharedData.flag_FG_FIN = false;
 
             // TODO update the CF_Status in scheduler
-            scheduler.resetCFList(outcf);
+//            scheduler.resetCFList(outcf);
 
 //            scheduler.printCFList();
 
             try {
                 scheduledFGOs = scheduler.scheduleRRF(currentTime);
 
+                // FIXME
 //                decompressedFGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
 //                sendControlMessages_Async(decompressedFGOsToSend);
 
@@ -266,13 +268,14 @@ public class Master {
         } else if (masterSharedData.flag_CF_FIN) { // no LP-sort, just update volume status and re-schedule
             masterSharedData.flag_CF_FIN = false;
             masterSharedData.flag_FG_FIN = false;
-            scheduler.handleCoflowFIN(outcf);
+//            scheduler.handleCoflowFIN(outcf);
 
 //            scheduler.printCFList();
 
             try {
                 scheduledFGOs = scheduler.scheduleRRF(currentTime);
 
+                // FIXME
 //                decompressedFGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
 //                sendControlMessages_Async(decompressedFGOsToSend);
 
@@ -282,13 +285,14 @@ public class Master {
 
         } else if (masterSharedData.flag_FG_FIN) { // no-reschedule, just pick up a new flowgroup.
             masterSharedData.flag_FG_FIN = false;
-            scheduler.handleFlowGroupFIN(outcf);
+//            scheduler.handleFlowGroupFIN(outcf);
 
 //            scheduler.printCFList();
 
             try {
                 scheduledFGOs = scheduler.scheduleRRF(currentTime);
 
+                // FIXME
 //                decompressedFGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
 //                sendControlMessages_Async(decompressedFGOsToSend);
 
