@@ -19,7 +19,8 @@ service SendingAgentService {
     rpc ChangeFlow (stream FlowUpdate) returns (FUM_ACK) {}
     rpc ControlExperiment (Exp_CTRL) returns (Exp_CTRL_ACK) {}
     rpc FetchSmallFlow (SmallFlow) returns (SmallFlow_ACK) {}
-    rpc SetFlowInfoList (FlowGroupInfoMsg) returns (GeneralACK) {}
+    rpc SetRecFlowInfoList (FlowGroupInfoMsg) returns (GeneralACK) {}
+    rpc FinishFile (FileFinishMsg) returns (GeneralACK) {}
     //    rpc GetShuffleSize(ShuffleInfoReq) returns (ShuffleFiles) {}
 }
 
@@ -94,6 +95,20 @@ message FlowUpdate {
     // Collectors.groupingBy() should enforce that multiple RAUEntry all have different raID
 }
 
+// Msg to change the rate of a FlowGroup
+message FlowGroupRate {
+
+    enum Operation {
+        START = 0;
+        CHANGE = 1;
+        PAUSE = 2;
+    }
+    Operation op = 1;
+
+
+    repeated FlowGroupInfoMsg sendingFGIs = 5; // this is optional
+
+}
 
 message SmallFlow {
     string srcIP = 1;
@@ -109,7 +124,9 @@ message PAMessage {
 
 message FlowGroupInfoMsg{
     string fgID = 1;
-    repeated ShuffleInfo.FlowInfo flowInfos = 2;
+    string srcLoc = 2;
+    string dstLoc = 3;
+    repeated ShuffleInfo.FlowInfo flowInfos = 4;
 }
 
 message PAM_REQ {

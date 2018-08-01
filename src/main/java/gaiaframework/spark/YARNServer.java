@@ -63,7 +63,7 @@ public class YARNServer extends GaiaAbstractServer {
             logger.info("YARN Server submitting CF: {}", cf.getId());
 
             try {
-                // first broadcast flowInfos,
+                // TODO do we need to first broadcast flowInfos?
 //                ms.broadcastFlowInfo(cf);
                 // submit coflow to scheduler, no need to broadcast flowInfos, only broadcast the first time we schedule
                 msData.onSubmitCoflow(cfID, cf);

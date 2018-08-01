@@ -7,7 +7,6 @@ package gaiaframework.gaiamaster;
  */
 
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
-import gaiaframework.network.FlowGroup_Old_Compressed;
 import gaiaframework.util.Constants;
 
 import java.util.LinkedList;
@@ -152,13 +151,13 @@ public class FlowGroup {
         return fgo;
     }*/
 
-    // newer version of converter
-    @Deprecated
-    public FlowGroup_Old_Compressed toFlowGroup_Old(int intID) {
-        FlowGroup_Old_Compressed fgo = new FlowGroup_Old_Compressed(this, intID);
-
-        return fgo;
-    }
+//    // newer version of converter
+//    @Deprecated
+//    public FlowGroup_Old_Compressed toFlowGroup_Old(int intID) {
+//        FlowGroup_Old_Compressed fgo = new FlowGroup_Old_Compressed(this, intID);
+//
+//        return fgo;
+//    }
 
     public long getStartTime() {
         return startTime;

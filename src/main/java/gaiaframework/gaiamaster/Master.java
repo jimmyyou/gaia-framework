@@ -160,7 +160,7 @@ public class Master {
         // start the periodic execution of schedule()
 
 //        final Runnable runSchedule = () -> schedule();
-        final Runnable runSchedule = () -> schedule();
+        final Runnable runSchedule = () -> onSchedule();
         ScheduledFuture<?> mainHandler = mainExec.scheduleAtFixedRate(runSchedule, 0, Constants.SCHEDULE_INTERVAL_MS, MILLISECONDS);
 
         // Start the input
@@ -206,7 +206,17 @@ public class Master {
 
     // the new version of schedule()
     // 1. check in the last interval if anything happens, and determine a fast schedule or re-do the sorting process
-    private void schedule() {
+    // FIXME remove compression
+
+    /**
+     * Called upon schedule timer tick (default 500ms).
+     * Reads from the current coflow status and schedule.
+     * we still need to take snapshot every 500ms.
+     *
+     */
+
+    // FIXME why scheduler need to handle CF_FIN, FG_FIN?
+    private void onSchedule() {
 //        logger.info("schedule_New(): CF_ADD: {} CF_FIN: {} FG_FIN: {}", masterSharedData.flag_CF_ADD, masterSharedData.flag_CF_FIN, masterSharedData.flag_FG_FIN);
 
         long currentTime = System.currentTimeMillis();
@@ -214,11 +224,12 @@ public class Master {
         List<FlowGroup_Old_Compressed> decompressedFGOsToSend = new ArrayList<>();
 
         // snapshoting and converting
+        // TODO
         HashMap<String, Coflow_Old_Compressed> outcf = new HashMap<>();
-        for (Map.Entry<String, Coflow> ecf : masterSharedData.coflowPool.entrySet()) {
-            Coflow_Old_Compressed cfo = Coflow.toCoflow_Old_Compressed_with_Trimming(ecf.getValue());
-            outcf.put(cfo.getId(), cfo);
-        }
+//        for (Map.Entry<String, Coflow> ecf : masterSharedData.coflowPool.entrySet()) {
+//            Coflow_Old_Compressed cfo = Coflow.toCoflow_Old_Compressed_with_Trimming(ecf.getValue());
+//            outcf.put(cfo.getId(), cfo);
+//        }
 
         // process Link change
         GaiaMessageProtos.PathStatusReport m = masterSharedData.linkStatusQueue.poll();
@@ -226,7 +237,7 @@ public class Master {
             scheduler.processLinkChange(m);
             m = masterSharedData.linkStatusQueue.poll();
 
-            // TODO need to trigger reschedule here
+            // Fake a CF_ADD to trigger reschedule here
             masterSharedData.flag_CF_ADD = true;
         }
 
@@ -245,8 +256,8 @@ public class Master {
             try {
                 scheduledFGOs = scheduler.scheduleRRF(currentTime);
 
-                decompressedFGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
-                sendControlMessages_Async(decompressedFGOsToSend);
+//                decompressedFGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
+//                sendControlMessages_Async(decompressedFGOsToSend);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -262,8 +273,8 @@ public class Master {
             try {
                 scheduledFGOs = scheduler.scheduleRRF(currentTime);
 
-                decompressedFGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
-                sendControlMessages_Async(decompressedFGOsToSend);
+//                decompressedFGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
+//                sendControlMessages_Async(decompressedFGOsToSend);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -278,8 +289,8 @@ public class Master {
             try {
                 scheduledFGOs = scheduler.scheduleRRF(currentTime);
 
-                decompressedFGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
-                sendControlMessages_Async(decompressedFGOsToSend);
+//                decompressedFGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
+//                sendControlMessages_Async(decompressedFGOsToSend);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -300,7 +311,8 @@ public class Master {
 //        printMasterState();
     }
 
-    // update the flowState in the CFPool, before sending out the information.
+   /* // update the flowState in the CFPool, before sending out the information.
+    @Deprecated
     private List<FlowGroup_Old_Compressed> parseFlowState_DeCompress(MasterSharedData masterSharedData, List<FlowGroup_Old_Compressed> scheduledCompressedFGs) {
         List<FlowGroup_Old_Compressed> fgoToSend = new ArrayList<>();
         HashMap<String, FlowGroup_Old_Compressed> fgoHashMap = new HashMap<>();
@@ -375,7 +387,7 @@ public class Master {
 
         return fgoToSend;
     }
-
+*/
     private void sendControlMessages_Async(List<FlowGroup_Old_Compressed> scheduledFGs) {
         // group FGOs by SA
         Map<String, List<FlowGroup_Old_Compressed>> fgoBySA = scheduledFGs.stream()

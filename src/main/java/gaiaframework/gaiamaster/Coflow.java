@@ -56,8 +56,7 @@ public class Coflow {
         return flowGroups.get(fgid);
     }
 
-    // TODO verify the two converters
-    // converter between Old Coflow and new coflow, for use by Scheduler.
+/*    // converter between Old Coflow and new coflow, for use by Scheduler.
     // scheduler takes in ID, flowgroups (with IntID, srcLoc, dstLoc, volume remain.)
     @Deprecated
     public static Coflow_Old_Compressed toCoflow_Old_Compressed_with_Trimming(Coflow cf) {
@@ -112,7 +111,7 @@ public class Coflow {
 
         return ret;
     }
-/*    public Coflow (Coflow_Old_Compressed cfo){
+*//*    public Coflow (Coflow_Old_Compressed cfo){
         this.id = cfo.id;
         this.aggFlowGroups = new HashMap<String , FlowGroup>();
         for(Map.Entry<String, FlowGroup_Old_Compressed> entry : cfo.flows.entrySet()){
