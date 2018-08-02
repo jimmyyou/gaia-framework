@@ -555,8 +555,8 @@ public class CoflowScheduler extends Scheduler {
      * @return
      * @throws Exception
      */
-    public List<ScheduleOutputFG> scheduleRRF(long timestamp) throws Exception {
-        List<ScheduleOutputFG> scheduledFGs = new LinkedList<>();
+    public HashMap<String, ScheduleOutputFG> scheduleRRF(long timestamp) throws Exception {
+        HashMap<String, ScheduleOutputFG> scheduledFGs = new HashMap<>();
         LinkedList<CoflowSchedulerEntry> unscheduled_coflows = new LinkedList<>();
 
         reset_links();
@@ -650,7 +650,7 @@ public class CoflowScheduler extends Scheduler {
 */
 
 //                flows_.put(f.getId(), f);
-                scheduledFGs.add(f);
+                scheduledFGs.put(f.getId(), f);
             }
 
         }
@@ -789,11 +789,11 @@ public class CoflowScheduler extends Scheduler {
         return false;
     }
 
-    // sort first and then schedule
+/*    // sort first and then schedule
     public List<ScheduleOutputFG> scheduleRRFwithSort(long timestamp) throws Exception {
         sortCFList();
         return scheduleRRF(timestamp);
-    }
+    }*/
 
     public void sortCFList() {
         cfseList.sort(smallCCTFirst);
