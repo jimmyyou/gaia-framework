@@ -113,7 +113,7 @@ public class CoflowScheduler extends Scheduler {
         public NewCoflowSchedulerE(Coflow cf) {
 
             this.cfID = cf.getId();
-            this.flowgroups = new HashMap<>(); // TODO which list to choose?
+            this.flowgroups = new HashMap<>();
             this.coflow = cf;
 
             int intIDCount = 0;
@@ -136,7 +136,7 @@ public class CoflowScheduler extends Scheduler {
          */
         public void updateVolume(Coflow cf) {
 
-            // TODO TODO
+            // TODO implement updateVolume()
 
         }
 
@@ -207,8 +207,6 @@ public class CoflowScheduler extends Scheduler {
             if (mmcf_out.completion_time_ > 0 && mmcf_out.completion_time_ * 1000 <= cf.ddl_Millis) {
                 logger.info("Admitting DDL Coflow {}", cf.getId());
 
-                // TODO verify the admission logic
-
                 boolean all_flows_scheduled = true;
                 for (String k : cfo.flows.keySet()) {
                     FlowGroup_Old_Compressed f = cfo.flows.get(k);
@@ -248,7 +246,7 @@ public class CoflowScheduler extends Scheduler {
 //    }
 
     public void make_paths(ScheduleOutputFG f, ArrayList<Link> link_vals) {
-        // TODO: Consider just choosing the shortest path (measured by hops)
+        // TODO(jack): Consider just choosing the shortest path (measured by hops)
         //       from src to dst if the flow has volume below some threshold.
         //       See if not accounting for bw consumption on a certain link
         //       makes any affect.
@@ -558,7 +556,6 @@ public class CoflowScheduler extends Scheduler {
         // Part 1: recursively schedule CFs in the priority queue
         for (NewCoflowSchedulerE cfse : cfseList) {
 
-            //FIXME
 //            Coflow_Old_Compressed c = e.cf;
 
             // first fast check, we need to check every CF, even if we only have small BW left.
@@ -631,7 +628,8 @@ public class CoflowScheduler extends Scheduler {
                     System.out.println("    " + p.toString());
                 }*/
 
-// TODO fix the timestamp business
+
+// No need for timestamp
 /*
                 if (f.getStart_timestamp() == -1) {
                     f.setStart_timestamp(timestamp);
@@ -644,15 +642,13 @@ public class CoflowScheduler extends Scheduler {
 
         }
 
-        // TODO verify the remain-flows part
+        // TODO scheduleRemainFlows feature to be added later
 //        if (!unscheduled_coflows.isEmpty() && remaining_bw() > 0.0) {
 //            scheduleRemainFlows(unscheduled_coflows, scheduledFGs, timestamp);
 //        }
 
         return scheduledFGs;
     }
-
-    // TODO This feature to be added,
 
     /**
      * Schedule remaining flows
@@ -745,7 +741,7 @@ public class CoflowScheduler extends Scheduler {
         int srcID = Integer.parseInt(fgse.srcLoc);
         int dstID = Integer.parseInt(fgse.dstLoc);
 
-        // BFS the graph from the source TODO: efficiency
+        // BFS the graph from the source
         Queue<Integer> nodeIDtoCheck = new LinkedList<>();
         nodeIDtoCheck.add(srcID);
 
