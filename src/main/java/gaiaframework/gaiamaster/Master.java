@@ -7,6 +7,7 @@ import gaiaframework.network.FlowGroup_Old_Compressed;
 import gaiaframework.network.NetGraph;
 import gaiaframework.network.Pathway;
 import gaiaframework.scheduler.CoflowScheduler;
+import gaiaframework.scheduler.ScheduleOutputFG;
 import gaiaframework.spark.YARNServer;
 import gaiaframework.util.Configuration;
 import gaiaframework.util.Constants;
@@ -212,7 +213,6 @@ public class Master {
      * Reads from the current coflow status and schedule.
      * we still need to take snapshot every 500ms. Because we need to ensure that the remaining volume is accurate.
      * Otherwise, the CF that are scheduled later may see a smaller volume hence are prioritized.
-     *
      */
 
     // FIXME why scheduler need to handle CF_FIN, FG_FIN?
@@ -220,8 +220,8 @@ public class Master {
 //        logger.info("schedule_New(): CF_ADD: {} CF_FIN: {} FG_FIN: {}", masterSharedData.flag_CF_ADD, masterSharedData.flag_CF_FIN, masterSharedData.flag_FG_FIN);
 
         long currentTime = System.currentTimeMillis();
-        List<FlowGroup_Old_Compressed> scheduledFGOs = new ArrayList<>(0);
-        List<FlowGroup_Old_Compressed> decompressedFGOsToSend = new ArrayList<>();
+        List<ScheduleOutputFG> scheduledFGOs = new LinkedList<>();
+//        List<FlowGroup_Old_Compressed> decompressedFGOsToSend = new ArrayList<>();
 
         // snapshot??? We only need to snapshot when: 1. initCF 2. statusChange, so no need to snapshot here in v2.0
 
@@ -254,9 +254,9 @@ public class Master {
 //            scheduler.printCFList();
 
             try {
-//                scheduledFGOs = scheduler.scheduleRRF(currentTime);
+                scheduledFGOs = scheduler.scheduleRRF(currentTime);
 
-                // FIXME
+                // TODO send rpc msgs
 //                decompressedFGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
 //                sendControlMessages_Async(decompressedFGOsToSend);
 
@@ -274,9 +274,9 @@ public class Master {
 //            scheduler.printCFList();
 
             try {
-//                scheduledFGOs = scheduler.scheduleRRF(currentTime);
+                scheduledFGOs = scheduler.scheduleRRF(currentTime);
 
-                // FIXME
+                // TODO send rpc msgs
 //                decompressedFGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
 //                sendControlMessages_Async(decompressedFGOsToSend);
 
@@ -293,9 +293,9 @@ public class Master {
 //            scheduler.printCFList();
 
             try {
-//                scheduledFGOs = scheduler.scheduleRRF(currentTime);
+                scheduledFGOs = scheduler.scheduleRRF(currentTime);
 
-                // FIXME
+                // TODO send rpc msgs
 //                decompressedFGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
 //                sendControlMessages_Async(decompressedFGOsToSend);
 
@@ -309,92 +309,93 @@ public class Master {
         long deltaTime = System.currentTimeMillis() - currentTime;
 
         StringBuilder fgoContent = new StringBuilder("\n");
-        for (FlowGroup_Old_Compressed fgo : decompressedFGOsToSend) {
-            fgoContent.append(fgo.getId()).append(' ').append(fgo.paths).append(' ').append(fgo.getFlowState()).append('\n');
+        for (ScheduleOutputFG fgo : scheduledFGOs) {
+            // FIXME ScheduleOutputFG does not have FlowState. How to implement.
+//            fgoContent.append(fgo.getId()).append(' ').append(fgo.paths).append(' ').append(fgo.getFlowState()).append('\n');
         }
         logger.info("FG content: {}", fgoContent);
-        logger.info("schedule(): took {} ms. Active CF: {} Scheduled FG: {}/{}", deltaTime, masterSharedData.coflowPool.size(), scheduledFGOs.size(), decompressedFGOsToSend.size());
+        logger.info("schedule(): took {} ms. Active CF: {} Scheduled FG: {}", deltaTime, masterSharedData.coflowPool.size(), scheduledFGOs.size());
 
 //        printMasterState();
     }
 
-   /* // update the flowState in the CFPool, before sending out the information.
-    @Deprecated
-    private List<FlowGroup_Old_Compressed> parseFlowState_DeCompress(MasterSharedData masterSharedData, List<FlowGroup_Old_Compressed> scheduledCompressedFGs) {
-        List<FlowGroup_Old_Compressed> fgoToSend = new ArrayList<>();
-        HashMap<String, FlowGroup_Old_Compressed> fgoHashMap = new HashMap<>();
+    /* // update the flowState in the CFPool, before sending out the information.
+     @Deprecated
+     private List<FlowGroup_Old_Compressed> parseFlowState_DeCompress(MasterSharedData masterSharedData, List<FlowGroup_Old_Compressed> scheduledCompressedFGs) {
+         List<FlowGroup_Old_Compressed> fgoToSend = new ArrayList<>();
+         HashMap<String, FlowGroup_Old_Compressed> fgoHashMap = new HashMap<>();
 
-        StringBuilder fgoContent = new StringBuilder("\n");
-        for (FlowGroup_Old_Compressed fgo : scheduledCompressedFGs) {
-            fgoContent.append(fgo.getId()).append(' ').append(fgo.paths).append(' ').append(fgo.getFlowState()).append('\n');
-        }
-        logger.info("FGOs to decomp {}", fgoContent);
+         StringBuilder fgoContent = new StringBuilder("\n");
+         for (FlowGroup_Old_Compressed fgo : scheduledCompressedFGs) {
+             fgoContent.append(fgo.getId()).append(' ').append(fgo.paths).append(' ').append(fgo.getFlowState()).append('\n');
+         }
+         logger.info("FGOs to decomp {}", fgoContent);
 
-        // first decompress convert List to hashMap
-        int cnt = 0;
-        for (FlowGroup_Old_Compressed fgo : scheduledCompressedFGs) {
+         // first decompress convert List to hashMap
+         int cnt = 0;
+         for (FlowGroup_Old_Compressed fgo : scheduledCompressedFGs) {
 
-//            logger.info("Decompressing {}", fgo.getId());
+ //            logger.info("Decompressing {}", fgo.getId());
 
-            // decompress here
-            for (FlowGroup decompressedFG : fgo.fgList) {
+             // decompress here
+             for (FlowGroup decompressedFG : fgo.fgList) {
 
-                FlowGroup_Old_Compressed fgo_decompressed = decompressedFG.toFlowGroup_Old(cnt++);
-                // FIXME: need to make the ratio sum up to 1. Another way to achieve this is to remember the remaining volume when snapshoting.
-//                logger.info("Decompress: {} : {} - {} / {}", decompressedFG.getId(), decompressedFG.getTotalVolume(), decompressedFG.getTransmitted(), fgo.getRemainingVolume());
-                double ratio = (decompressedFG.getTotalVolume() - decompressedFG.getTransmitted()) / fgo.getRemainingVolume();
+                 FlowGroup_Old_Compressed fgo_decompressed = decompressedFG.toFlowGroup_Old(cnt++);
+                 // FIXME: need to make the ratio sum up to 1. Another way to achieve this is to remember the remaining volume when snapshoting.
+ //                logger.info("Decompress: {} : {} - {} / {}", decompressedFG.getId(), decompressedFG.getTotalVolume(), decompressedFG.getTransmitted(), fgo.getRemainingVolume());
+                 double ratio = (decompressedFG.getTotalVolume() - decompressedFG.getTransmitted()) / fgo.getRemainingVolume();
 
-                // clone the paths, and set the BW
-                fgo_decompressed.paths = new ArrayList<>();
-                for (Pathway p : fgo.paths) {
-                    Pathway decompressedPathway = new Pathway(p);
-                    decompressedPathway.setBandwidth(p.getBandwidth() * ratio);
-                    fgo_decompressed.paths.add(decompressedPathway);
-                }
-//                logger.info("Decompress: {} has {} of {}, paths: {}", decompressedFG.getId(), ratio, fgo.getId(), fgo_decompressed.paths);
+                 // clone the paths, and set the BW
+                 fgo_decompressed.paths = new ArrayList<>();
+                 for (Pathway p : fgo.paths) {
+                     Pathway decompressedPathway = new Pathway(p);
+                     decompressedPathway.setBandwidth(p.getBandwidth() * ratio);
+                     fgo_decompressed.paths.add(decompressedPathway);
+                 }
+ //                logger.info("Decompress: {} has {} of {}, paths: {}", decompressedFG.getId(), ratio, fgo.getId(), fgo_decompressed.paths);
 
-//                fgoHashMap.put(fgo.getId(), fgo);
-                fgoHashMap.put(decompressedFG.getId(), fgo_decompressed);
-            }
-        }
+ //                fgoHashMap.put(fgo.getId(), fgo);
+                 fgoHashMap.put(decompressedFG.getId(), fgo_decompressed);
+             }
+         }
 
-        // traverse all FGs in CFPool
-        for (Map.Entry<String, Coflow> ecf : masterSharedData.coflowPool.entrySet()) { // snapshoting should not be a problem
-            Coflow cf = ecf.getValue();
-            for (Map.Entry<String, FlowGroup> fge : cf.getFlowGroups().entrySet()) {
-                FlowGroup fg = fge.getValue();
-                if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.TRANSFER_FIN) {
-                    // FIXME repeated too many times here. (Because FGs are skewed.)
-//                    logger.info("find fg {} in TRANSFER_FIN state, to be ignored", fg.getId());
-                    continue; // ignore finished, they shall be removed shortly
-                } else if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.RUNNING) { // may pause/change the running flow
-                    if (fgoHashMap.containsKey(fg.getId())) { // we may need to change, if the path/rate are different TODO: speculatively send change message
-                        fgoToSend.add(fgoHashMap.get(fg.getId()).setFlowState(FlowGroup_Old_Compressed.FlowState.CHANGING)); // running flow needs to change
-                    } else { // we need to pause
-                        fg.setFlowGroupState(FlowGroup.FlowGroupState.PAUSED);
-                        fgoToSend.add(fg.toFlowGroup_Old(0).setFlowState(FlowGroup_Old_Compressed.FlowState.PAUSING));
-//                        fgoToSend.add ( FlowGroup.toFlowGroup_Old(fg, 0).setFlowGroupState(FlowGroup_Old_Compressed.FlowGroupState.PAUSING) );
-                    }
-                } else { // case: NEW/PAUSED
-                    if (fgoHashMap.containsKey(fg.getId())) { // we take action only if the flow get (re)scheduled
-                        if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.NEW) { // start the flow
-                            fg.setFlowGroupState(FlowGroup.FlowGroupState.RUNNING);
-                            fgoToSend.add(fgoHashMap.get(fg.getId()).setFlowState(FlowGroup_Old_Compressed.FlowState.STARTING));
-                            masterSharedData.flowStartCnt++;
-                        } else if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.PAUSED) { // RESUME the flow
-                            fg.setFlowGroupState(FlowGroup.FlowGroupState.RUNNING);
-                            fgoToSend.add(fgoHashMap.get(fg.getId()).setFlowState(FlowGroup_Old_Compressed.FlowState.CHANGING));
-                        }
+         // traverse all FGs in CFPool
+         for (Map.Entry<String, Coflow> ecf : masterSharedData.coflowPool.entrySet()) { // snapshoting should not be a problem
+             Coflow cf = ecf.getValue();
+             for (Map.Entry<String, FlowGroup> fge : cf.getFlowGroups().entrySet()) {
+                 FlowGroup fg = fge.getValue();
+                 if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.TRANSFER_FIN) {
+                     // FIXME repeated too many times here. (Because FGs are skewed.)
+ //                    logger.info("find fg {} in TRANSFER_FIN state, to be ignored", fg.getId());
+                     continue; // ignore finished, they shall be removed shortly
+                 } else if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.RUNNING) { // may pause/change the running flow
+                     if (fgoHashMap.containsKey(fg.getId())) { // we may need to change, if the path/rate are different TODO: speculatively send change message
+                         fgoToSend.add(fgoHashMap.get(fg.getId()).setFlowState(FlowGroup_Old_Compressed.FlowState.CHANGING)); // running flow needs to change
+                     } else { // we need to pause
+                         fg.setFlowGroupState(FlowGroup.FlowGroupState.PAUSED);
+                         fgoToSend.add(fg.toFlowGroup_Old(0).setFlowState(FlowGroup_Old_Compressed.FlowState.PAUSING));
+ //                        fgoToSend.add ( FlowGroup.toFlowGroup_Old(fg, 0).setFlowGroupState(FlowGroup_Old_Compressed.FlowGroupState.PAUSING) );
+                     }
+                 } else { // case: NEW/PAUSED
+                     if (fgoHashMap.containsKey(fg.getId())) { // we take action only if the flow get (re)scheduled
+                         if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.NEW) { // start the flow
+                             fg.setFlowGroupState(FlowGroup.FlowGroupState.RUNNING);
+                             fgoToSend.add(fgoHashMap.get(fg.getId()).setFlowState(FlowGroup_Old_Compressed.FlowState.STARTING));
+                             masterSharedData.flowStartCnt++;
+                         } else if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.PAUSED) { // RESUME the flow
+                             fg.setFlowGroupState(FlowGroup.FlowGroupState.RUNNING);
+                             fgoToSend.add(fgoHashMap.get(fg.getId()).setFlowState(FlowGroup_Old_Compressed.FlowState.CHANGING));
+                         }
 
-                    }
-                }
-            }
+                     }
+                 }
+             }
 
-        }
+         }
 
-        return fgoToSend;
-    }
-*/
+         return fgoToSend;
+     }
+ */
     private void sendControlMessages_Async(List<FlowGroup_Old_Compressed> scheduledFGs) {
         // group FGOs by SA
         Map<String, List<FlowGroup_Old_Compressed>> fgoBySA = scheduledFGs.stream()
@@ -451,6 +452,7 @@ public class Master {
 
     /**
      * Broadcast FlowInfo to corresponding SA/FA.
+     *
      * @param cf
      */
     @Deprecated

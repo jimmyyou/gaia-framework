@@ -26,4 +26,8 @@ public class ScheduleOutputFG {
     public String getDst_loc() {
         return dst_loc;
     }
+
+    public String getId() {
+        return id;
+    }
 }
