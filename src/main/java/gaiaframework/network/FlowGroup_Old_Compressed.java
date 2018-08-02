@@ -67,7 +67,7 @@ public class FlowGroup_Old_Compressed {
 
     private FlowState flowState;
 
-    public FlowGroup_Old_Compressed(String id, int int_id, Coflow coflow, String src_loc, String dst_loc, double remainingVolume, List<FlowGroup> fgList) {
+/*    public FlowGroup_Old_Compressed(String id, int int_id, Coflow coflow, String src_loc, String dst_loc, double remainingVolume, List<FlowGroup> fgList) {
         this.id = id;
         this.int_id = int_id;
         this.cf = coflow;
@@ -94,7 +94,7 @@ public class FlowGroup_Old_Compressed {
         this.flowState = FlowState.INIT;
         this.filename = filename;
         this.flowInfos = flowInfos;
-    }
+    }*/
 
     @Deprecated // Use getRemainingVolume()
     public double remaining_volume() {
