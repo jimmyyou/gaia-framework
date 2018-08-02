@@ -96,7 +96,8 @@ public class AggFlowGroupInfo {
         assert (flowGroupInfoList != null);
 
         for (int i = 0; i < fue.getFlowInfosCount(); i++) {
-            flowGroupInfoList.add(new FlowGroupInfo(this, fue.getFlowInfos(i), fue.getSrcIP(i), fue.getDstIP(i)));
+            // FIXME MUST FIX THIS. deleted due to protobuf change. (don't need this, only needs FlowInfo proto)
+//            flowGroupInfoList.add(new FlowGroupInfo(this, fue.getFlowInfos(i), fue.getSrcIP(i), fue.getDstIP(i)));
         }
 
     }

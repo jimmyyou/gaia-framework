@@ -82,8 +82,8 @@ message FlowUpdate {
         //        string filename = 5;
 
         repeated ShuffleInfo.FlowInfo flowInfos = 5;
-        repeated string srcIP = 6;
-        repeated string dstIP = 7;
+//        repeated string srcIP = 6;
+//        repeated string dstIP = 7;
     }
 
     message RAUpdateEntry {

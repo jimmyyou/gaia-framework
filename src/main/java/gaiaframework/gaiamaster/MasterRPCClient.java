@@ -79,7 +79,7 @@ public class MasterRPCClient {
         return blockingStub.prepareConnections(req);
     }
 
-    public void setFlow(Collection<FlowGroup_Old_Compressed> fgos, NetGraph ng, String saID) {
+/*    public void setFlow(Collection<FlowGroup_Old_Compressed> fgos, NetGraph ng, String saID) {
 
         GaiaMessageProtos.FlowUpdate fum = buildFUM(fgos, ng, saID);
         logger.info("Built the FUM\n {}", fum);
@@ -91,9 +91,10 @@ public class MasterRPCClient {
         fumStreamObserver.onNext(fum);
         logger.info("FUM sent ({} Byte) for saID = {}", fum.getSerializedSize(), saID);
 
-    }
+    }*/
 
 
+    @Deprecated
     public GaiaMessageProtos.FlowUpdate buildFUM(Collection<FlowGroup_Old_Compressed> fgos, NetGraph ng, String saID) {
 
         GaiaMessageProtos.FlowUpdate.Builder fumBuilder = GaiaMessageProtos.FlowUpdate.newBuilder();
@@ -134,8 +135,8 @@ public class MasterRPCClient {
 
                         // also send the IP
                         // TODO integrate IP into fields of FlowInfo
-                        fueBuilder.addAllSrcIP(fgo.srcIPs);
-                        fueBuilder.addAllDstIP(fgo.dstIPs);
+//                        fueBuilder.addAllSrcIP(fgo.srcIPs);
+//                        fueBuilder.addAllDstIP(fgo.dstIPs);
 
                     } else {
                         fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.CHANGE);

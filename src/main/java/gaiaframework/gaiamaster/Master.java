@@ -352,8 +352,32 @@ public class Master {
         }
 
         // TODO: send CTRL msg
+        //
+        sendControlMessages_Async(scheduledFGOs);
+
+    }
+
+    /**
+     * Asynchronously send CTRL Msg.
+     * @param scheduledFGOs
+     */
+    private void sendControlMessages_Async(HashMap<String, ScheduleOutputFG> scheduledFGOs) {
+
+        // TODO to implememnt. Need to define the msg first, then create the msg, then send it.
 
 
+/*        // group FGOs by SA
+        Map<String, List<FlowGroup_Old_Compressed>> fgoBySA = scheduledFGs.stream()
+                .collect(Collectors.groupingBy(FlowGroup_Old_Compressed::getSrc_loc));
+
+        // just post the update to RPCClient, not waiting for reply
+        for (Map.Entry<String, List<FlowGroup_Old_Compressed>> entry : fgoBySA.entrySet()) {
+            String saID = entry.getKey();
+            List<FlowGroup_Old_Compressed> fgforSA = entry.getValue();
+
+            // call async RPC
+            rpcClientHashMap.get(saID).setFlow(fgforSA, netGraph, saID);
+        }*/
     }
 
     /* // update the flowState in the CFPool, before sending out the information.
@@ -433,6 +457,9 @@ public class Master {
          return fgoToSend;
      }
  */
+
+/*
+    @Deprecated
     private void sendControlMessages_Async(List<FlowGroup_Old_Compressed> scheduledFGs) {
         // group FGOs by SA
         Map<String, List<FlowGroup_Old_Compressed>> fgoBySA = scheduledFGs.stream()
@@ -447,6 +474,7 @@ public class Master {
             rpcClientHashMap.get(saID).setFlow(fgforSA, netGraph, saID);
         }
 
+*/
 /*        // How to parallelize -> use the threadpool
         List<FlowUpdateSender> tasks= new ArrayList<>();
         for ( Map.Entry<String,List<FlowGroup_Old_Compressed>> entry : fgoBySA.entrySet() ){
@@ -458,8 +486,10 @@ public class Master {
             List<Future<Integer>> futures = saControlExec.invokeAll(tasks);
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }*/
+        }*//*
+
     }
+*/
 
     public void printMasterState() {
         StringBuilder str = new StringBuilder("-----Master state-----\n");
