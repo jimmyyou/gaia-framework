@@ -2,8 +2,6 @@ package gaiaframework.scheduler;
 
 import java.util.HashMap;
 
-import gaiaframework.network.Coflow_Old_Compressed;
-import gaiaframework.network.FlowGroup_Old_Compressed;
 import gaiaframework.network.SubscribedLink;
 import gaiaframework.network.NetGraph;
 

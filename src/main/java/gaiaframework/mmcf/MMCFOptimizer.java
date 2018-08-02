@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import gaiaframework.network.*;
-import gaiaframework.network.Coflow_Old_Compressed;
 import gaiaframework.scheduler.CoflowScheduler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -197,7 +196,7 @@ public class MMCFOptimizer {
         return mmcf_out;
     }
 
-    @Deprecated
+    /*@Deprecated
     public static MMCFOutput glpk_optimize(Coflow_Old_Compressed coflow, NetGraph net_graph, SubscribedLink[][] links) throws Exception {
         String path_root = "/tmp";
         String mod_file_name = path_root + "/MinCCT.mod";
@@ -368,5 +367,5 @@ public class MMCFOptimizer {
         }
         br.close();
         return mmcf_out;
-    }
+    }*/
 }

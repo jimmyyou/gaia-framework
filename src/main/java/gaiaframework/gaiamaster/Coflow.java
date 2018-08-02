@@ -2,10 +2,7 @@ package gaiaframework.gaiamaster;
 
 // The new coflow definition. used by GAIA master, YARN emulator etc.
 
-import com.google.errorprone.annotations.DoNotCall;
-import gaiaframework.network.Coflow_Old_Compressed;
-import gaiaframework.network.FlowGroup_Old_Compressed;
-import gaiaframework.util.Constants;
+
 
 import java.util.HashMap;
 import java.util.LinkedList;
