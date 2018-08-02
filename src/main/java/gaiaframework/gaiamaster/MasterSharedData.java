@@ -1,7 +1,6 @@
 package gaiaframework.gaiamaster;
 
 import gaiaframework.gaiaprotos.GaiaMessageProtos;
-import gaiaframework.spark.YARNMessages;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -25,7 +24,7 @@ public class MasterSharedData {
     volatile boolean flag_FG_FIN = false;
 
     // move this event queue here because the RPC server module need to access it
-    protected LinkedBlockingQueue<YARNMessages> yarnEventQueue = new LinkedBlockingQueue<YARNMessages>();
+//    protected LinkedBlockingQueue<YARNMessages> yarnEventQueue = new LinkedBlockingQueue<YARNMessages>();
     LinkedBlockingQueue<GaiaMessageProtos.PathStatusReport> linkStatusQueue = new LinkedBlockingQueue<>();
 
 /*        public AtomicBoolean flag_CF_ADD = new AtomicBoolean(false);
@@ -120,11 +119,12 @@ public class MasterSharedData {
         if (flag) {
             String coflowID = fg.getOwningCoflowID();
             if (onFinishCoflow(coflowID)) {
-                try {
-                    yarnEventQueue.put(new YARNMessages(coflowID));
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                // No need for YARNMsg now.
+//                try {
+//                    yarnEventQueue.put(new YARNMessages(coflowID));
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
             }
         }
     }
