@@ -23,7 +23,7 @@ public class MMCFOptimizer {
                 = new HashMap<Integer, ArrayList<Link>>();
     }
 
-    public static MMCFOutput glpk_optimizeNew(CoflowScheduler.NewCoflowSchedulerE cfse, NetGraph ng, SubscribedLink[][] links) throws Exception {
+    public static MMCFOutput glpk_optimizeNew(CoflowScheduler.CoflowSchedulerEntry cfse, NetGraph ng, SubscribedLink[][] links) throws Exception {
         String path_root = "/tmp";
         String mod_file_name = path_root + "/MinCCT.mod";
         StringBuilder dat_string = new StringBuilder();
@@ -39,8 +39,8 @@ public class MMCFOptimizer {
         HashMap<Integer, String> flow_int_id_to_id = new HashMap<Integer, String>();
 //        System.out.println("Coflow_Old_Compressed " + coflow.getId() + " has flows: ");
 
-        for (Map.Entry<String, CoflowScheduler.NewCoflowSchedulerE.FGSchedulerE> fgseE : cfse.getFlowgroups().entrySet()) {
-            CoflowScheduler.NewCoflowSchedulerE.FGSchedulerE fgse = fgseE.getValue();
+        for (Map.Entry<String, CoflowScheduler.CoflowSchedulerEntry.FlowGroupSchedulerEntry> fgseE : cfse.getFlowgroups().entrySet()) {
+            CoflowScheduler.CoflowSchedulerEntry.FlowGroupSchedulerEntry fgse = fgseE.getValue();
             if (fgse.remainingVol > 0.0) {
                 int int_id = fgse.intID;
                 flow_int_id_list.add(int_id);

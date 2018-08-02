@@ -12,7 +12,7 @@ public class ScheduleOutputFG {
     private String dst_loc;
     public LinkedList<Pathway> paths = new LinkedList<Pathway>();
 
-    public ScheduleOutputFG(CoflowScheduler.NewCoflowSchedulerE.FGSchedulerE fgse){
+    public ScheduleOutputFG(CoflowScheduler.CoflowSchedulerEntry.FlowGroupSchedulerEntry fgse){
         this.id = fgse.fgID;
         this.int_id = fgse.intID;
         this.src_loc = fgse.srcLoc;

@@ -6,6 +6,7 @@ package gaiaframework.gaiamaster;
  * TerraMaster does not learn about progress of individual flows, only about progress of FlowGroups
  */
 
+// TODO clear definition of FG_FIN, and corresponding API (e.g. fg.isFinished())
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.util.Constants;
 

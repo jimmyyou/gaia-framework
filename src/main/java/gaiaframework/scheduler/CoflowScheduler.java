@@ -24,9 +24,9 @@ public class CoflowScheduler extends Scheduler {
 
     private SubscribedLink[][] linksWithDDLCF;
 
-    protected Comparator<NewCoflowSchedulerE> smallCCTFirst = Comparator.comparingDouble(o -> o.getLastLPOutput().completion_time_);
+    protected Comparator<CoflowSchedulerEntry> smallCCTFirst = Comparator.comparingDouble(o -> o.getLastLPOutput().completion_time_);
 
-    protected List<NewCoflowSchedulerE> cfseList = new LinkedList<>();
+    protected List<CoflowSchedulerEntry> cfseList = new LinkedList<>();
 //    List<CoflowSchedulerEntry> nonDDLCFList = new LinkedList<>();
 
     // Create a priority queue to sort the CFs according to completion time.
@@ -87,16 +87,16 @@ public class CoflowScheduler extends Scheduler {
     /**
      * A class to take snapshot only store information that are related to scheduling (src,dst,vol,int_id).
      */
-    public class NewCoflowSchedulerE {
+    public class CoflowSchedulerEntry {
 
-        public class FGSchedulerE {
+        public class FlowGroupSchedulerEntry {
             public String fgID;
             public String srcLoc;
             public String dstLoc;
             public int intID;
             public double remainingVol;
 
-            public FGSchedulerE(String fgID, String srcLoc, String dstLoc, int intID, double remainingVol) {
+            public FlowGroupSchedulerEntry(String fgID, String srcLoc, String dstLoc, int intID, double remainingVol) {
                 this.fgID = fgID;
                 this.srcLoc = srcLoc;
                 this.dstLoc = dstLoc;
@@ -107,10 +107,10 @@ public class CoflowScheduler extends Scheduler {
 
         String cfID;
         Coflow coflow;
-        HashMap<String, FGSchedulerE> flowgroups;
+        HashMap<String, FlowGroupSchedulerEntry> flowgroups;
         MMCFOptimizer.MMCFOutput lastLPOutput = null;
 
-        public NewCoflowSchedulerE(Coflow cf) {
+        public CoflowSchedulerEntry(Coflow cf) {
 
             this.cfID = cf.getId();
             this.flowgroups = new HashMap<>();
@@ -121,7 +121,7 @@ public class CoflowScheduler extends Scheduler {
                 FlowGroup fg = fge.getValue();
 
                 // Snapshot here!
-                FGSchedulerE fgse = new FGSchedulerE(fg.getId(), fg.getSrcLocation(), fg.getDstLocation(),
+                FlowGroupSchedulerEntry fgse = new FlowGroupSchedulerEntry(fg.getId(), fg.getSrcLocation(), fg.getDstLocation(),
                         (intIDCount++), fg.getRemainingVolume());
 
                 flowgroups.put(fg.getId(), fgse);
@@ -136,8 +136,21 @@ public class CoflowScheduler extends Scheduler {
          */
         public void updateVolume(Coflow cf) {
 
-            // TODO implement updateVolume()
-
+            // Iterate through flowgroups, remove the finished ones, copy the others.
+            for (Map.Entry<String, FlowGroup> fge : cf.getFlowGroups().entrySet()) {
+                FlowGroup fg = fge.getValue();
+                String fgID = fge.getKey();
+                if (fg.getRemainingVolume() < Constants.DOUBLE_EPSILON) {
+                    this.flowgroups.remove(fgID);
+                } else {
+                    if (this.flowgroups.containsKey(fgID)) {
+                        this.flowgroups.get(fgID).remainingVol = fg.getRemainingVolume();
+                    } else {
+                        logger.error("FATAL: No existing SchedulerFGE for {}", fgID);
+                        throw new RuntimeException("FATAL: No existing SchedulerFGE");
+                    }
+                }
+            }
         }
 
         public void setLastLPOutput(MMCFOptimizer.MMCFOutput lastLPOutput) {
@@ -152,7 +165,7 @@ public class CoflowScheduler extends Scheduler {
             return coflow;
         }
 
-        public HashMap<String, FGSchedulerE> getFlowgroups() {
+        public HashMap<String, FlowGroupSchedulerEntry> getFlowgroups() {
             return flowgroups;
         }
 
@@ -481,10 +494,10 @@ public class CoflowScheduler extends Scheduler {
      */
     public void updateCFList(ConcurrentHashMap<String, Coflow> coflowPool) {
         // iterate through CFList, if non-existent, remove, else update the cct.
-        ListIterator<NewCoflowSchedulerE> iter = cfseList.listIterator();
+        ListIterator<CoflowSchedulerEntry> iter = cfseList.listIterator();
 
         while (iter.hasNext()) {
-            NewCoflowSchedulerE cfse = iter.next();
+            CoflowSchedulerEntry cfse = iter.next();
             if (!coflowPool.containsKey(cfse.getCfID())) {
                 iter.remove();
             } else {
@@ -544,7 +557,7 @@ public class CoflowScheduler extends Scheduler {
      */
     public List<ScheduleOutputFG> scheduleRRF(long timestamp) throws Exception {
         List<ScheduleOutputFG> scheduledFGs = new LinkedList<>();
-        LinkedList<NewCoflowSchedulerE> unscheduled_coflows = new LinkedList<>();
+        LinkedList<CoflowSchedulerEntry> unscheduled_coflows = new LinkedList<>();
 
         reset_links();
 
@@ -554,7 +567,7 @@ public class CoflowScheduler extends Scheduler {
 
 
         // Part 1: recursively schedule CFs in the priority queue
-        for (NewCoflowSchedulerE cfse : cfseList) {
+        for (CoflowSchedulerEntry cfse : cfseList) {
 
 //            Coflow_Old_Compressed c = e.cf;
 
@@ -571,8 +584,8 @@ public class CoflowScheduler extends Scheduler {
             MMCFOptimizer.MMCFOutput mmcf_out = MMCFOptimizer.glpk_optimizeNew(cfse, net_graph_, links_); // This is the recursive part.
 
             boolean all_flows_scheduled = true;
-            for (Map.Entry<String, NewCoflowSchedulerE.FGSchedulerE> fgseE : cfse.getFlowgroups().entrySet()) {
-                NewCoflowSchedulerE.FGSchedulerE fgse = fgseE.getValue();
+            for (Map.Entry<String, CoflowSchedulerEntry.FlowGroupSchedulerEntry> fgseE : cfse.getFlowgroups().entrySet()) {
+                CoflowSchedulerEntry.FlowGroupSchedulerEntry fgse = fgseE.getValue();
                 if (mmcf_out.flow_link_bw_map_.get(fgse.intID) == null) {
                     all_flows_scheduled = false;
                     logger.warn("FG {} {}-{} / {}not being scheduled", fgse.fgID, fgse.srcLoc, fgse.dstLoc, fgse.remainingVol);
@@ -597,11 +610,11 @@ public class CoflowScheduler extends Scheduler {
             cfse.setLastLPOutput(mmcf_out);
 
             // This portion is similar to CoFlow::make() in Sim
-            for (Map.Entry<String, NewCoflowSchedulerE.FGSchedulerE> fgseE : cfse.getFlowgroups().entrySet()) {
+            for (Map.Entry<String, CoflowSchedulerEntry.FlowGroupSchedulerEntry> fgseE : cfse.getFlowgroups().entrySet()) {
 
-                NewCoflowSchedulerE.FGSchedulerE fgse = fgseE.getValue();
+                CoflowSchedulerEntry.FlowGroupSchedulerEntry fgse = fgseE.getValue();
 
-                // TODO do we need to check whether the FG finished here?
+                // TODO(later) do we need to check whether the FG finished here?
 /*                if (f.isDone()) {
                     continue;
                 }*/
@@ -642,7 +655,7 @@ public class CoflowScheduler extends Scheduler {
 
         }
 
-        // TODO scheduleRemainFlows feature to be added later
+        // TODO(later) scheduleRemainFlows feature to be added
 //        if (!unscheduled_coflows.isEmpty() && remaining_bw() > 0.0) {
 //            scheduleRemainFlows(unscheduled_coflows, scheduledFGs, timestamp);
 //        }
@@ -657,12 +670,12 @@ public class CoflowScheduler extends Scheduler {
      * @param scheduledFGs
      * @param timestamp
      */
-    private void scheduleRemainFlows(LinkedList<NewCoflowSchedulerE> unscheduled_coflows, List<FlowGroup_Old_Compressed> scheduledFGs, long timestamp) {
-        LinkedList<NewCoflowSchedulerE.FGSchedulerE> unscheduled_fgse = new LinkedList<>();
-        for (NewCoflowSchedulerE cfse : unscheduled_coflows) {
+    private void scheduleRemainFlows(LinkedList<CoflowSchedulerEntry> unscheduled_coflows, List<FlowGroup_Old_Compressed> scheduledFGs, long timestamp) {
+        LinkedList<CoflowSchedulerEntry.FlowGroupSchedulerEntry> unscheduled_fgse = new LinkedList<>();
+        for (CoflowSchedulerEntry cfse : unscheduled_coflows) {
 
             // Filtering
-            for (Map.Entry<String, NewCoflowSchedulerE.FGSchedulerE> fgseE : cfse.getFlowgroups().entrySet()) {
+            for (Map.Entry<String, CoflowSchedulerEntry.FlowGroupSchedulerEntry> fgseE : cfse.getFlowgroups().entrySet()) {
                 if (fgseE.getValue().remainingVol > 0) {
                     unscheduled_fgse.add(fgseE.getValue());
                 }
@@ -670,14 +683,14 @@ public class CoflowScheduler extends Scheduler {
 
         }
         // schedule from small to big
-        Collections.sort(unscheduled_fgse, new Comparator<NewCoflowSchedulerE.FGSchedulerE>() {
-            public int compare(NewCoflowSchedulerE.FGSchedulerE o1, NewCoflowSchedulerE.FGSchedulerE o2) {
+        Collections.sort(unscheduled_fgse, new Comparator<CoflowSchedulerEntry.FlowGroupSchedulerEntry>() {
+            public int compare(CoflowSchedulerEntry.FlowGroupSchedulerEntry o1, CoflowSchedulerEntry.FlowGroupSchedulerEntry o2) {
                 if (o1.remainingVol == o2.remainingVol) return 0;
                 return o1.remainingVol < o2.remainingVol ? -1 : 1;
             }
         });
 
-        for (NewCoflowSchedulerE.FGSchedulerE f : unscheduled_fgse) {
+        for (CoflowSchedulerEntry.FlowGroupSchedulerEntry f : unscheduled_fgse) {
             int src = Integer.parseInt(f.srcLoc);
             int dst = Integer.parseInt(f.dstLoc);
             Pathway p = new Pathway(net_graph_.apsp_[src][dst]);
@@ -697,7 +710,7 @@ public class CoflowScheduler extends Scheduler {
             }
 
 
-            // TODO make_paths()
+            // TODO(later) implement make_paths() for scheduleRemainFlows later
 /*            if (min_bw > 0) {
 //                p.bandwidth = min_bw;
                 p.setBandwidth(min_bw);
@@ -724,9 +737,9 @@ public class CoflowScheduler extends Scheduler {
         }
     }
 
-    public boolean fastCheckCF(NewCoflowSchedulerE cfse) {
+    public boolean fastCheckCF(CoflowSchedulerEntry cfse) {
         // check the FGs, if anyone of them can't be allocated, return false
-        for (Map.Entry<String, NewCoflowSchedulerE.FGSchedulerE> e : cfse.getFlowgroups().entrySet()) {
+        for (Map.Entry<String, CoflowSchedulerEntry.FlowGroupSchedulerEntry> e : cfse.getFlowgroups().entrySet()) {
             if (!fastCheckFG(e.getValue())) {
                 return false;
             }
@@ -735,7 +748,7 @@ public class CoflowScheduler extends Scheduler {
         return true;
     }
 
-    private boolean fastCheckFG(NewCoflowSchedulerE.FGSchedulerE fgse) {
+    private boolean fastCheckFG(CoflowSchedulerEntry.FlowGroupSchedulerEntry fgse) {
         // check connectivity using link[][].remainingBW
 
         int srcID = Integer.parseInt(fgse.srcLoc);
@@ -826,7 +839,7 @@ public class CoflowScheduler extends Scheduler {
             }
 
             // Snapshot happens here
-            NewCoflowSchedulerE cfe = new NewCoflowSchedulerE(cf);
+            CoflowSchedulerEntry cfe = new CoflowSchedulerEntry(cf);
             // add to cfseList here
             cfseList.add(cfe);
         }
@@ -834,9 +847,9 @@ public class CoflowScheduler extends Scheduler {
 
         // After snapshot, iterate through them and get initial LP time
         // also prune the list of the CFs that can not be scheduled
-        ListIterator<NewCoflowSchedulerE> iter = cfseList.listIterator();
+        ListIterator<CoflowSchedulerEntry> iter = cfseList.listIterator();
         while (iter.hasNext()) {
-            NewCoflowSchedulerE cfse = iter.next();
+            CoflowSchedulerEntry cfse = iter.next();
 
             // call LP once to get the CCT_init
             MMCFOptimizer.MMCFOutput mmcf_out = null;
@@ -865,7 +878,7 @@ public class CoflowScheduler extends Scheduler {
     public void printCFList() {
         StringBuilder str = new StringBuilder("-----CF List-----\n");
 
-        for (NewCoflowSchedulerE cfe : cfseList) {
+        for (CoflowSchedulerEntry cfe : cfseList) {
             Coflow cf = cfe.getCoflow();
             str.append(cf.getId()).append(' ').append(cfe.lastLPOutput.completion_time_).append('\n');
             for (Map.Entry<String, FlowGroup> fge : cf.getFlowGroups().entrySet()) {
