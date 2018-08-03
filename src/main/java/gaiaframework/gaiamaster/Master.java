@@ -365,6 +365,8 @@ public class Master {
 
         // TODO to implememnt. Need to define the msg first, then create the msg, then send it.
 
+        // First, group msgs by sending agent.
+        // Don't forget to also create a msg for receiving side SA. (two types of msgs to be sent: 1. FlowUpdate 2. FlowInfo)
 
 /*        // group FGOs by SA
         Map<String, List<FlowGroup_Old_Compressed>> fgoBySA = scheduledFGs.stream()
@@ -522,8 +524,8 @@ public class Master {
      *
      * @param cf
      */
-    @Deprecated
     public void broadcastFlowInfo(Coflow cf) {
+        // TODO implement this
 
     }
 

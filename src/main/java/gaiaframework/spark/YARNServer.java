@@ -59,12 +59,14 @@ public class YARNServer extends GaiaAbstractServer {
 
         if (flowsList.size() > 0) {
             Coflow cf = generateCoflow(cfID, groupedFlowInfo);
-            // submit and wait
-            logger.info("YARN Server submitting CF: {}", cf.getId());
+            long cfGenTime = System.currentTimeMillis();
+            logger.info("YARN Server generated CF: {}, took {} ms", cf.getId(), (cfGenTime - cfStartTime));
 
             try {
-                // TODO do we need to first broadcast flowInfos?
-//                ms.broadcastFlowInfo(cf);
+                // we first broadcast flowInfos
+                ms.broadcastFlowInfo(cf); // blocking!!
+                long cfBCTime = System.currentTimeMillis();
+                logger.info("Broadcast FlowInfo for CF: {}, took {} ms", cf.getId(), (cfBCTime - cfGenTime));
                 // submit coflow to scheduler, no need to broadcast flowInfos, only broadcast the first time we schedule
                 msData.onSubmitCoflow(cfID, cf);
 
