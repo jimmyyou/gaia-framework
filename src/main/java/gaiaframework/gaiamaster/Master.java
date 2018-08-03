@@ -520,12 +520,15 @@ public class Master {
     }
 
     /**
-     * Broadcast FlowInfo to corresponding SA/FA.
+     * Broadcast FlowInfo to corresponding Agents.
      *
      * @param cf
      */
     public void broadcastFlowInfo(Coflow cf) {
-        // TODO implement this
+        // TODO implement broadcastFlowInfo.
+        // HOWTO: iterate through all FGs, and send FGIBundle message.
+        // For now only BC to the receiving side
+
 
     }
 

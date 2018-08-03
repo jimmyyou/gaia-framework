@@ -250,6 +250,30 @@ public class AgentRPCServer {
                                    io.grpc.stub.StreamObserver<gaiaframework.gaiaprotos.GaiaMessageProtos.SmallFlow_ACK> responseObserver) {
 
             fetchFile(request.getFilename(), request.getSrcIP());
+            responseObserver.onNext(GaiaMessageProtos.SmallFlow_ACK.getDefaultInstance());
+            responseObserver.onCompleted();
+        }
+
+        /**
+         * Process FlowGroupInfoBundle msg. store the mapping of filename to fg, into shared state.
+         *
+         * @param request
+         * @param responseObserver
+         */
+        @Override
+        public void setRecFlowInfoList(gaiaframework.gaiaprotos.GaiaMessageProtos.FlowGroupInfoBundle request,
+                                       io.grpc.stub.StreamObserver<gaiaframework.gaiaprotos.GaiaMessageProtos.ACK> responseObserver) {
+            // TODO implement here.
+            for (GaiaMessageProtos.FlowGroupInfoMsg fgimsg : request.getFgimsgList()) {
+                // Check if we are the receiving side of the FG.
+                if (fgimsg.getDstLoc().equals(saID)) {
+
+                } else {
+                    logger.error("ERROR!");
+                }
+            }
+
+            responseObserver.onNext(GaiaMessageProtos.ACK.getDefaultInstance());
             responseObserver.onCompleted();
         }
 
