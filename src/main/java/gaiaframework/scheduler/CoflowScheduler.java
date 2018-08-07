@@ -22,8 +22,6 @@ public class CoflowScheduler extends Scheduler {
     private static final Logger logger = LogManager.getLogger();
     private final SubscribedLink[][] linksAtStart;
 
-    private SubscribedLink[][] linksWithDDLCF;
-
     protected Comparator<CoflowSchedulerEntry> smallCCTFirst = Comparator.comparingDouble(o -> o.getLastLPOutput().completion_time_);
 
     protected List<CoflowSchedulerEntry> cfseList = new LinkedList<>();
@@ -44,14 +42,6 @@ public class CoflowScheduler extends Scheduler {
             linksAtStart[dst][src] = new SubscribedLink(Double.parseDouble(e.getAttribute("bandwidth").toString()));
         }
 
-        //  init links for with only deadline CF
-        linksWithDDLCF = new SubscribedLink[net_graph_.nodes_.size()][net_graph_.nodes_.size()];
-        for (Edge e : net_graph_.graph_.getEachEdge()) {
-            int src = Integer.parseInt(e.getNode0().toString());
-            int dst = Integer.parseInt(e.getNode1().toString());
-            linksWithDDLCF[src][dst] = new SubscribedLink(Double.parseDouble(e.getAttribute("bandwidth").toString()));
-            linksWithDDLCF[dst][src] = new SubscribedLink(Double.parseDouble(e.getAttribute("bandwidth").toString()));
-        }
     }
 
     public void processLinkChange(GaiaMessageProtos.PathStatusReport m) {
@@ -71,14 +61,12 @@ public class CoflowScheduler extends Scheduler {
 
             linksAtStart[src][dst].goDown();
             links_[src][dst].goDown();
-            linksWithDDLCF[src][dst].goDown();
             logger.info("Making Link {} {} go down", src, dst);
 
         } else {
 
+            linksAtStart[src][dst].goUp();
             links_[src][dst].goUp();
-            links_[src][dst].goUp();
-            linksWithDDLCF[src][dst].goUp();
             logger.info("Making Link {} {} go up", src, dst);
         }
     }
@@ -667,10 +655,9 @@ public class CoflowScheduler extends Scheduler {
      * Schedule remaining flows
      *
      * @param unscheduled_coflows
-     * @param scheduledFGs
      * @param timestamp
      */
-    private void scheduleRemainFlows(LinkedList<CoflowSchedulerEntry> unscheduled_coflows, List<FlowGroup_Old_Compressed> scheduledFGs, long timestamp) {
+    private void scheduleRemainFlows(LinkedList<CoflowSchedulerEntry> unscheduled_coflows, long timestamp) {
         LinkedList<CoflowSchedulerEntry.FlowGroupSchedulerEntry> unscheduled_fgse = new LinkedList<>();
         for (CoflowSchedulerEntry cfse : unscheduled_coflows) {
 
@@ -888,27 +875,6 @@ public class CoflowScheduler extends Scheduler {
             }
         }
         logger.info(str);
-    }
-
-    void reset_linksWithDDLCF() {
-        for (int i = 0; i < net_graph_.nodes_.size(); i++) {
-            for (int j = 0; j < net_graph_.nodes_.size(); j++) {
-                if (linksWithDDLCF[i][j] != null) {
-                    linksWithDDLCF[i][j].subscribers_.clear();
-                }
-            }
-        }
-    }
-
-    void subscribeFlowToLinkWithDDFCF(FlowGroup_Old_Compressed f) {
-        // Subscribe the flow's paths to the links it uses
-        for (Pathway p : f.paths) {
-            for (int i = 0; i < p.node_list.size() - 1; i++) {
-                int src = Integer.parseInt(p.node_list.get(i));
-                int dst = Integer.parseInt(p.node_list.get(i + 1));
-                linksWithDDLCF[src][dst].subscribers_.add(p);
-            }
-        }
     }
 
     /*public void schedule_extra_flows(ArrayList<Coflow_Old_Compressed> unscheduled_coflows, long timestamp) {
