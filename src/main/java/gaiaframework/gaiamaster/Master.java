@@ -359,6 +359,7 @@ public class Master {
 
     /**
      * Asynchronously send CTRL Msg.
+     *
      * @param scheduledFGOs
      */
     private void sendControlMessages_Async(HashMap<String, ScheduleOutputFG> scheduledFGOs) {
@@ -524,12 +525,26 @@ public class Master {
      *
      * @param cf
      */
-    public void broadcastFlowInfo(Coflow cf) {
-        // TODO implement broadcastFlowInfo.
+    public void broadcastFlowInfo(Coflow cf) throws InterruptedException {
         // HOWTO: iterate through all FGs, and send FGIBundle message.
-        // For now only BC to the receiving side
+        // For now only BC to the receiving side, BC to the sending side will be performed at START msg
 
+        // First sort the FGs by FA.
+        Map<String, List<FlowGroup>> fgByFA = cf.getFlowGroups().entrySet().stream().map(Map.Entry::getValue)
+                .collect(Collectors.groupingBy(FlowGroup::getDstLocation));
 
+        // Call rpc, and count down for all complete msgs.
+        CountDownLatch latch = new CountDownLatch(fgByFA.size());
+
+        for (Map.Entry<String, List<FlowGroup>> entry : fgByFA.entrySet()) {
+            String saID = entry.getKey();
+
+            // call async RPC
+            rpcClientHashMap.get(saID).SetFlowInfoList(entry.getValue(), latch);
+        }
+
+        // wait for broadcast to complete
+        latch.await();
     }
 
 

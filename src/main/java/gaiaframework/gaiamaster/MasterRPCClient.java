@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -166,5 +167,47 @@ public class MasterRPCClient {
     public void startExp() {
         GaiaMessageProtos.Exp_CTRL hb = GaiaMessageProtos.Exp_CTRL.newBuilder().build();
         blockingStub.controlExperiment(hb);
+    }
+
+    /**
+     * Sends flowGroupInfo to Agent, count down when finished.
+     *
+     * @param flowGroupList
+     * @param downLatch
+     */
+    public void SetFlowInfoList(List<FlowGroup> flowGroupList, CountDownLatch downLatch) {
+
+        GaiaMessageProtos.FlowGroupInfoBundle.Builder fgibBuilder = GaiaMessageProtos.FlowGroupInfoBundle.newBuilder();
+        for (FlowGroup fg : flowGroupList) {
+
+            GaiaMessageProtos.FlowGroupInfoMsg.Builder fgimBuilder = GaiaMessageProtos.FlowGroupInfoMsg.newBuilder();
+            fgimBuilder.addAllFlowInfos(fg.flowInfos);
+            fgimBuilder.setSrcLoc(fg.getSrcLocation());
+            fgimBuilder.setDstLoc(fg.getDstLocation());
+            fgimBuilder.setFgID(fg.getId());
+
+            fgibBuilder.addFgimsg(fgimBuilder);
+        }
+
+        StreamObserver<GaiaMessageProtos.ACK> observer = new StreamObserver<GaiaMessageProtos.ACK>() {
+            @Override
+            public void onNext(GaiaMessageProtos.ACK ack) {
+
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                throw new RuntimeException(throwable);
+            }
+
+            @Override
+            public void onCompleted() {
+                downLatch.countDown();
+                logger.info("Finish SetFlowInfoList for {}", targetIP);
+            }
+        };
+
+        logger.info("Sending FlowInfoBundle to {}, content:\n{}", targetIP, fgibBuilder);
+        asyncStub.setRecFlowInfoList(fgibBuilder.build(), observer);
     }
 }
