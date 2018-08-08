@@ -28,10 +28,10 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
 @SuppressWarnings("Duplicates")
-public class WorkerThread implements Runnable{
+public class WorkerThread implements Runnable {
 
     private static final Logger logger = LogManager.getLogger();
-//    PConnection conn;
+    //    PConnection conn;
     AgentSharedData sharedData;
 
     String connID; // name of this TCP Connection. SA_id-RA_id.path_id
@@ -67,7 +67,7 @@ public class WorkerThread implements Runnable{
 
 
     public WorkerThread(String workerID, String RAID, int pathID, LinkedBlockingQueue<CTRL_to_WorkerMsg> inputQueue,
-                        AgentSharedData sharedData, String raip, int raPort, int port){
+                        AgentSharedData sharedData, String raip, int raPort, int port) {
         this.connID = workerID;
         this.subcriptionQueue = inputQueue;
         this.sharedData = sharedData;
@@ -101,11 +101,10 @@ public class WorkerThread implements Runnable{
             try {
                 m = subcriptionQueue.take();
 
-                if (m.type == CTRL_to_WorkerMsg.MsgType.CONNECT){
+                if (m.type == CTRL_to_WorkerMsg.MsgType.CONNECT) {
                     connectSocket();
                     break;
-                }
-                else {
+                } else {
                     logger.error("Expecting CONNECT msg, got {}", m.type);
                 }
             } catch (InterruptedException e) {
@@ -117,7 +116,7 @@ public class WorkerThread implements Runnable{
         int reconnCnt = 0;
 
         // 3 enter eventloop
-        while (true){
+        while (true) {
             m = subcriptionQueue.poll();
 
             if (isReconnecting) {
@@ -137,8 +136,7 @@ public class WorkerThread implements Runnable{
                     }
                 }
 
-            }
-            else {
+            } else {
 
                 // process the msg
                 // ignore incoming SYNC msg if connection is down! but still need to take them out of the queue
@@ -183,7 +181,7 @@ public class WorkerThread implements Runnable{
 
 
         try {
-            bos = new BufferedOutputStream(dataSocket.getOutputStream() , Constants.BUFFER_SIZE );
+            bos = new BufferedOutputStream(dataSocket.getOutputStream(), Constants.BUFFER_SIZE);
         } catch (IOException e) {
             e.printStackTrace();
             logger.error("Fail to setup BOS");
@@ -205,12 +203,11 @@ public class WorkerThread implements Runnable{
             int data_length;
 
             // check if 100 permits/s is enough (3200MByte/s enough?)
-            if( cur_rate < Constants.BLOCK_SIZE_MB * 8 * Constants.DEFAULT_TOKEN_RATE  ){
+            if (cur_rate < Constants.BLOCK_SIZE_MB * 8 * Constants.DEFAULT_TOKEN_RATE) {
                 // no need to change rate , calculate the length
                 rateLimiter.setRate(Constants.DEFAULT_TOKEN_RATE);
                 data_length = (int) (cur_rate / Constants.DEFAULT_TOKEN_RATE * 1024 * 1024 / 8);
-            }
-            else {
+            } else {
                 data_length = Constants.BLOCK_SIZE_MB;
                 double new_rate = cur_rate / 8 / Constants.BLOCK_SIZE_MB;
                 logger.error("Total rate {} too high for {}, setting new sending rate to {} / s", total_rate, this.connID, new_rate);
@@ -218,7 +215,7 @@ public class WorkerThread implements Runnable{
             }
 
             tmp_timestamp = System.currentTimeMillis();
-            bos.write(data_block , 0, data_length);
+            bos.write(data_block, 0, data_length);
             bos.flush();
 
 //            logger.info("worker {} flush took {} ms", connID, (System.currentTimeMillis() - tmp_timestamp));
@@ -230,11 +227,10 @@ public class WorkerThread implements Runnable{
             // distribute transmitted_agg...
             double tx_ed = (double) data_length * 8 / 1024 / 1024;
 
-            distribute_transmitted( tx_ed);
+            distribute_transmitted(tx_ed);
 //                        System.out.println("T_MBit " + tx_ed + " original " + buffer_size_megabits_);
 //                        data_.distribute_transmitted(buffer_size_megabits_);
-        }
-        catch (SocketException e) {
+        } catch (SocketException e) {
 //                    System.err.println("Fail to write data to ra");
             logger.error("worker {} flush took {} ms", connID, (System.currentTimeMillis() - tmp_timestamp));
             logger.error("Fail to write data to ra {} , thread {}", raID, connID);
@@ -242,8 +238,7 @@ public class WorkerThread implements Runnable{
             enterReconnectingState();
             e.printStackTrace();
 //                    System.exit(1); // don't fail here
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             logger.error("worker {} flush took {} ms", connID, (System.currentTimeMillis() - tmp_timestamp));
             logger.error("Fail to write to bos. ra {} , thread {}", raID, connID);
 
@@ -272,7 +267,7 @@ public class WorkerThread implements Runnable{
         GaiaMessageProtos.PathStatusReport report = GaiaMessageProtos.PathStatusReport.newBuilder().setPathID(pathID)
                 .setSaID(sharedData.saID).setRaID(raID).setIsBroken(true).build();
 
-        logger.error("Sending LinkReport {}", report );
+        logger.error("Sending LinkReport {}", report);
 
         // Call directly instead of using event loop
         sharedData.rpcClient.sendPathStatus(report);
@@ -292,7 +287,7 @@ public class WorkerThread implements Runnable{
             return; // only send when for one hop path
         }
 
-        while (currentConn != sharedData.MAX_ACTIVE_CONNECTION){
+        while (currentConn != sharedData.MAX_ACTIVE_CONNECTION) {
             logger.error("One-hop worker waiting for others {}", currentConn);
             synchronized (sharedData.activeConnections) {
                 try {
@@ -306,7 +301,7 @@ public class WorkerThread implements Runnable{
             logger.error("Current active connection {} / {}", currentConn, sharedData.MAX_ACTIVE_CONNECTION);
         }
 
-        if ( currentConn == sharedData.MAX_ACTIVE_CONNECTION) {
+        if (currentConn == sharedData.MAX_ACTIVE_CONNECTION) {
 
             GaiaMessageProtos.PathStatusReport report = GaiaMessageProtos.PathStatusReport.newBuilder().setPathID(pathID)
                     .setSaID(sharedData.saID).setRaID(raID).setIsBroken(false).build();
@@ -335,7 +330,7 @@ public class WorkerThread implements Runnable{
     public void connectSocket() {
 
         boolean isConnected = false;
-        while ( !isConnected ) {
+        while (!isConnected) {
             try {
                 dataSocket = new Socket(raIP, raPort, null, localPort);
 //                dataSocket.setSoTimeout(Constants.DEFAULT_SOCKET_TIMEOUT);
@@ -348,7 +343,7 @@ public class WorkerThread implements Runnable{
 
                 // sleep for some time
                 try {
-                    logger.error("Retry-connection in {} seconds", Constants.SOCKET_RETRY_MILLIS/1000);
+                    logger.error("Retry-connection in {} seconds", Constants.SOCKET_RETRY_MILLIS / 1000);
                     Thread.sleep(Constants.SOCKET_RETRY_MILLIS);
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
@@ -362,7 +357,7 @@ public class WorkerThread implements Runnable{
 
 
         try {
-            bos = new BufferedOutputStream(dataSocket.getOutputStream() , Constants.BUFFER_SIZE );
+            bos = new BufferedOutputStream(dataSocket.getOutputStream(), Constants.BUFFER_SIZE);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -382,22 +377,22 @@ public class WorkerThread implements Runnable{
 
             // Now we only use the subscription message as a sync signal..
 
-            if (m.getType() == CTRL_to_WorkerMsg.MsgType.SYNC){
+            if (m.getType() == CTRL_to_WorkerMsg.MsgType.SYNC) {
                 // update the worker's subscription info
                 // and go back to work.
                 subscribers.clear();
-                subscribers.putAll( sharedData.subscriptionRateMaps.get(raID).get(pathID) );
+                subscribers.putAll(sharedData.subscriptionRateMaps.get(raID).get(pathID));
 
                 total_rate = sharedData.subscriptionRateMaps.get(raID).get(pathID).values()
                         .stream().mapToDouble(SubscriptionInfo::getRate).sum();
 
-                if (total_rate  > 0){
-                    logger.debug("Worker {} Received SYNC message, now working with rate {} (MBit/s)", this.connID , total_rate);
+                if (total_rate > 0) {
+                    logger.debug("Worker {} Received SYNC message, now working with rate {} (MBit/s)", this.connID, total_rate);
                 }
 
             }
 
-            if (m.getType() == CTRL_to_WorkerMsg.MsgType.CONNECT){
+            if (m.getType() == CTRL_to_WorkerMsg.MsgType.CONNECT) {
 
                 logger.error("Received CONNECT message when expecting SYNC");
 
@@ -442,7 +437,7 @@ public class WorkerThread implements Runnable{
 
 
     public synchronized void distribute_transmitted(double transmitted_MBit) {
-        if (transmitted_MBit > 0.0 ) {
+        if (transmitted_MBit > 0.0) {
 
             ArrayList<SubscriptionInfo> to_remove = new ArrayList<SubscriptionInfo>();
 

@@ -117,7 +117,7 @@ public class SendingAgent {
 //        final Runnable sendStatus = () -> sharedData.rpcClient.sendStatusUpdate();
         final Runnable sendStatus = () -> sharedData.pushStatusUpdate();
 
-        (new Thread ( new CTRLMsgSenderThread(sharedData)) ).start();
+//        (new Thread ( new CTRLMsgSenderThread(sharedData)) ).start();
 
         ScheduledFuture<?> mainHandler = statusReportExec.scheduleAtFixedRate(sendStatus, 0, Constants.STATUS_MESSAGE_INTERVAL_MS, MILLISECONDS);
 

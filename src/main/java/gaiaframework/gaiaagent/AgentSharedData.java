@@ -43,8 +43,6 @@ public class AgentSharedData {
 
     LinkedBlockingQueue<GaiaMessageProtos.FlowUpdate> fumQueue = new LinkedBlockingQueue<>();
 
-    LinkedBlockingQueue<Worker_to_CTRLMsg> worker_to_ctrlMsgQueue = new LinkedBlockingQueue<>();
-
     // moved the rpcClient to shared.
     AgentRPCClient rpcClient;
 
