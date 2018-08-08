@@ -2,10 +2,7 @@ package gaiaframework.receiver;
 
 // Receiving Agent, only used to receive data
 
-import gaiaframework.gaiaagent.DataChunk;
 import gaiaframework.transmission.DataChunkMessage;
-import gaiaframework.util.Configuration;
-import gaiaframework.util.Constants;
 import org.apache.commons.cli.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

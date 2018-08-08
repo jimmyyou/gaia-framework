@@ -1,4 +1,4 @@
-package gaiaframework.gaiaagent;
+package gaiaframework.transmission;
 
 // Data Chunk to be transferred by agents
 

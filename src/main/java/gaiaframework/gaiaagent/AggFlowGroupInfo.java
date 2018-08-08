@@ -5,8 +5,8 @@ package gaiaframework.gaiaagent;
 
 // Life Cycle: created ->
 
-import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.gaiaprotos.GaiaMessageProtos;
+import gaiaframework.transmission.DataChunk;
 import gaiaframework.util.Constants;
 
 import java.util.ArrayList;
