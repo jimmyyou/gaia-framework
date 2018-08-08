@@ -266,10 +266,34 @@ public class AgentRPCServer {
             for (GaiaMessageProtos.FlowGroupInfoMsg fgimsg : request.getFgimsgList()) {
                 // Check if we are the receiving side of the FG.
                 if (fgimsg.getDstLoc().equals(saID)) {
-                    // TODO implement here.
+                    // TODO implement setRecFlowInfoList, create listener for FILE_FIN
+
+                    // HOWTO: After receiving the FlowInfos, we need to store it, create a fileName to FG mapping, and a counter for this FG.
+                    // Then upon every File_FIN, we count down, and after counting down to 0, we send a FG_FILE_FIN to master.
+
+
+                    // One fgimsg correspond to a FG, no duplicates.
+                    CountDownLatch fgFilesCountLatch = new CountDownLatch(fgimsg.getFlowInfosCount());
+
+                    // A listener for the latch
+                    Runnable latchListener = () -> {
+                        try {
+                            fgFilesCountLatch.await();
+                            // TODO Then send out msg.
+
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    };
+
+                    (new Thread(latchListener)).start();
+
+                    // This is a valid FG, so we need to create a thread listening on all File_FIN for this FG, and send FG_FILE_FIN.
+                    // This means we need to create a latch and a thread for each iteration.
+
 
                 } else {
-                    logger.error("ERROR!");
+                    logger.error("ERROR: received {} \n but expected dstLoc = {}", fgimsg, saID);
                 }
             }
 
