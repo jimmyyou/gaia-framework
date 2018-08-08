@@ -33,6 +33,8 @@ service SendingAgentService {
 service MasterService {
     rpc UpdateFlowStatus (stream FlowStatusReport) returns (FlowStatus_ACK) {}
     rpc UpdatePathStatus (PathStatusReport) returns (PathStatus_ACK) {}
+    // Borrow FlowStatusReport Msg here.
+    rpc FinishFGFile (FlowStatusReport) returns (ACK) {}
 //    rpc FinishFile (FileFinishMsg) returns (FlowStatus_ACK) {}
     //    rpc StreamUpdatePathStatus (stream PathStatusReport) returns (PathStatus_ACK) {}
 }

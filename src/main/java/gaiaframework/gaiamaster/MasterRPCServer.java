@@ -100,6 +100,15 @@ public class MasterRPCServer {
             responseObserver.onCompleted();
         }
 
+        @Override
+        public void finishFGFile(gaiaframework.gaiaprotos.GaiaMessageProtos.FlowStatusReport request,
+                                 io.grpc.stub.StreamObserver<gaiaframework.gaiaprotos.GaiaMessageProtos.ACK> responseObserver) {
+            handleFGFileFIN(request);
+
+            responseObserver.onNext(GaiaMessageProtos.ACK.getDefaultInstance());
+            responseObserver.onCompleted();
+        }
+
 //        @Override
 //        public void finishFile(gaiaframework.gaiaprotos.GaiaMessageProtos.FileFinishMsg request,
 //                               io.grpc.stub.StreamObserver<gaiaframework.gaiaprotos.GaiaMessageProtos.FlowStatus_ACK> responseObserver) {
@@ -111,16 +120,23 @@ public class MasterRPCServer {
 
     } // End of MasterServiceImpl
 
-    // TODO this rpc method is deprecated
-    @Deprecated
-    private void handleFinishFile(GaiaMessageProtos.FileFinishMsg request) {
-//        logger.info("Master Received FILE_FIN {}", request.getFilename());
-        onFileFinish(request.getFilename());
+    /**
+     * Handle FG_FILE_FIN sent from agents.
+     *
+     * @param request
+     */
+    private void handleFGFileFIN(GaiaMessageProtos.FlowStatusReport request) {
+        logger.info("Received Status Report for FG_FILE_FIN, content {}", request);
+        String fgID = request.getStatus(0).getId();
+        FlowGroup fg = masterSharedData.getFlowGroup(fgID);
+        Coflow cf = masterSharedData.coflowPool.get(fg.getOwningCoflowID());
+        logger.info("Found FlowGroup {} and Coflow {} for FG_FILE_FIN of {}", fg, fgID);
 
+        // Reuse the old onFGFileFIN here. Should be OK.
+        masterSharedData.onFGFileFIN(fg, cf);
     }
 
     private void handlePathUpdate(GaiaMessageProtos.PathStatusReport request) {
-        // TODO handle path Update
 
         masterSharedData.onLinkChange(request);
 //        if (request.getIsBroken()){
@@ -192,7 +208,7 @@ public class MasterRPCServer {
 
 //            logger.info("Found CF {} for file {}", cf.getId(), origFilename);
 
-            // FIXME TODO overhead too high
+            // FIXME(deprecated) TODO overhead too high
             boolean foundFG = false;
             for (Map.Entry<String, FlowGroup> fge : cf.getFlowGroups().entrySet()) {
 
@@ -203,7 +219,7 @@ public class MasterRPCServer {
 
                         foundFG = true;
                         logger.info("Received FILE_FIN for {} {} {}", fge.getKey(), origFilename, reducerID);
-                        masterSharedData.onFileFIN(fge.getValue(), cf);
+                        masterSharedData.onFGFileFIN(fge.getValue(), cf);
 //                        masterSharedData.onFinishFlowGroup(fge.getKey(), System.currentTimeMillis());
                     }
                 }
@@ -216,7 +232,5 @@ public class MasterRPCServer {
         } else {
             logger.error("FATAL: CF not found for {}", origFilename);
         }
-
     }
-
 }

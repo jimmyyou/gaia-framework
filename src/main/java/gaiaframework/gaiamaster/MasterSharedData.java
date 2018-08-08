@@ -145,7 +145,7 @@ public class MasterSharedData {
         }
     }
 
-    public void onFileFIN(FlowGroup fg, Coflow cf) {
+    public void onFGFileFIN(FlowGroup fg, Coflow cf) {
         if (fg == null) {
             logger.error("FATAL: fg == null when file fin");
             return;
