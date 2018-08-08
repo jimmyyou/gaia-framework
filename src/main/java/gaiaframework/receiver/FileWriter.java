@@ -8,6 +8,7 @@ package gaiaframework.receiver;
 import com.google.common.util.concurrent.Uninterruptibles;
 import gaiaframework.gaiaprotos.GaiaMessageProtos;
 import gaiaframework.gaiaprotos.MasterServiceGrpc;
+import gaiaframework.gaiaprotos.SendingAgentServiceGrpc;
 import gaiaframework.transmission.DataChunkMessage;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -39,7 +40,7 @@ public class FileWriter implements Runnable {
     @Override
     public void run() {
 
-        // FIXME not use hardcoded in the future
+        // FIXME should use co-sited SA's IP
         grpcChannel = ManagedChannelBuilder.forAddress("dc1master", 8888).usePlaintext().build();
 
         logger.info("Filewriter Thread started, and grpcChannel established");
@@ -128,14 +129,15 @@ public class FileWriter implements Runnable {
     }
 
     void sendFileFIN(String filename) throws RuntimeException{
-        MasterServiceGrpc.MasterServiceStub stub = MasterServiceGrpc.newStub(grpcChannel);
+
+        SendingAgentServiceGrpc.SendingAgentServiceStub stub = SendingAgentServiceGrpc.newStub(grpcChannel);
         GaiaMessageProtos.FileFinishMsg request = GaiaMessageProtos.FileFinishMsg.newBuilder().setFilename(filename).build();
 
         final CountDownLatch latch = new CountDownLatch(1);
-        StreamObserver<GaiaMessageProtos.FlowStatus_ACK> responseObserver = new StreamObserver<GaiaMessageProtos.FlowStatus_ACK>() {
+        StreamObserver<GaiaMessageProtos.ACK> responseObserver = new StreamObserver<GaiaMessageProtos.ACK>() {
 
             @Override
-            public void onNext(GaiaMessageProtos.FlowStatus_ACK flowStatus_ack) {
+            public void onNext(GaiaMessageProtos.ACK flowStatus_ack) {
                 latch.countDown();
             }
 

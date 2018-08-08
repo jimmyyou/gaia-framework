@@ -100,18 +100,19 @@ public class MasterRPCServer {
             responseObserver.onCompleted();
         }
 
-        @Override
-        public void finishFile(gaiaframework.gaiaprotos.GaiaMessageProtos.FileFinishMsg request,
-                               io.grpc.stub.StreamObserver<gaiaframework.gaiaprotos.GaiaMessageProtos.FlowStatus_ACK> responseObserver) {
-
-            handleFinishFile(request);
-            responseObserver.onNext(GaiaMessageProtos.FlowStatus_ACK.getDefaultInstance());
-            responseObserver.onCompleted();
-        }
+//        @Override
+//        public void finishFile(gaiaframework.gaiaprotos.GaiaMessageProtos.FileFinishMsg request,
+//                               io.grpc.stub.StreamObserver<gaiaframework.gaiaprotos.GaiaMessageProtos.FlowStatus_ACK> responseObserver) {
+//
+//            handleFinishFile(request);
+//            responseObserver.onNext(GaiaMessageProtos.FlowStatus_ACK.getDefaultInstance());
+//            responseObserver.onCompleted();
+//        }
 
     } // End of MasterServiceImpl
 
     // TODO this rpc method is deprecated
+    @Deprecated
     private void handleFinishFile(GaiaMessageProtos.FileFinishMsg request) {
 //        logger.info("Master Received FILE_FIN {}", request.getFilename());
         onFileFinish(request.getFilename());
@@ -176,6 +177,7 @@ public class MasterRPCServer {
      *
      * @param filename
      */
+    @Deprecated
     synchronized void onFileFinish(String filename) {
         int off1 = filename.lastIndexOf('-');
         int off0 = filename.lastIndexOf('-', off1 - 1);
