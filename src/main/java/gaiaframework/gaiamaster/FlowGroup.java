@@ -6,7 +6,7 @@ package gaiaframework.gaiamaster;
  * TerraMaster does not learn about progress of individual flows, only about progress of FlowGroups
  */
 
-// TODO clear definition of FG_FIN, and corresponding API (e.g. fg.isFinished())
+// TODO(future) clear definition of FG_FIN, and corresponding API (e.g. fg.isFinished())
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.util.Constants;
 
@@ -70,7 +70,7 @@ public class FlowGroup {
         this.owningCoflowID = cfID;
         this.flowInfos = flowInfos;
         this.totalVolume = flowInfos.stream().mapToLong(ShuffleInfo.FlowInfo::getFlowSize).sum();
-        // TODO: check the long to double conversion here
+        // TODO(future) check the long to double conversion here
     }
 
 

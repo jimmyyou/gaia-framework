@@ -15,7 +15,8 @@ public class MasterSharedData {
     volatile ConcurrentHashMap<String, Coflow> coflowPool;
 
     // index for searching flowGroup in this data structure.
-    // only need to add entry, no need to delete entry. TODO verify this.
+    // only need to add entry, no need to delete entry.
+    // TODO(future) implement delete entry.
     private volatile ConcurrentHashMap<String, Coflow> flowIDtoCoflow;
     volatile HashMap<String, Coflow> fileNametoCoflow;
 
@@ -55,7 +56,12 @@ public class MasterSharedData {
         return false;
     }
 
-    // FIXME: remove deprecated API
+    /**
+     * submit Coflow to masterSharedData.coflowPool, so it will be scheduled
+     *
+     * @param id
+     * @param cf
+     */
     public synchronized void onSubmitCoflow(String id, Coflow cf) { // trim the co-located flowgroup before adding!
         // first add index
         for (FlowGroup fg : cf.getFlowGroups().values()) {
@@ -79,7 +85,6 @@ public class MasterSharedData {
         }
     }
 
-    // TODO: set the concurrency level.
     public MasterSharedData() {
         this.coflowPool = new ConcurrentHashMap<>();
         this.flowIDtoCoflow = new ConcurrentHashMap<>();

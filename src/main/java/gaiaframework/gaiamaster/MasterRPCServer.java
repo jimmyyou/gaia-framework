@@ -180,57 +180,11 @@ public class MasterRPCServer {
 
     private void onFinishFlowGroup(String fid, long timestamp) {
 
-        logger.info("Received FLOW_FIN for {}", fid);
+        logger.info("Received FG_FIN for {}", fid);
         // set the current status
 
-        // FIXME Moved to onFileFinish
+        // FIXME(future) Moved to onFileFinish
         masterSharedData.onFinishFlowGroup(fid, timestamp);
-
     }
 
-    /**
-     * Invoked when File Transfer of a fg is finished, search for the fg and invoke fg finish.
-     *
-     * @param filename
-     */
-    @Deprecated
-    synchronized void onFileFinish(String filename) {
-        int off1 = filename.lastIndexOf('-');
-        int off0 = filename.lastIndexOf('-', off1 - 1);
-        int off2 = filename.lastIndexOf('.');
-        String reducerID = filename.substring(off0 + 1, off1);
-        String origFilename = filename.substring(0, off0).concat(".data");
-
-        // Find the FG in the CFPool and then finish the FG
-        if (masterSharedData.fileNametoCoflow.containsKey(origFilename)) {
-
-            Coflow cf = masterSharedData.fileNametoCoflow.get(origFilename);
-
-//            logger.info("Found CF {} for file {}", cf.getId(), origFilename);
-
-            // FIXME(deprecated) TODO overhead too high
-            boolean foundFG = false;
-            for (Map.Entry<String, FlowGroup> fge : cf.getFlowGroups().entrySet()) {
-
-                if (fge.getValue().getFilename().equals(origFilename)) {
-//                    logger.info("Red ID = {} , expected {} ", fge.getValue().redID, reducerID);
-
-                    if (fge.getValue().redID.equals(reducerID)) {
-
-                        foundFG = true;
-                        logger.info("Received FILE_FIN for {} {} {}", fge.getKey(), origFilename, reducerID);
-                        masterSharedData.onFGFileFIN(fge.getValue(), cf);
-//                        masterSharedData.onFinishFlowGroup(fge.getKey(), System.currentTimeMillis());
-                    }
-                }
-            }
-
-            if (!foundFG) {
-                logger.error("FATAL: FG not found for {}", origFilename);
-            }
-
-        } else {
-            logger.error("FATAL: CF not found for {}", origFilename);
-        }
-    }
 }

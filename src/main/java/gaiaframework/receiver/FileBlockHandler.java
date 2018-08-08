@@ -26,7 +26,7 @@ public class FileBlockHandler {
     long totalChunks; // does not include the first and the last DataChunk
     long totalSize_bytes;
 
-    // TODO use HashTable etc. to track the progress? in case of retransmission. And report the progress back to GAIA controller
+    // TODO(future) use HashTable etc. to track the progress? in case of retransmission. And report the progress back to GAIA controller
     long receivedChunks = 0;
     long receivedBytes = 0;
     long currentLength = 0;

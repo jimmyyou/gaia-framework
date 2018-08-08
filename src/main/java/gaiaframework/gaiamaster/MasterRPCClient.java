@@ -189,7 +189,7 @@ public class MasterRPCClient {
                             fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.CHANGE);
                         }
 
-                        // FIXME: this message field is deprecated!!!
+                        // FIXME: this message field is deprecated? We can tell after implementing agent.
                         fueBuilder.setRemainingVolume(masterSharedData.coflowPool.get(sofg.getCoflow_id()).getFlowGroup(sofg.getId()).getRemainingVolume());
 
                         for (Pathway p : sofg.paths) {
