@@ -274,11 +274,8 @@ public class WorkerThread implements Runnable{
 
         logger.error("Sending LinkReport {}", report );
 
-        try {
-            sharedData.worker_to_ctrlMsgQueue.put(new Worker_to_CTRLMsg(report));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        // Call directly instead of using event loop
+        sharedData.rpcClient.sendPathStatus(report);
     }
 
     private void exitReconnectingState() {
@@ -316,11 +313,8 @@ public class WorkerThread implements Runnable{
 
             logger.error("Sending LinkReport {}", report);
 
-            try {
-                sharedData.worker_to_ctrlMsgQueue.put(new Worker_to_CTRLMsg(report));
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            // Call directly instead of using event loop
+            sharedData.rpcClient.sendPathStatus(report);
         }
     }
 

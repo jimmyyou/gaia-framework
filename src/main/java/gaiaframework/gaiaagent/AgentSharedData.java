@@ -128,12 +128,8 @@ public class AgentSharedData {
 
         GaiaMessageProtos.FlowStatusReport FG_FIN = GaiaMessageProtos.FlowStatusReport.newBuilder().addStatus(fsBuilder).build();
 
-        try {
-            worker_to_ctrlMsgQueue.put(new Worker_to_CTRLMsg(FG_FIN));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
+        // Call directly instead of using eventloop
+        this.rpcClient.sendFlowStatus(FG_FIN);
 //        logger.info("finished sending FLOW_FIN for {}", fgID);
     }
 
@@ -148,11 +144,8 @@ public class AgentSharedData {
 //        GaiaMessageProtos.FlowStatusReport statusReport = statusReportBuilder.build();
         GaiaMessageProtos.FlowStatusReport statusReport = buildCurrentFlowStatusReport();
 
-        try {
-            worker_to_ctrlMsgQueue.put(new Worker_to_CTRLMsg(statusReport));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        // Changed to directly call method
+        this.rpcClient.sendFlowStatus(statusReport);
 
         logger.debug("finished pushing status report\n{}", statusReport);
 
@@ -165,6 +158,7 @@ public class AgentSharedData {
 
     /**
      * methods to update the aggFlowGroups and subscriptionRateMaps
+     *
      * @param faID
      * @param fgID
      * @param fue
