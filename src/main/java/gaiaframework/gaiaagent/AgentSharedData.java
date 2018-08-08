@@ -310,6 +310,11 @@ public class AgentSharedData {
         return statusReportBuilder.build();
     }
 
+    void onFGFileAllFinished(String fgID) {
+        // TODO implement onFGFileAllFinished, also handle the data here
+        rpcClient.sendFGFileFIN(fgID);
+    }
+
 /*    // Getters//
 
     public String getSaID() { return saID; }

@@ -280,6 +280,8 @@ public class AgentRPCServer {
                         try {
                             fgFilesCountLatch.await();
                             // TODO Then send out msg.
+                            logger.info("Received all File_FIN msg for {}", fgimsg.getFgID());
+                            sharedData.onFGFileAllFinished(fgimsg.getFgID());
 
                         } catch (InterruptedException e) {
                             e.printStackTrace();

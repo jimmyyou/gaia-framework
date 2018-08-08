@@ -140,4 +140,11 @@ public class AgentRPCClient {
         }
     }
 
+    /** send FG File FIN msg to master
+     *
+     * @param fgID
+     */
+    void sendFGFileFIN(String fgID) {
+        // TODO implement sendFGFileFIN
+    }
 }
