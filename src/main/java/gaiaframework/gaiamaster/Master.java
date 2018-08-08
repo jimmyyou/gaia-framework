@@ -3,7 +3,6 @@ package gaiaframework.gaiamaster;
 import gaiaframework.comm.PortAnnouncementMessage_Old;
 import gaiaframework.comm.PortAnnouncementRelayMessage;
 import gaiaframework.gaiaprotos.GaiaMessageProtos;
-import gaiaframework.network.FlowGroup_Old_Compressed;
 import gaiaframework.network.NetGraph;
 import gaiaframework.network.Pathway;
 import gaiaframework.scheduler.CoflowScheduler;
@@ -308,7 +307,6 @@ public class Master {
      */
     // TODO(future) when rates don't change, dont send them. i.e. speculatively send change message
     private void generateAndSendCtrlMsg(HashMap<String, ScheduleOutputFG> scheduledFGOs) {
-        // TODO to implement this
 
         // traverse all FGs in CFPool, and modify the scheduledFGOs
         for (Map.Entry<String, Coflow> ecf : masterSharedData.coflowPool.entrySet()) {
@@ -329,7 +327,8 @@ public class Master {
                     } else { // we need to pause, because there is no scheduled FG in scheduledFGOs
                         fg.setFlowGroupState(FlowGroup.FlowGroupState.PAUSED);
                         // Here we need to create a fake scheduledFGO to send the PAUSE msg.
-                        ScheduleOutputFG tmpFGO = new ScheduleOutputFG(fgID, fg.getSrcLocation(), fg.getDstLocation(), ScheduleOutputFG.FGOState.PAUSING);
+                        ScheduleOutputFG tmpFGO = new ScheduleOutputFG(fgID, fg.getSrcLocation(), fg.getDstLocation(),
+                                ScheduleOutputFG.FGOState.PAUSING, fg.getOwningCoflowID());
                         scheduledFGOs.put(fgID, tmpFGO);
 //                        fgoToSend.add(fg.toFlowGroup_Old(0).setFlowState(FlowGroup_Old_Compressed.FlowState.PAUSING));
                         //                        fgoToSend.add ( FlowGroup.toFlowGroup_Old(fg, 0).setFlowGroupState(FlowGroup_Old_Compressed.FlowGroupState.PAUSING) );
@@ -364,23 +363,16 @@ public class Master {
      */
     private void sendControlMessages_Async(HashMap<String, ScheduleOutputFG> scheduledFGOs) {
 
-        // TODO to implememnt. Need to define the msg first, then create the msg, then send it.
-
         // First, group msgs by sending agent.
-        // Don't forget to also create a msg for receiving side SA. (two types of msgs to be sent: 1. FlowUpdate 2. FlowInfo)
+        Map<String, List<ScheduleOutputFG>> fgobySA = scheduledFGOs.entrySet().stream().map(Map.Entry::getValue)
+                .collect(Collectors.groupingBy(ScheduleOutputFG::getSrc_loc));
 
-/*        // group FGOs by SA
-        Map<String, List<FlowGroup_Old_Compressed>> fgoBySA = scheduledFGs.stream()
-                .collect(Collectors.groupingBy(FlowGroup_Old_Compressed::getSrc_loc));
-
-        // just post the update to RPCClient, not waiting for reply
-        for (Map.Entry<String, List<FlowGroup_Old_Compressed>> entry : fgoBySA.entrySet()) {
+        for (Map.Entry<String, List<ScheduleOutputFG>> entry : fgobySA.entrySet()) {
             String saID = entry.getKey();
-            List<FlowGroup_Old_Compressed> fgforSA = entry.getValue();
 
-            // call async RPC
-            rpcClientHashMap.get(saID).setFlow(fgforSA, netGraph, saID);
-        }*/
+            // call async rpc
+            rpcClientHashMap.get(saID).setFlowNew(entry.getValue(), netGraph, saID, masterSharedData);
+        }
     }
 
     /* // update the flowState in the CFPool, before sending out the information.

@@ -8,7 +8,7 @@ import java.util.LinkedList;
 public class ScheduleOutputFG {
     private String id;
 //    private int int_id;
-//    private String coflow_id; // id of owning coflow
+    private String coflow_id; // id of owning coflow
     private String src_loc;
     private String dst_loc;
     public LinkedList<Pathway> paths = new LinkedList<Pathway>();
@@ -33,17 +33,20 @@ public class ScheduleOutputFG {
 
     public ScheduleOutputFG(CoflowScheduler.CoflowSchedulerEntry.FlowGroupSchedulerEntry fgse){
         this.id = fgse.fgID;
-//        this.int_id = fgse.intID;
         this.src_loc = fgse.srcLoc;
         this.dst_loc = fgse.dstLoc;
+        this.coflow_id = fgse.coflowID;
         this.fgoState = FGOState.SCHEDULED;
     }
 
-    public ScheduleOutputFG(String id, String src_loc, String dst_loc, FGOState fgoState) {
+    // This constructor used only for PAUSED FG
+    public ScheduleOutputFG(String id, String src_loc, String dst_loc, FGOState fgoState, String owningCoflowID) {
         this.id = id;
         this.src_loc = src_loc;
         this.dst_loc = dst_loc;
         this.fgoState = fgoState;
+
+        this.coflow_id = owningCoflowID;
     }
 
     public String getSrc_loc() {
@@ -56,5 +59,9 @@ public class ScheduleOutputFG {
 
     public String getId() {
         return id;
+    }
+
+    public String getCoflow_id() {
+        return coflow_id;
     }
 }

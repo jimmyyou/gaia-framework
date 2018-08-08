@@ -6,6 +6,7 @@ import gaiaframework.gaiaprotos.SendingAgentServiceGrpc;
 import gaiaframework.network.FlowGroup_Old_Compressed;
 import gaiaframework.network.NetGraph;
 import gaiaframework.network.Pathway;
+import gaiaframework.scheduler.ScheduleOutputFG;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
@@ -143,7 +144,7 @@ public class MasterRPCClient {
                         fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.CHANGE);
                     }
 
-                    fueBuilder.setRemainingVolume(fgo.remaining_volume());
+//                    fueBuilder.setRemainingVolume(fgo.remaining_volume());
                     for (Pathway p : fgo.paths) {
                         int pathID = ng.get_path_id(p);
                         if (pathID != -1) {
@@ -209,5 +210,91 @@ public class MasterRPCClient {
 
         logger.info("Sending FlowInfoBundle to {}, content:\n{}", targetIP, fgibBuilder);
         asyncStub.setRecFlowInfoList(fgibBuilder.build(), observer);
+    }
+
+    /**
+     * send FlowUpdateMessage, version 2.0.
+     *
+     * @param outputFGList
+     * @param netGraph
+     * @param saID
+     * @param masterSharedData
+     */
+    public void setFlowNew(List<ScheduleOutputFG> outputFGList, NetGraph netGraph, String saID, MasterSharedData masterSharedData) {
+
+        GaiaMessageProtos.FlowUpdate fum = buildFUMNew(outputFGList, netGraph, saID, masterSharedData);
+        logger.info("Built the FUM\n {}", fum);
+
+        if (!isStreamReady) {
+            initStream();
+        }
+
+        fumStreamObserver.onNext(fum);
+        logger.info("FUM sent ({} Byte) for saID = {}", fum.getSerializedSize(), saID);
+    }
+
+    private GaiaMessageProtos.FlowUpdate buildFUMNew(List<ScheduleOutputFG> outputFGList, NetGraph netGraph, String saID, MasterSharedData masterSharedData) {
+        GaiaMessageProtos.FlowUpdate.Builder fumBuilder = GaiaMessageProtos.FlowUpdate.newBuilder();
+
+        // first sort all fgos according to the RA.
+        Map<String, List<ScheduleOutputFG>> fgobyRA = outputFGList.stream().collect(Collectors.groupingBy(ScheduleOutputFG::getDst_loc));
+
+        for (Map.Entry<String, List<ScheduleOutputFG>> entrybyRA : fgobyRA.entrySet()) {
+
+//            String raID = entrybyRA.getKey();
+
+            GaiaMessageProtos.FlowUpdate.RAUpdateEntry.Builder raueBuilder = GaiaMessageProtos.FlowUpdate.RAUpdateEntry.newBuilder();
+            raueBuilder.setRaID(entrybyRA.getKey());
+
+            for (ScheduleOutputFG sofg : entrybyRA.getValue()) { // for each FGO of this RA, we create an FlowUpdateEntry
+                assert (saID.equals(sofg.getSrc_loc()));
+                String fgoID = sofg.getId();
+
+                GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Builder fueBuilder = GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.newBuilder();
+                fueBuilder.setFlowID(fgoID);
+
+                switch (sofg.getFgoState()) {
+                    case SCHEDULED:
+                        logger.error("ERROR: FUM message contains flows that have not be make_path()");
+                        continue; // skip this sofg.
+//                        break;
+
+                    case PAUSING:
+                        fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.PAUSE);
+                        break;
+
+                    case STARTING:
+                    case CHANGING:
+                        if (sofg.getFgoState() == ScheduleOutputFG.FGOState.STARTING) {
+                            fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.START);
+                            // also send the List<FlowInfo> along with the START FUM
+                            fueBuilder.addAllFlowInfos(masterSharedData.coflowPool.get(sofg.getCoflow_id()).getFlowGroup(sofg.getId()).flowInfos);
+                        } else {
+                            fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.CHANGE);
+                        }
+
+                        // FIXME: this message field is deprecated!!!
+                        fueBuilder.setRemainingVolume(masterSharedData.coflowPool.get(sofg.getCoflow_id()).getFlowGroup(sofg.getId()).getRemainingVolume());
+
+                        for (Pathway p : sofg.paths) {
+                            int pathID = netGraph.get_path_id(p);
+                            if (pathID != -1) {
+                                fueBuilder.addPathToRate(GaiaMessageProtos.FlowUpdate.PathRateEntry.newBuilder().setPathID(pathID).setRate(p.getBandwidth() * 1000000));
+                            } else {
+                                logger.error("FATAL: illegal path for {}", sofg.getId());
+//                                System.exit(1); // don't fail yet!
+                            }
+                        }
+
+                        break;
+                }
+
+                raueBuilder.addFges(fueBuilder);
+            } // end of creating all the FlowUpdateEntry
+
+            fumBuilder.addRAUpdate(raueBuilder);
+        } // end of creating all the RAUpdateEntry
+
+        return fumBuilder.build();
     }
 }

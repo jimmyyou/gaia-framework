@@ -81,15 +81,17 @@ public class CoflowScheduler extends Scheduler {
             public String fgID;
             public String srcLoc;
             public String dstLoc;
+            public String coflowID;
             public int intID;
             public double remainingVol;
 
-            public FlowGroupSchedulerEntry(String fgID, String srcLoc, String dstLoc, int intID, double remainingVol) {
+            public FlowGroupSchedulerEntry(String fgID, String srcLoc, String dstLoc, int intID, double remainingVol, String owningCoflowID) {
                 this.fgID = fgID;
                 this.srcLoc = srcLoc;
                 this.dstLoc = dstLoc;
                 this.intID = intID;
                 this.remainingVol = remainingVol;
+                this.coflowID = owningCoflowID;
             }
         }
 
@@ -110,7 +112,7 @@ public class CoflowScheduler extends Scheduler {
 
                 // Snapshot here!
                 FlowGroupSchedulerEntry fgse = new FlowGroupSchedulerEntry(fg.getId(), fg.getSrcLocation(), fg.getDstLocation(),
-                        (intIDCount++), fg.getRemainingVolume());
+                        (intIDCount++), fg.getRemainingVolume(), fg.getOwningCoflowID());
 
                 flowgroups.put(fg.getId(), fgse);
             }
