@@ -97,8 +97,7 @@ public class AgentRPCServer {
 
             if (sharedData.saState != AgentSharedData.SAState.IDLE) {
                 logger.error("Received Prepare Connection message when not IDLE");
-                // TODO error handling
-//                    responseObserver.onError();
+                responseObserver.onError(new RuntimeException("Received Prepare Connection message when not IDLE"));
             }
 
             sharedData.saState = AgentSharedData.SAState.CONNECTING;
@@ -132,7 +131,8 @@ public class AgentRPCServer {
                         GaiaMessageProtos.PAMessage reply = GaiaMessageProtos.PAMessage.newBuilder().setSaId(saID).setRaId(ra_id).setPathId(i).setPortNo(port).build();
                         responseObserver.onNext(reply);
 
-                        // Start the worker Thread TODO: handle thread failure/PConn failure
+                        // Start the worker Thread
+                        // TODO: handle thread failure/PConn failure
 /*                        Thread wt = new Thread( new WorkerThread_New(conn_id, ra_id , i , queues[i] , sharedData,
                                 config.getFAIP(raID) , config.getFAPort(raID), port ) );*/
 
@@ -263,10 +263,10 @@ public class AgentRPCServer {
         @Override
         public void setRecFlowInfoList(gaiaframework.gaiaprotos.GaiaMessageProtos.FlowGroupInfoBundle request,
                                        io.grpc.stub.StreamObserver<gaiaframework.gaiaprotos.GaiaMessageProtos.ACK> responseObserver) {
-            // TODO implement here.
             for (GaiaMessageProtos.FlowGroupInfoMsg fgimsg : request.getFgimsgList()) {
                 // Check if we are the receiving side of the FG.
                 if (fgimsg.getDstLoc().equals(saID)) {
+                    // TODO implement here.
 
                 } else {
                     logger.error("ERROR!");
@@ -354,7 +354,6 @@ public class AgentRPCServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
 
     }
 }

@@ -183,7 +183,7 @@ public class MasterRPCClient {
                     case CHANGING:
                         if (sofg.getFgoState() == ScheduleOutputFG.FGOState.STARTING) {
                             fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.START);
-                            // also send the List<FlowInfo> along with the START FUM
+                            // IMPORTANT: also send the List<FlowInfo> along with the START FUM
                             fueBuilder.addAllFlowInfos(masterSharedData.coflowPool.get(sofg.getCoflow_id()).getFlowGroup(sofg.getId()).flowInfos);
                         } else {
                             fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.CHANGE);
