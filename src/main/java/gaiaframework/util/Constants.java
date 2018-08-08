@@ -1,5 +1,7 @@
 package gaiaframework.util;
 
+import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
+
 import java.util.HashMap;
 
 public class Constants {
@@ -29,7 +31,7 @@ public class Constants {
     // in milliseconds.
     public static final int SIMULATION_TIMESTEP_MILLI = 10;
 
-    public static final double SIMULATION_TIMESTEP_SEC = (double)SIMULATION_TIMESTEP_MILLI / (double)MILLI_IN_SECOND;
+    public static final double SIMULATION_TIMESTEP_SEC = (double) SIMULATION_TIMESTEP_MILLI / (double) MILLI_IN_SECOND;
 
     // The number of milliseconds in an epoch. An epoch is
     // a period during which jobs may be scheduled. By
@@ -70,5 +72,17 @@ public class Constants {
         // FlowGroup ids are of the form <job_id>:<coflow_id>:<flow_id>
         String[] splits = id.split(":");
         return splits[0] + ":" + splits[1];
+    }
+
+    /**
+     * A universal converter for converting to dstFilename.
+     *
+     * @param flowInfo
+     * @return
+     */
+    public static String getDstFileName(ShuffleInfo.FlowInfo flowInfo) {
+
+        // TODO MUST implement Constants.getDstFileName()
+        return "Test";
     }
 }

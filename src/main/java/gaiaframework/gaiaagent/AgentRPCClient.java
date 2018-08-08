@@ -63,7 +63,6 @@ public class AgentRPCClient {
             public void onError(Throwable t) {
                 logger.error("ERROR in agent {} when calling path status update RPC: {}", agentSharedData.saID, t.toString());
                 t.printStackTrace();
-                // TODO retry??
             }
 
             @Override
@@ -145,6 +144,11 @@ public class AgentRPCClient {
      * @param fgID
      */
     void sendFGFileFIN(String fgID) {
-        // TODO implement sendFGFileFIN
+        // reuse the flowStatusReport
+        GaiaMessageProtos.FlowStatusReport.FlowStatus.Builder fsBuilder = GaiaMessageProtos.FlowStatusReport.FlowStatus.newBuilder().setId(fgID);
+        GaiaMessageProtos.FlowStatusReport.Builder fgFileFINBuilder = GaiaMessageProtos.FlowStatusReport.newBuilder().addStatus(fsBuilder);
+
+        // Use the blocking stub
+        blockingStub.finishFGFile(fgFileFINBuilder.build());
     }
 }

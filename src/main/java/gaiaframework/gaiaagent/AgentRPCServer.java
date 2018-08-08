@@ -6,6 +6,7 @@ package gaiaframework.gaiaagent;
  3. ready
 */
 
+import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.gaiaprotos.GaiaMessageProtos;
 import gaiaframework.gaiaprotos.SendingAgentServiceGrpc;
 import gaiaframework.network.NetGraph;
@@ -17,7 +18,6 @@ import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -220,7 +220,7 @@ public class AgentRPCServer {
                 }
             }
 
-            // TODO: add bwm-ng command
+            // TODO(future) add bwm-ng command
             if (expName != null) {
                 logger.info("Agent start working for experiment {}", expName);
             }
@@ -255,6 +255,21 @@ public class AgentRPCServer {
         }
 
         /**
+         * RPC handler for FILEFIN msg, sent from RA to Agent(SA)
+         *
+         * @param request
+         * @param responseObserver
+         */
+        @Override
+        public void finishFile(gaiaframework.gaiaprotos.GaiaMessageProtos.FileFinishMsg request,
+                               io.grpc.stub.StreamObserver<gaiaframework.gaiaprotos.GaiaMessageProtos.ACK> responseObserver) {
+            sharedData.onSingleFILEFIN(request.getFilename());
+
+            responseObserver.onNext(GaiaMessageProtos.ACK.getDefaultInstance());
+            responseObserver.onCompleted();
+        }
+
+        /**
          * Process FlowGroupInfoBundle msg. store the mapping of filename to fg, into shared state.
          *
          * @param request
@@ -266,33 +281,30 @@ public class AgentRPCServer {
             for (GaiaMessageProtos.FlowGroupInfoMsg fgimsg : request.getFgimsgList()) {
                 // Check if we are the receiving side of the FG.
                 if (fgimsg.getDstLoc().equals(saID)) {
-                    // TODO implement setRecFlowInfoList, create listener for FILE_FIN
 
-                    // HOWTO: After receiving the FlowInfos, we need to store it, create a fileName to FG mapping, and a counter for this FG.
-                    // Then upon every File_FIN, we count down, and after counting down to 0, we send a FG_FILE_FIN to master.
-
-
-                    // One fgimsg correspond to a FG, no duplicates.
+                    // Upon every File_FIN, we will count down, and after counting down to 0, we send a FG_FILE_FIN to master.
                     CountDownLatch fgFilesCountLatch = new CountDownLatch(fgimsg.getFlowInfosCount());
+
+                    // create a fileName to FG(latch) mapping, we only need a fileName to Latch mapping right?
+                    for (ShuffleInfo.FlowInfo flowInfo : fgimsg.getFlowInfosList()) {
+                        String dstFileName = Constants.getDstFileName(flowInfo);
+
+                        sharedData.dstFilenameToLatchMap.put(dstFileName, fgFilesCountLatch);
+                    }
 
                     // A listener for the latch
                     Runnable latchListener = () -> {
                         try {
                             fgFilesCountLatch.await();
-                            // TODO Then send out msg.
+                            // Then send out msg.
                             logger.info("Received all File_FIN msg for {}", fgimsg.getFgID());
-                            sharedData.onFGFileAllFinished(fgimsg.getFgID());
+                            sharedData.pushFGFileAllFinished(fgimsg.getFgID());
 
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
                     };
-
                     (new Thread(latchListener)).start();
-
-                    // This is a valid FG, so we need to create a thread listening on all File_FIN for this FG, and send FG_FILE_FIN.
-                    // This means we need to create a latch and a thread for each iteration.
-
 
                 } else {
                     logger.error("ERROR: received {} \n but expected dstLoc = {}", fgimsg, saID);

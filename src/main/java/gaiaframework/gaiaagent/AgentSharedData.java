@@ -27,6 +27,8 @@ public class AgentSharedData {
     final String saID;
     final String saName; // the name of Data Center in the trace file.
     public volatile int MAX_ACTIVE_CONNECTION;
+    public ConcurrentHashMap<String, CountDownLatch> dstFilenameToLatchMap = new ConcurrentHashMap<>();
+
 
     enum SAState {
         IDLE, CONNECTING, READY
@@ -310,9 +312,31 @@ public class AgentSharedData {
         return statusReportBuilder.build();
     }
 
-    void onFGFileAllFinished(String fgID) {
-        // TODO implement onFGFileAllFinished, also handle the data here
+    /**
+     * Sends msg to master after all FILE_FIN for FG have been processed.
+     *
+     * @param fgID
+     */
+    void pushFGFileAllFinished(String fgID) {
         rpcClient.sendFGFileFIN(fgID);
+        logger.info("Finished sending FGFileFIN to master for {}", fgID);
+    }
+
+    /**
+     * Process single FileFIN message
+     *
+     * @param dstFilename
+     */
+    void onSingleFILEFIN(String dstFilename) {
+
+        // look up and count down the latch
+        if (dstFilenameToLatchMap.containsKey(dstFilename)) {
+            dstFilenameToLatchMap.get(dstFilename).countDown();
+            // then delete the look up table
+            dstFilenameToLatchMap.remove(dstFilename);
+        } else {
+            logger.error("Received FILEFIN for {}, but no latch found!", dstFilename);
+        }
     }
 
 /*    // Getters//
