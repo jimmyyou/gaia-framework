@@ -139,7 +139,8 @@ public class Master {
 
 
         try {
-            Thread.sleep(5000); // sleep 10s for the rules to propagate // TODO test the rules first before proceeding
+            // TODO(future) test the rules first before proceeding
+            Thread.sleep(5000); // sleep 10s for the rules to propagate
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -205,7 +206,6 @@ public class Master {
 
     // the new version of schedule()
     // 1. check in the last interval if anything happens, and determine a fast schedule or re-do the sorting process
-    // FIXME remove compression
 
     /**
      * Called upon schedule timer tick (default 500ms).
@@ -214,7 +214,6 @@ public class Master {
      * Otherwise, the CF that are scheduled later may see a smaller volume hence are prioritized.
      */
 
-    // FIXME why scheduler need to handle CF_FIN, FG_FIN?
     private void onSchedule() {
 //        logger.info("schedule_New(): CF_ADD: {} CF_FIN: {} FG_FIN: {}", masterSharedData.flag_CF_ADD, masterSharedData.flag_CF_FIN, masterSharedData.flag_FG_FIN);
 
@@ -278,7 +277,7 @@ public class Master {
         try {
             scheduledFGOs = scheduler.scheduleRRF(currentTime);
 
-            // TODO generate and send rpc msgs. 1. parse FGState 2. gen msg 3. send msg
+            // generate and send rpc msgs. 1. parse FGState 2. gen msg 3. send msg
             generateAndSendCtrlMsg(scheduledFGOs);
 //                decompressedFGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
 //                sendControlMessages_Async(decompressedFGOsToSend);
@@ -350,8 +349,7 @@ public class Master {
             }
         }
 
-        // TODO: send CTRL msg
-        //
+        // send CTRL msg
         sendControlMessages_Async(scheduledFGOs);
 
     }

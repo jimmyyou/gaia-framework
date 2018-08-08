@@ -111,6 +111,7 @@ public class MasterRPCServer {
 
     } // End of MasterServiceImpl
 
+    // TODO this rpc method is deprecated
     private void handleFinishFile(GaiaMessageProtos.FileFinishMsg request) {
 //        logger.info("Master Received FILE_FIN {}", request.getFilename());
         onFileFinish(request.getFilename());

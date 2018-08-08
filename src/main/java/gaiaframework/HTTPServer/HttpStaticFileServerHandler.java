@@ -285,7 +285,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         // Convert to absolute path.
 //        return SystemPropertyUtil.get("user.dir") + File.separator + uri;
         return File.separator + uri;
-        // TODO limit the access to within the hadoop folder. (/tmp)
+        // TODO(future) limit the access to within the hadoop folder. (/tmp)
     }
 
     private static final Pattern ALLOWED_FILE_NAME = Pattern.compile("[^-\\._]?[^<>&\\\"]*");
