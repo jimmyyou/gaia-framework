@@ -85,7 +85,7 @@ public class RemoteHTTPFetcher implements Runnable {
      * @param reduceAttemptID
      * @return dstFilename
      */
-    // TODO change this into a universal name converter, prereq: rebuild agent side startFlow logic etc.
+    // TODO change this into a universal name converter, prereq: rebuild agent side startFlowGroup logic etc.
     private String getDstFilename(String srcFilename, String reduceAttemptID) {
         String ret = srcFilename.substring(0, srcFilename.lastIndexOf('.')) + "-" + reduceAttemptID + ".data";
         return ret;

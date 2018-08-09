@@ -58,9 +58,12 @@ public class AgentSharedData {
 
     // TODO do we need ConcurrentHashMap?
     // fgID -> FGI. FlowGroups that are currently being sent by this SendingAgent
+    @Deprecated
     public ConcurrentHashMap<String, AggFlowGroupInfo> aggFlowGroups = new ConcurrentHashMap<String, AggFlowGroupInfo>();
 
     // RAID , pathID -> FGID -> subscription info // ArrayList works good here!
+    // TODO remove subscription mechanism, we should be able to directly set the rate and paths.
+    @Deprecated
     public HashMap<String, ArrayList<ConcurrentHashMap<String, SubscriptionInfo>>> subscriptionRateMaps = new HashMap<>();
 
     // faID , pathID -> workerQueue.
@@ -155,15 +158,20 @@ public class AgentSharedData {
     }
 
     /**
-     * methods to update the aggFlowGroups and subscriptionRateMaps
+     * Update the aggFlowGroups and subscriptionRateMaps
      *
      * @param faID
      * @param fgID
      * @param fue
      */
-    public void startFlow(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fue) {
-        // add this flowgroup when not existent // only accept volume from CTRL at this point.
+    public void startFlowGroup(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fue) {
+        // add this flowgroup when not existent // only accept volume from CTRL at StartFG.
         logger.info("STARTING : {}", fgID);
+
+        // TODO change startFlowGroup to start fetching for FG.
+        // HOWTO: create a Object FlowGroupInfo: containing flowInfo/progress, current rate, path
+
+
 
         if (aggFlowGroups.containsKey(fgID)) {
             logger.info("START failed: an existing flow {}", fgID);
@@ -174,6 +182,7 @@ public class AgentSharedData {
         AggFlowGroupInfo afgi = new AggFlowGroupInfo(this, fgID, fue, saID, faID).setFlowState(AggFlowGroupInfo.FlowState.RUNNING);
         aggFlowGroups.put(fgID, afgi);
 
+        // TODO no need to subscribe in the future.
         addAllSubscription(faID, fgID, fue, afgi);
 
     }
@@ -181,6 +190,7 @@ public class AgentSharedData {
     // Called upon start/change flow
     // maintains AggFlowGroupInfo + FlowGroupInfo + WorkerInfo
     // FIXME haven't changed yet. may not need changing.
+    @Deprecated
     private void addAllSubscription(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fue, AggFlowGroupInfo aggFlowGroupInfo) {
 
         // For each path, get its rate.
@@ -209,7 +219,7 @@ public class AgentSharedData {
         } // end loop for pathID
     }
 
-    public boolean changeFlow(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge) {
+    public boolean changeFlowGroup(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge) {
 
         if (aggFlowGroups.containsKey(fgID)) {
 
@@ -226,7 +236,7 @@ public class AgentSharedData {
         }
     }
 
-    public void pauseFlow(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge) {
+    public void pauseFlowGroup(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge) {
         // search for all subscription with this flowID, and remove them
 
         if (aggFlowGroups.containsKey(fgID)) {

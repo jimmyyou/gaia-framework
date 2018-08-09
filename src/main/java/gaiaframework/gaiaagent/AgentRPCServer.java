@@ -313,7 +313,7 @@ public class AgentRPCServer {
 
         // non-stream version
 /*        @Override
-        public void changeFlow(gaiaframework.gaiaprotos.GaiaMessageProtos.FlowUpdate request,
+        public void changeFlowGroup(gaiaframework.gaiaprotos.GaiaMessageProtos.FlowUpdate request,
                                io.grpc.stub.StreamObserver<gaiaframework.gaiaprotos.GaiaMessageProtos.FUM_ACK> responseObserver) {
             if (saState != SAState.READY) {
                 logger.error("Received changeFLow when not READY");

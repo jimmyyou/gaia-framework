@@ -43,7 +43,7 @@ public class CTRLMsgListenerThread implements Runnable {
                     }
                 }*/ //
 
-                // TODO rebuild a scheme to send files. also change the startFlow/changeFlow/pauseFlow
+                // TODO rebuild a scheme to send files. also change the startFlowGroup/changeFlowGroup/pauseFlowGroup
                 int count_ChangeFailed = 0;
                 for (gaiaframework.gaiaprotos.GaiaMessageProtos.FlowUpdate.RAUpdateEntry rau : m.getRAUpdateList()) {
                     String raID = rau.getRaID();
@@ -54,19 +54,19 @@ public class CTRLMsgListenerThread implements Runnable {
                         switch (fge.getOp()) {
                             case START:
 
-                                agentSharedData.startFlow(raID, fgID, fge);
+                                agentSharedData.startFlowGroup(raID, fgID, fge);
                                 break;
 
                             case CHANGE:
 
-                                boolean res = agentSharedData.changeFlow(raID, fgID, fge);
+                                boolean res = agentSharedData.changeFlowGroup(raID, fgID, fge);
                                 if (!res) {
                                     count_ChangeFailed++;
                                 }
                                 break;
 
                             case PAUSE: // only pause the FG, no rate set
-                                agentSharedData.pauseFlow(raID, fgID, fge);
+                                agentSharedData.pauseFlowGroup(raID, fgID, fge);
                                 break;
 
                             case UNRECOGNIZED:
@@ -99,7 +99,6 @@ public class CTRLMsgListenerThread implements Runnable {
                 } // end loop for raID
 
                 // notify all subscribed workers..? or maybe all workers?
-                // FIXME: notify all workers!!?
 /*                for( String raID : agentSharedData.subscriptionRateMaps.keySet()) {
                     ArrayList<ConcurrentHashMap<String , SubscriptionInfo> > al = agentSharedData.subscriptionRateMaps.get(raID);
                     for (int i = 0 ; i < al.size() ; i++){ // i = pathID..?
