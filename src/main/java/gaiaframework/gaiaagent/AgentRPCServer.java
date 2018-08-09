@@ -41,7 +41,7 @@ public class AgentRPCServer {
 
     // data structures from the SAAPI
     AgentSharedData sharedData;
-    private int fumaxsize = 0;
+    private int fumaxsize = 0; // Max bytes that this agentRPCServer has received.
 
     public AgentRPCServer(String id, NetGraph net_graph, Configuration config, AgentSharedData sharedData) {
         this.config = config;
@@ -67,10 +67,6 @@ public class AgentRPCServer {
                 System.err.println("*** server shut down");
             }
         }); // end of Shutdown Hook
-
-
-        // TODO forward the FUM message
-
     }
 
     public void stop() {

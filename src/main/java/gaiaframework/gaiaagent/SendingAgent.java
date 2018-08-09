@@ -18,8 +18,6 @@ import java.util.concurrent.ScheduledFuture;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 
-@SuppressWarnings("Duplicates")
-
 public class SendingAgent {
     private static final Logger logger = LogManager.getLogger();
     protected static Configuration config;

@@ -20,8 +20,6 @@ import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-//@SuppressWarnings("Duplicates")
-
 public class Master {
     private static final Logger logger = LogManager.getLogger();
     private final String outdir;

@@ -19,8 +19,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@SuppressWarnings("Duplicates")
-
 public class AgentSharedData {
     private static final Logger logger = LogManager.getLogger();
 

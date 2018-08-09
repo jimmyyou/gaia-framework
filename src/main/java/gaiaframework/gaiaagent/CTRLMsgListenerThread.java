@@ -1,5 +1,8 @@
 package gaiaframework.gaiaagent;
 
+/**
+ * This is the Event loop to handle messages from Master. Version 2.0 still uses event loop here.
+ */
 // For coordinating the workers in the SA.
 // serialize the status report from workers.
 // decode messages from CTRL.
@@ -11,7 +14,6 @@ import org.apache.logging.log4j.Logger;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
-@SuppressWarnings("Duplicates")
 
 public class CTRLMsgListenerThread implements Runnable {
     private static final Logger logger = LogManager.getLogger();
@@ -41,6 +43,7 @@ public class CTRLMsgListenerThread implements Runnable {
                     }
                 }*/ //
 
+                // TODO rebuild a scheme to send files. also change the startFlow/changeFlow/pauseFlow
                 int count_ChangeFailed = 0;
                 for (gaiaframework.gaiaprotos.GaiaMessageProtos.FlowUpdate.RAUpdateEntry rau : m.getRAUpdateList()) {
                     String raID = rau.getRaID();

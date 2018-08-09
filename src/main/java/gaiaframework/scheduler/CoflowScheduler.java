@@ -15,8 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 // coflow scheduler 0.2.0
 
-@SuppressWarnings("Duplicates")
-
 public class CoflowScheduler extends Scheduler {
 
     private static final Logger logger = LogManager.getLogger();
