@@ -19,16 +19,17 @@ public class FlowGroupInfo {
     final String fgID;
     final String faID;
 
+    // Because we create one chunk for each path, so we don't really need total rate. (we will sum up the rate on the fly)
+    List<GaiaMessageProtos.FlowUpdate.PathRateEntry> pathRateEntries;
+
     LinkedList<ShuffleInfo.FlowInfo> flowInfos = new LinkedList<>();
 
-    // TODO do we need a total rate? or do we just need a pathToRate? We don't need total rate here.
-    // Because we create one chunk for each path, so we don't really need total rate. (we will sum up the rate on the fly)
     volatile double remainingVolume;
-    volatile double rate;
+//    volatile double rate;
 
     AgentSharedData agentSharedData;
 
-    Thread fetcher;
+//    Thread fetcher;
 
     public FlowGroupInfo(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fue) {
 
@@ -42,13 +43,30 @@ public class FlowGroupInfo {
         this.remainingVolume = fue.getRemainingVolume();
         this.flowInfos.addAll(fue.getFlowInfosList());
 
-        // TODO store pathToRate Info
-        List<GaiaMessageProtos.FlowUpdate.PathRateEntry> asd = fue.getPathToRateList();
+        // store pathToRate Info
+        setPathRateEntries(fue.getPathToRateList());
 
         // TODO Must change HTTPFetcher.
 //        fetcher = new Thread(new RemoteHTTPFetcher(this, flowInfo, dataQueue, srcHostIP, dstHostIP));
     }
 
+    /**
+     * Method to read the rates for this FlowGroup, must be synchronized.
+     *
+     * @return
+     */
+    public synchronized List<GaiaMessageProtos.FlowUpdate.PathRateEntry> getPathRateEntries() {
+        return pathRateEntries;
+    }
+
+    /**
+     * Method to set the rates for this FlowGroup, must be synchronized.
+     *
+     * @param pathRateEntries
+     */
+    public synchronized void setPathRateEntries(List<GaiaMessageProtos.FlowUpdate.PathRateEntry> pathRateEntries) {
+        this.pathRateEntries = pathRateEntries;
+    }
 
     /**
      * Called by fetcher, to update stats after transmission.
@@ -81,8 +99,6 @@ public class FlowGroupInfo {
 //            agentSharedData.subscriptionRateMaps.get(faID).get(pathID).remove(afgID);
 
             agentSharedData.finishFlow(afgID);
-
-
         }
     }
 }

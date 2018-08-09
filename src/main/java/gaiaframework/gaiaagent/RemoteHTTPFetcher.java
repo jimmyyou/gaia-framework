@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
  * This is the fetcher thread that request file blocks from an HTTP server.
  * A Fetcher only works on one block (for one reducer) of file (specified by @startOffset and @totalBlockLength)
  */
+@Deprecated
 public class RemoteHTTPFetcher implements Runnable {
     private static final Logger logger = LogManager.getLogger();
 

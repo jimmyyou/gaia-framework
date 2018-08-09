@@ -181,12 +181,18 @@ public class AgentSharedData {
 //        }
 
         FlowGroupInfo fgi = new FlowGroupInfo(faID, fgID, fue);
-//        AggFlowGroupInfo fgi = new AggFlowGroupInfo(fgID, fge.getRemainingVolume(), fge.getFilename()).setFlowGroupState(AggFlowGroupInfo.FlowGroupState.RUNNING);
-        AggFlowGroupInfo afgi = new AggFlowGroupInfo(this, fgID, fue, saID, faID).setFlowState(AggFlowGroupInfo.FlowState.RUNNING);
-        aggFlowGroups.put(fgID, afgi);
+        flowGroupInfoConcurrentHashMap.put(fgID, fgi);
 
-        // TODO no need to subscribe in the future.
-        addAllSubscription(faID, fgID, fue, afgi);
+        // TODO start the fetcher for this FG
+        FlowGroupFetcher fgfetcher = new FlowGroupFetcher(fgi);
+        fgfetcher.start();
+
+//        AggFlowGroupInfo fgi = new AggFlowGroupInfo(fgID, fge.getRemainingVolume(), fge.getFilename()).setFlowGroupState(AggFlowGroupInfo.FlowGroupState.RUNNING);
+//        AggFlowGroupInfo afgi = new AggFlowGroupInfo(this, fgID, fue, saID, faID).setFlowState(AggFlowGroupInfo.FlowState.RUNNING);
+//        aggFlowGroups.put(fgID, afgi);
+
+        // no need to subscribe
+//        addAllSubscription(faID, fgID, fue, afgi);
 
     }
 
