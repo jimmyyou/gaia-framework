@@ -61,11 +61,14 @@ public class RemoteHTTPFetcher implements Runnable {
         this.blockId = flowInfo.getReduceAttemptID();
 
         this.srcFilename = flowInfo.getDataFilename();
-        int off0 = flowGroupInfo.parentFlowInfo.ID.indexOf("_");
+
+        // FIXME use the universal fileName
+/*        int off0 = flowGroupInfo.parentFlowInfo.ID.indexOf("_");
         int off1 = flowGroupInfo.parentFlowInfo.ID.indexOf("_", off0 + 1); // app-shuffle_stage:*
         int off2 = flowGroupInfo.parentFlowInfo.ID.indexOf(":");
         String stageID = flowGroupInfo.parentFlowInfo.ID.substring(off1 + 1, off2);
-        this.dstFilename = getDstFilename(srcFilename, blockId + "-" + stageID);
+        this.dstFilename = getDstFilename(srcFilename, blockId + "-" + stageID);*/
+
 //        this.dstFilename = srcFilename;
 //        this.dataQueue = dataQueue;
 
@@ -246,8 +249,8 @@ public class RemoteHTTPFetcher implements Runnable {
 
                 // now we've determined a worker
 
-                // TODO why?
-                if (rateMap.size() > 1) {
+                // TODO redesign rate/path enforcement
+/*                if (rateMap.size() > 1) {
                     logger.debug("rateMap should not be > 1!");
                 }
 
@@ -260,7 +263,7 @@ public class RemoteHTTPFetcher implements Runnable {
                     AggFlowGroupInfo.WorkerInfo wi = new AggFlowGroupInfo.WorkerInfo(raID, pathID, rate);
 
                     wiList.add(wi);
-                }
+                }*/
 
             }
         }

@@ -60,6 +60,7 @@ public class AgentSharedData {
     // fgID -> FGI. FlowGroups that are currently being sent by this SendingAgent
     @Deprecated
     public ConcurrentHashMap<String, AggFlowGroupInfo> aggFlowGroups = new ConcurrentHashMap<String, AggFlowGroupInfo>();
+    public ConcurrentHashMap<String, FlowGroupInfo> flowGroupInfoConcurrentHashMap = new ConcurrentHashMap<>();
 
     // RAID , pathID -> FGID -> subscription info // ArrayList works good here!
     // TODO remove subscription mechanism, we should be able to directly set the rate and paths.
@@ -170,14 +171,16 @@ public class AgentSharedData {
 
         // TODO change startFlowGroup to start fetching for FG.
         // HOWTO: create a Object FlowGroupInfo: containing flowInfo/progress, current rate, path
-
-
-
-        if (aggFlowGroups.containsKey(fgID)) {
+        if (flowGroupInfoConcurrentHashMap.containsKey(fgID)) {
             logger.info("START failed: an existing flow {}", fgID);
             return;
         }
+//        if (aggFlowGroups.containsKey(fgID)) {
+//            logger.info("START failed: an existing flow {}", fgID);
+//            return;
+//        }
 
+        FlowGroupInfo fgi = new FlowGroupInfo(faID, fgID, fue);
 //        AggFlowGroupInfo fgi = new AggFlowGroupInfo(fgID, fge.getRemainingVolume(), fge.getFilename()).setFlowGroupState(AggFlowGroupInfo.FlowGroupState.RUNNING);
         AggFlowGroupInfo afgi = new AggFlowGroupInfo(this, fgID, fue, saID, faID).setFlowState(AggFlowGroupInfo.FlowState.RUNNING);
         aggFlowGroups.put(fgID, afgi);
