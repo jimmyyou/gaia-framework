@@ -283,7 +283,7 @@ public class AgentRPCServer {
 
                     // create a fileName to FG(latch) mapping, we only need a fileName to Latch mapping right?
                     for (ShuffleInfo.FlowInfo flowInfo : fgimsg.getFlowInfosList()) {
-                        String dstFileName = Constants.getDstFileName(flowInfo);
+                        String dstFileName = Constants.getDstFileName(flowInfo, fgimsg.getFgID());
 
                         sharedData.dstFilenameToLatchMap.put(dstFileName, fgFilesCountLatch);
                     }

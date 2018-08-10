@@ -76,13 +76,21 @@ public class Constants {
 
     /**
      * A universal converter for converting to dstFilename.
+     * DstFileName = origfile-reduceAttemptID-stageID.data ; stageID =
      *
      * @param flowInfo
+     * @param fgID
      * @return
      */
-    public static String getDstFileName(ShuffleInfo.FlowInfo flowInfo) {
+    // TODO verify this
+    public static String getDstFileName(ShuffleInfo.FlowInfo flowInfo, String fgID) {
 
-        // TODO MUST implement Constants.getDstFileName()
-        return "Test";
+        int off0 = fgID.indexOf("_");
+        int off1 = fgID.indexOf("_", off0 + 1); // app-shuffle_stage:*
+        int off2 = fgID.indexOf(":");
+        String stageID = fgID.substring(off1 + 1, off2);
+
+        String srcFilename = flowInfo.getDataFilename();
+        return srcFilename.substring(0, srcFilename.lastIndexOf('.')) + "-" + flowInfo.getReduceAttemptID() + "-" + stageID + ".data";
     }
 }

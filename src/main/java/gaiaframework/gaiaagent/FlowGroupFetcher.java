@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -44,7 +43,7 @@ public class FlowGroupFetcher {
         LinkedBlockingQueue<DataChunkMessage> dataQueue;
         ShuffleInfo.FlowInfo flowInfo;
 
-        public FileFetcherThread(ShuffleInfo.FlowInfo flowInfo, LinkedBlockingQueue<DataChunkMessage> dataQueue, int chunkSize) {
+        public FileFetcherThread(ShuffleInfo.FlowInfo flowInfo, LinkedBlockingQueue<DataChunkMessage> dataQueue, int chunkSize, String fgID) {
             this.flowInfo = flowInfo;
             this.dataQueue = dataQueue;
             this.srcIP = flowInfo.getMapperIP();
@@ -55,7 +54,7 @@ public class FlowGroupFetcher {
             this.srcFilename = flowInfo.getDataFilename();
             this.blockId = flowInfo.getReduceAttemptID();
 
-            this.dstFilename = Constants.getDstFileName(flowInfo); // TODO MUST FIX this.
+            this.dstFilename = Constants.getDstFileName(flowInfo, fgID);
         }
 
         @Override
