@@ -46,8 +46,6 @@ public class FlowGroupInfo {
         // store pathToRate Info
         setPathRateEntries(fue.getPathToRateList());
 
-        // TODO Must change HTTPFetcher.
-//        fetcher = new Thread(new RemoteHTTPFetcher(this, flowInfo, dataQueue, srcHostIP, dstHostIP));
     }
 
     /**

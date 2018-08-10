@@ -1,6 +1,5 @@
 package gaiaframework.gaiaagent;
 
-import com.google.common.util.concurrent.RateLimiter;
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.transmission.DataChunkMessage;
 import gaiaframework.util.Constants;
@@ -13,6 +12,8 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -25,8 +26,11 @@ public class FlowGroupFetcher {
     private static final Logger logger = LogManager.getLogger();
 
     FlowGroupInfo flowGroupInfo;
-    LinkedBlockingQueue<DataChunkMessage> dataChunkInputQueue = new LinkedBlockingQueue<>();
+    LinkedBlockingQueue<DataChunkMessage> dataChunkInputQueue = new LinkedBlockingQueue<>(Constants.FETCHER_QUEUE_LENGTH);
 
+    /**
+     * FileFetcher fetches one block of file, into the buffer.
+     */
     class FileFetcherThread implements Runnable {
 
         private final long startOffset;
@@ -59,14 +63,10 @@ public class FlowGroupFetcher {
 
         @Override
         public void run() {
+            logger.info("Starting FileFetcherThread for {}", dstFilename);
 
-            // first get the URL
-//        http://localhost:20020/home/jimmy/Downloads/profile.xml?start=0&len=5
             StringBuilder str_url = new StringBuilder("http://").append(srcIP).append(':').append(Constants.DEFAULT_HTTP_SERVER_PORT)
                     .append(srcFilename).append("?start=").append(startOffset).append("&len=").append(totalBlockLength);
-
-            RateLimiter rateLimiter = RateLimiter.create(Constants.DEFAULT_TOKEN_RATE);
-//        logger.info("Fetcher started with freq {}", Constants.DEFAULT_TOKEN_RATE);
 
             try {
                 URL url = new URL(str_url.toString());
@@ -121,9 +121,24 @@ public class FlowGroupFetcher {
                 e.printStackTrace();
             }
 
+            logger.info("Finishing FileFetcherThread for {}", dstFilename);
         }
     }
 
+    /**
+     * RateEnforcer fetches from the buffer and enforce rate/path allocation
+     * Each enforcer corresponds to a path, and enforce the path on that specific path.
+     */
+    class RateEnforcerThread implements Runnable {
+
+        // TODO implement RateEnforcerThread
+        // HOWTO enforce rate/path allocation?
+        // Because now we use constant chunkSize, we can simply wait for a given time, then try to fetch from queue.
+        @Override
+        public void run() {
+
+        }
+    }
 
     public FlowGroupFetcher(FlowGroupInfo flowGroupInfo) {
         this.flowGroupInfo = flowGroupInfo;
@@ -131,11 +146,23 @@ public class FlowGroupFetcher {
 
 
     /**
-     * Start the Fetcher
+     * Start the Fetcher.
+     * First start producer(fetcher thread for file blocks). Then start consumer(dispatcher/rate limiter)
      */
     public void start() {
-        // TODO implement FlowGroupFetcher
-        // HOWTO: implement a runnable to fetch through flowInfoList
 
+        // Use a threadpool to exec through all flowinfo
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+
+        for (ShuffleInfo.FlowInfo finfo : flowGroupInfo.flowInfos) {
+            executor.submit(new FileFetcherThread(finfo, dataChunkInputQueue, Constants.HTTP_CHUNKSIZE, flowGroupInfo.fgID));
+        }
+
+        // TODO also need to start consumer (rate enforcers)
+
+
+        // TODO need to stop producer and consumer after transmission. Also needs to record the status.
+//        for()
+//        Thread fft = new Thread(new FileFetcherThread());
     }
 }
