@@ -134,11 +134,11 @@ public class FlowGroupFetcher {
     class RateEnforcerThread implements Runnable {
 
         private final RateLimiter rateLimiter;
+        private final int pathID;
 
-        // TODO implement RateEnforcerThread
-        public RateEnforcerThread(RateLimiter rateLimiter) {
+        public RateEnforcerThread(int pathID, RateLimiter rateLimiter) {
             this.rateLimiter = rateLimiter;
-
+            this.pathID = pathID;
         }
 
         // HOWTO enforce rate/path allocation?
@@ -146,6 +146,30 @@ public class FlowGroupFetcher {
         @Override
         public void run() {
 
+            while (true) {
+                // Rate control
+                rateLimiter.acquire();
+
+                // Then fetch one Chunk and forward
+                DataChunkMessage dm = dataChunkInputQueue.poll();
+
+                if (dm == null) {
+                    // Check if we need to stop this thread
+                    if (flowGroupInfo.finished) {
+                        return;
+                    } else {
+                        logger.warn("Polling from fetcher failed but FG remaining Volume = {}", flowGroupInfo.remainingVolume);
+                    }
+                } else {
+                    try {
+                        agentSharedData.workerQueues.get(flowGroupInfo.faID)[pathID].put(new CTRL_to_WorkerMsg(dm));
+                        // If sent, need to update status
+                        flowGroupInfo.onTransmit(dm.getData().length);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
         }
     }
 
@@ -168,24 +192,18 @@ public class FlowGroupFetcher {
             executor.submit(new FileFetcherThread(finfo, dataChunkInputQueue, Constants.HTTP_CHUNKSIZE, flowGroupInfo.fgID));
         }
 
-        // TODO also need to start consumer (rate enforcers)
+        // also need to start consumer (rate enforcers)
         int pathSize = agentSharedData.netGraph.apap_.get(agentSharedData.saID).get(flowGroupInfo.faID).size();
         logger.info("Starting RateEnforcer for {} paths of {} to {} on FG: {}", pathSize, agentSharedData.saID, flowGroupInfo.faID, flowGroupInfo.fgID);
 
-        int faID = Integer.parseInt(flowGroupInfo.faID);
-
         for (int i = 0; i < pathSize; i++) {
-
             // Start a thread to enforce rate. Thread will be stopped after all the data is transmitted.
-            RateLimiter rateLimiter = RateLimiter.create(Constants.DEFAULT_TOKEN_RATE);
-            flowGroupInfo.rateLimiterArrayList.add(rateLimiter);
-
-            new RateEnforcerThread(rateLimiter);
-            // TODO here.
-
+            RateLimiter rateLimiter = flowGroupInfo.rateLimiterArrayList.get(i);
+            Thread rateEnforcerThread = new Thread(new RateEnforcerThread(i, rateLimiter));
+            rateEnforcerThread.start();
         }
 
-        // TODO need to stop producer and consumer after transmission. Also needs to record the status.
+        // No need to stop producer. They will automatically stop
 //        for()
 //        Thread fft = new Thread(new FileFetcherThread());
     }

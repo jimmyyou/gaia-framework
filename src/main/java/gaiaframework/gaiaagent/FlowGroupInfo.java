@@ -30,6 +30,7 @@ public class FlowGroupInfo {
 //    volatile double rate;
 
     AgentSharedData agentSharedData;
+    volatile boolean finished = false;
 
 //    Thread fetcher;
 
@@ -48,8 +49,11 @@ public class FlowGroupInfo {
         this.flowInfos.addAll(fue.getFlowInfosList());
 
         // store pathToRate Info
-        setPathRateEntries(fue.getPathIDToRateMapMap());
-
+        for (int i = 0; i < pathSize; i++) {
+            RateLimiter rateLimiter = RateLimiter.create(Constants.DEFAULT_TOKEN_RATE);
+            this.rateLimiterArrayList.add(rateLimiter);
+        }
+        setRateLimiters(fue.getPathIDToRateMapMap());
     }
 
     /**
@@ -57,7 +61,7 @@ public class FlowGroupInfo {
      *
      * @param PathToRateMap
      */
-    public synchronized void setPathRateEntries(Map<Integer, Double> PathToRateMap) {
+    public synchronized void setRateLimiters(Map<Integer, Double> PathToRateMap) {
 
         // Iterate through all rate limiters. set the rate.
         for (int i = 0; i < pathSize; i++) {
@@ -107,8 +111,20 @@ public class FlowGroupInfo {
     }
 
     public void setPauseFlowGroup() {
-        // TODO pause Flow Group here, by setting rate limiter to 0
+        // pause Flow Group by setting rate limiter to 0
+        // Iterate through all rate limiters. set the rate.
+        for (int i = 0; i < pathSize; i++) {
+            rateLimiterArrayList.get(i).setRate(0);
+        }
+    }
 
-
+    public synchronized void onTransmit(int length) {
+        remainingVolume -= length;
+        if (remainingVolume < Constants.DOUBLE_EPSILON) {
+            finished = true;
+            remainingVolume = 0; // ensure that remaining volume >= 0
+//            return true;
+            // TODO the logic of finish FG
+        }
     }
 }
