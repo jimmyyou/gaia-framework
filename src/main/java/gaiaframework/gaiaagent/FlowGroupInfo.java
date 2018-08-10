@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FlowGroupInfo {
 
@@ -32,6 +33,7 @@ public class FlowGroupInfo {
 
     AgentSharedData agentSharedData;
     volatile boolean finished = false;
+    AtomicBoolean isFinished = new AtomicBoolean(false);
 
 //    Thread fetcher;
 
@@ -92,11 +94,10 @@ public class FlowGroupInfo {
     public synchronized void onTransmit(int length) {
         remainingVolume -= length;
         if (remainingVolume == 0) {
-            finished = true;
-            remainingVolume = 0; // ensure that remaining volume >= 0
-//            return true;
-            // TODO the logic of finish FG, enforce only one FIN msg.
-//            agentSharedData.finishFlow(fgID); // Check this!
+            if (!isFinished.getAndSet(true)) {
+                // We are the first to observe the finish
+                agentSharedData.finishFlow(fgID);
+            }
         }
     }
 }
