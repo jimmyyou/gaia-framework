@@ -19,7 +19,7 @@ public class FlowGroupInfo {
     final String fgID;
     final String faID;
     final int pathSize;
-    final double totalVolume;
+    final long totalVolume;
 
     // Because we create one chunk for each path, so we don't really need total rate. (we will sum up the rate on the fly)
     //    HashMap<Integer, RateLimiter> rateLimiterHashMap = new HashMap<>();
@@ -27,7 +27,7 @@ public class FlowGroupInfo {
 
     LinkedList<ShuffleInfo.FlowInfo> flowInfos = new LinkedList<>();
 
-    volatile double remainingVolume;
+    volatile long remainingVolume;
 //    volatile double rate;
 
     AgentSharedData agentSharedData;
@@ -46,8 +46,11 @@ public class FlowGroupInfo {
             logger.error("FATAL: starting FG {}, but OP != START", fgID);
         }
 
-        this.remainingVolume = fue.getRemainingVolume();
-        this.totalVolume = fue.getRemainingVolume();
+        this.totalVolume = fue.getFlowInfosList().stream().mapToLong(ShuffleInfo.FlowInfo::getFlowSize).sum();
+        this.remainingVolume = totalVolume;
+//        logger.info("");
+//        this.remainingVolume = fue.getRemainingVolume();
+//        this.totalVolume = fue.getRemainingVolume();
         this.flowInfos.addAll(fue.getFlowInfosList());
 
         // store pathToRate Info
@@ -88,7 +91,7 @@ public class FlowGroupInfo {
 
     public synchronized void onTransmit(int length) {
         remainingVolume -= length;
-        if (remainingVolume < Constants.DOUBLE_EPSILON) {
+        if (remainingVolume == 0) {
             finished = true;
             remainingVolume = 0; // ensure that remaining volume >= 0
 //            return true;
