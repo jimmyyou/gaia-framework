@@ -64,10 +64,10 @@ message PathStatusReport {
 // rates are grouped by [raID][flowID][pathID]
 message FlowUpdate {
 
-    message PathRateEntry {
-        int32 pathID = 1;
-        double rate = 2;
-    }
+//    message PathRateEntry {
+//        int32 pathID = 1;
+//        double rate = 2;
+//    }
 
     message FlowUpdateEntry {
         double remainingVolume = 1;
@@ -79,11 +79,13 @@ message FlowUpdate {
         }
         Operation op = 3;
         // path to rate mapping
-        repeated PathRateEntry pathToRate = 4;
+//        repeated PathRateEntry pathToRate = 4;
         //        map <int32, double> pathToRate = 3;
         //        string filename = 5;
+        map<int32, double> pathIDToRateMap = 4;
 
         repeated ShuffleInfo.FlowInfo flowInfos = 5;
+
 //        repeated string srcIP = 6;
 //        repeated string dstIP = 7;
     }

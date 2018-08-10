@@ -1,5 +1,6 @@
 package gaiaframework.gaiaagent;
 
+import com.google.common.util.concurrent.RateLimiter;
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.transmission.DataChunkMessage;
 import gaiaframework.util.Constants;
@@ -27,6 +28,7 @@ public class FlowGroupFetcher {
 
     FlowGroupInfo flowGroupInfo;
     LinkedBlockingQueue<DataChunkMessage> dataChunkInputQueue = new LinkedBlockingQueue<>(Constants.FETCHER_QUEUE_LENGTH);
+    AgentSharedData agentSharedData;
 
     /**
      * FileFetcher fetches one block of file, into the buffer.
@@ -131,7 +133,14 @@ public class FlowGroupFetcher {
      */
     class RateEnforcerThread implements Runnable {
 
+        private final RateLimiter rateLimiter;
+
         // TODO implement RateEnforcerThread
+        public RateEnforcerThread(RateLimiter rateLimiter) {
+            this.rateLimiter = rateLimiter;
+
+        }
+
         // HOWTO enforce rate/path allocation?
         // Because now we use constant chunkSize, we can simply wait for a given time, then try to fetch from queue.
         @Override
@@ -140,8 +149,9 @@ public class FlowGroupFetcher {
         }
     }
 
-    public FlowGroupFetcher(FlowGroupInfo flowGroupInfo) {
+    public FlowGroupFetcher(FlowGroupInfo flowGroupInfo, AgentSharedData agentSharedData) {
         this.flowGroupInfo = flowGroupInfo;
+        this.agentSharedData = agentSharedData;
     }
 
 
@@ -159,7 +169,21 @@ public class FlowGroupFetcher {
         }
 
         // TODO also need to start consumer (rate enforcers)
+        int pathSize = agentSharedData.netGraph.apap_.get(agentSharedData.saID).get(flowGroupInfo.faID).size();
+        logger.info("Starting RateEnforcer for {} paths of {} to {} on FG: {}", pathSize, agentSharedData.saID, flowGroupInfo.faID, flowGroupInfo.fgID);
 
+        int faID = Integer.parseInt(flowGroupInfo.faID);
+
+        for (int i = 0; i < pathSize; i++) {
+
+            // Start a thread to enforce rate. Thread will be stopped after all the data is transmitted.
+            RateLimiter rateLimiter = RateLimiter.create(Constants.DEFAULT_TOKEN_RATE);
+            flowGroupInfo.rateLimiterArrayList.add(rateLimiter);
+
+            new RateEnforcerThread(rateLimiter);
+            // TODO here.
+
+        }
 
         // TODO need to stop producer and consumer after transmission. Also needs to record the status.
 //        for()

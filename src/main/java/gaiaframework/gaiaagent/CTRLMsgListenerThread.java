@@ -46,7 +46,7 @@ public class CTRLMsgListenerThread implements Runnable {
                 // TODO rebuild a scheme to send files. also change the startFlowGroup/changeFlowGroup/pauseFlowGroup
                 int count_ChangeFailed = 0;
                 for (gaiaframework.gaiaprotos.GaiaMessageProtos.FlowUpdate.RAUpdateEntry rau : m.getRAUpdateList()) {
-                    String raID = rau.getRaID();
+                    String receivingAgentID = rau.getRaID();
 
                     for (gaiaframework.gaiaprotos.GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge : rau.getFgesList()) {
                         String fgID = fge.getFlowID();
@@ -54,19 +54,19 @@ public class CTRLMsgListenerThread implements Runnable {
                         switch (fge.getOp()) {
                             case START:
 
-                                agentSharedData.startFlowGroup(raID, fgID, fge);
+                                agentSharedData.startFlowGroup(receivingAgentID, fgID, fge);
                                 break;
 
                             case CHANGE:
 
-                                boolean res = agentSharedData.changeFlowGroup(raID, fgID, fge);
+                                boolean res = agentSharedData.changeFlowGroup(receivingAgentID, fgID, fge);
                                 if (!res) {
                                     count_ChangeFailed++;
                                 }
                                 break;
 
                             case PAUSE: // only pause the FG, no rate set
-                                agentSharedData.pauseFlowGroup(raID, fgID, fge);
+                                agentSharedData.pauseFlowGroup(receivingAgentID, fgID, fge);
                                 break;
 
                             case UNRECOGNIZED:

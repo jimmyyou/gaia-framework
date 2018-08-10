@@ -195,7 +195,8 @@ public class MasterRPCClient {
                         for (Pathway p : sofg.paths) {
                             int pathID = netGraph.get_path_id(p);
                             if (pathID != -1) {
-                                fueBuilder.addPathToRate(GaiaMessageProtos.FlowUpdate.PathRateEntry.newBuilder().setPathID(pathID).setRate(p.getBandwidth() * 1000000));
+                                fueBuilder.putPathIDToRateMap(pathID, p.getBandwidth() * 1000000);
+//                                fueBuilder.addPathToRate(GaiaMessageProtos.FlowUpdate.PathRateEntry.newBuilder().setPathID(pathID).setRate(p.getBandwidth() * 1000000));
                             } else {
                                 logger.error("FATAL: illegal path for {}", sofg.getId());
 //                                System.exit(1); // don't fail yet!

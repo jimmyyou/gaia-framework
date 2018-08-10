@@ -4,23 +4,25 @@ package gaiaframework.gaiaagent;
  * Stores information of FlowGroup for Sending Agent. version 2.0
  */
 
+import com.google.common.util.concurrent.RateLimiter;
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.gaiaprotos.GaiaMessageProtos;
+import gaiaframework.util.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class FlowGroupInfo {
 
     private static final Logger logger = LogManager.getLogger();
     final String fgID;
     final String faID;
+    final int pathSize;
 
     // Because we create one chunk for each path, so we don't really need total rate. (we will sum up the rate on the fly)
-    List<GaiaMessageProtos.FlowUpdate.PathRateEntry> pathRateEntries;
+    //    HashMap<Integer, RateLimiter> rateLimiterHashMap = new HashMap<>();
+    ArrayList<RateLimiter> rateLimiterArrayList;
 
     LinkedList<ShuffleInfo.FlowInfo> flowInfos = new LinkedList<>();
 
@@ -31,10 +33,12 @@ public class FlowGroupInfo {
 
 //    Thread fetcher;
 
-    public FlowGroupInfo(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fue) {
+    public FlowGroupInfo(String forwardingAgentID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fue) {
 
         this.fgID = fgID;
-        this.faID = faID;
+        this.faID = forwardingAgentID;
+        this.pathSize = agentSharedData.netGraph.apap_.get(agentSharedData.saID).get(faID).size();
+        this.rateLimiterArrayList = new ArrayList<>(pathSize);
 
         if (fue.getOp() != GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.START) {
             logger.error("FATAL: starting FG {}, but OP != START", fgID);
@@ -44,26 +48,28 @@ public class FlowGroupInfo {
         this.flowInfos.addAll(fue.getFlowInfosList());
 
         // store pathToRate Info
-        setPathRateEntries(fue.getPathToRateList());
+        setPathRateEntries(fue.getPathIDToRateMapMap());
 
-    }
-
-    /**
-     * Method to read the rates for this FlowGroup, must be synchronized.
-     *
-     * @return
-     */
-    public synchronized List<GaiaMessageProtos.FlowUpdate.PathRateEntry> getPathRateEntries() {
-        return pathRateEntries;
     }
 
     /**
      * Method to set the rates for this FlowGroup, must be synchronized.
      *
-     * @param pathRateEntries
+     * @param PathToRateMap
      */
-    public synchronized void setPathRateEntries(List<GaiaMessageProtos.FlowUpdate.PathRateEntry> pathRateEntries) {
-        this.pathRateEntries = pathRateEntries;
+    public synchronized void setPathRateEntries(Map<Integer, Double> PathToRateMap) {
+
+        // Iterate through all rate limiters. set the rate.
+        for (int i = 0; i < pathSize; i++) {
+            // Search for rate in Entries
+            if (PathToRateMap.containsKey(i)) {
+                // TODO verify this: convert to token rate.
+                rateLimiterArrayList.get(i).setRate(PathToRateMap.get(i) / Constants.HTTP_CHUNKSIZE);
+            } else {
+                // This path has zero rate.
+                rateLimiterArrayList.get(i).setRate(0);
+            }
+        }
     }
 
     /**
@@ -98,5 +104,11 @@ public class FlowGroupInfo {
 
             agentSharedData.finishFlow(afgID);
         }
+    }
+
+    public void setPauseFlowGroup() {
+        // TODO pause Flow Group here, by setting rate limiter to 0
+
+
     }
 }

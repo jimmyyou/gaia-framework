@@ -161,11 +161,11 @@ public class AgentSharedData {
     /**
      * Update the aggFlowGroups and subscriptionRateMaps
      *
-     * @param faID
+     * @param forwardingAgentID
      * @param fgID
      * @param fue
      */
-    public void startFlowGroup(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fue) {
+    public void startFlowGroup(String forwardingAgentID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fue) {
         // add this flowgroup when not existent // only accept volume from CTRL at StartFG.
         logger.info("STARTING : {}", fgID);
 
@@ -180,11 +180,11 @@ public class AgentSharedData {
 //            return;
 //        }
 
-        FlowGroupInfo fgi = new FlowGroupInfo(faID, fgID, fue);
+        FlowGroupInfo fgi = new FlowGroupInfo(forwardingAgentID, fgID, fue);
         flowGroupInfoConcurrentHashMap.put(fgID, fgi);
 
         // TODO start the fetcher for this FG
-        FlowGroupFetcher fgfetcher = new FlowGroupFetcher(fgi);
+        FlowGroupFetcher fgfetcher = new FlowGroupFetcher(fgi, this);
         fgfetcher.start();
 
 //        AggFlowGroupInfo fgi = new AggFlowGroupInfo(fgID, fge.getRemainingVolume(), fge.getFilename()).setFlowGroupState(AggFlowGroupInfo.FlowGroupState.RUNNING);
@@ -196,7 +196,7 @@ public class AgentSharedData {
 
     }
 
-    // Called upon start/change flow
+/*    // Called upon start/change flow
     // maintains AggFlowGroupInfo + FlowGroupInfo + WorkerInfo
     // FIXME haven't changed yet. may not need changing.
     @Deprecated
@@ -226,7 +226,7 @@ public class AgentSharedData {
             }
 
         } // end loop for pathID
-    }
+    }*/
 
     public boolean changeFlowGroup(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge) {
 
@@ -236,7 +236,7 @@ public class AgentSharedData {
             fgi.setFlowState(AggFlowGroupInfo.FlowState.RUNNING);
 
             removeAllSubscription(faID, fgID, fgi);
-            addAllSubscription(faID, fgID, fge, fgi);
+//            addAllSubscription(faID, fgID, fge, fgi);
 
             return true;
         } else {
@@ -247,6 +247,9 @@ public class AgentSharedData {
 
     public void pauseFlowGroup(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge) {
         // search for all subscription with this flowID, and remove them
+
+        // TODO: when pausing, we need to
+        flowGroupInfoConcurrentHashMap.get(fgID).setPauseFlowGroup();
 
         if (aggFlowGroups.containsKey(fgID)) {
 
