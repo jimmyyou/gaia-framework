@@ -43,7 +43,6 @@ public class CTRLMsgListenerThread implements Runnable {
                     }
                 }*/ //
 
-                // TODO rebuild a scheme to send files. also change the startFlowGroup/changeFlowGroup/pauseFlowGroup
                 int count_ChangeFailed = 0;
                 for (gaiaframework.gaiaprotos.GaiaMessageProtos.FlowUpdate.RAUpdateEntry rau : m.getRAUpdateList()) {
                     String receivingAgentID = rau.getRaID();

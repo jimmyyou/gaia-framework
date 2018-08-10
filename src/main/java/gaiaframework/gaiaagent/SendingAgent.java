@@ -97,7 +97,7 @@ public class SendingAgent {
             e.printStackTrace();
         }
 
-        // TODO: wait for the status become READY, then start the Client
+        // wait for the status become READY, then start the Client
         logger.info("Waiting for the READY status before starting the gRPC client");
 
         try {

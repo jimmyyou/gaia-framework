@@ -82,7 +82,7 @@ public class SimpleBestEfforWorker implements Runnable {
 
                 if (m.getType() == CTRL_to_WorkerMsg.MsgType.DATA) {
 
-                    // TODO send data
+                    // send data
                     oos.writeObject(m.dataChunkMessage);
 //                    logger.info("Worker written data {} to {}", m.dataChunkMessage.getStartIndex(), dataSocket.getLocalSocketAddress());
 

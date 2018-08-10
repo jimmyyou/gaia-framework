@@ -54,22 +54,11 @@ public class AgentSharedData {
 
     NetGraph netGraph;
 
-    // TODO rethink about the data structures here. the consistency between the following two?
-
-    // TODO do we need ConcurrentHashMap?
     // fgID -> FGI. FlowGroups that are currently being sent by this SendingAgent
-//    public ConcurrentHashMap<String, AggFlowGroupInfo> aggFlowGroups = new ConcurrentHashMap<String, AggFlowGroupInfo>();
     public ConcurrentHashMap<String, FlowGroupInfo> flowGroupInfoConcurrentHashMap = new ConcurrentHashMap<>();
 
-    // RAID , pathID -> FGID -> subscription info // ArrayList works good here!
-    // TODO remove subscription mechanism, we should be able to directly set the rate and paths.
-//    public HashMap<String, ArrayList<ConcurrentHashMap<String, SubscriptionInfo>>> subscriptionRateMaps = new HashMap<>();
-
-            // faID , pathID -> workerQueue.
-            HashMap<String, LinkedBlockingQueue<CTRL_to_WorkerMsg>[]> workerQueues = new HashMap<>();
-
-//    public List< HashMap<String , SubscriptionInfo> > subscriptionRateMaps;
-
+    // faID , pathID -> workerQueue.
+    HashMap<String, LinkedBlockingQueue<CTRL_to_WorkerMsg>[]> workerQueues = new HashMap<>();
 
     public AgentSharedData(String saID, NetGraph netGraph) {
         this.saID = saID;
@@ -158,7 +147,7 @@ public class AgentSharedData {
     }
 
     /**
-     * Update the aggFlowGroups and subscriptionRateMaps
+     * Called upon starting a flow group. Version 2.0
      *
      * @param forwardingAgentID
      * @param fgID
@@ -195,6 +184,14 @@ public class AgentSharedData {
     }
 
 
+    /**
+     * Called upon changing the rate of a flowgroup. Version 2.0
+     *
+     * @param faID
+     * @param fgID
+     * @param fge
+     * @return
+     */
     public boolean changeFlowGroup(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge) {
 
         logger.info("CHANGING : {}", fgID);
@@ -212,6 +209,13 @@ public class AgentSharedData {
         }
     }
 
+    /**
+     * Called upon pausing a flow group. Version 2.0
+     *
+     * @param faID
+     * @param fgID
+     * @param fge
+     */
     public void pauseFlowGroup(String faID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge) {
 
         if (flowGroupInfoConcurrentHashMap.containsKey(fgID)) {
