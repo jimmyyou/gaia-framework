@@ -19,6 +19,7 @@ public class FlowGroupInfo {
     final String fgID;
     final String faID;
     final int pathSize;
+    final double totalVolume;
 
     // Because we create one chunk for each path, so we don't really need total rate. (we will sum up the rate on the fly)
     //    HashMap<Integer, RateLimiter> rateLimiterHashMap = new HashMap<>();
@@ -46,6 +47,7 @@ public class FlowGroupInfo {
         }
 
         this.remainingVolume = fue.getRemainingVolume();
+        this.totalVolume = fue.getRemainingVolume();
         this.flowInfos.addAll(fue.getFlowInfosList());
 
         // store pathToRate Info
@@ -76,40 +78,6 @@ public class FlowGroupInfo {
         }
     }
 
-    /**
-     * Called by fetcher, to update stats after transmission.
-     *
-     * @param volume
-     */
-    public void transmit(long volume) {
-
-        ArrayList<AggFlowGroupInfo> to_remove = new ArrayList<>();
-
-        // TODO, verify FlowGroupInfo.transmit() after removing AggFlowGroupInfo.java
-/*
-        boolean done = parentFlowInfo.transmit(volume);
-        if (done) { // meaning parent AggFlowGroup is done.
-            logger.info("{} finished transmission", this.parentFlowInfo.getID());
-            //
-            // wait until GAIA told us to stop, then stop. (although might cause a problem here.)
-            to_remove.add(parentFlowInfo);
-        }
-*/
-
-        for (AggFlowGroupInfo afgi : to_remove) {
-
-            String afgID = afgi.getID(); // fgID == fgiID
-
-            // don't remove for now!
-//            agentSharedData.aggFlowGroups.remove(afgi.getID());
-
-            // maybe not needing to delete here?
-//            agentSharedData.subscriptionRateMaps.get(faID).get(pathID).remove(afgID);
-
-            agentSharedData.finishFlow(afgID);
-        }
-    }
-
     public void setPauseFlowGroup() {
         // pause Flow Group by setting rate limiter to 0
         // Iterate through all rate limiters. set the rate.
@@ -124,7 +92,8 @@ public class FlowGroupInfo {
             finished = true;
             remainingVolume = 0; // ensure that remaining volume >= 0
 //            return true;
-            // TODO the logic of finish FG
+            // TODO the logic of finish FG, enforce only one FIN msg.
+//            agentSharedData.finishFlow(fgID); // Check this!
         }
     }
 }

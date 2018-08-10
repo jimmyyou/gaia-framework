@@ -58,17 +58,15 @@ public class AgentSharedData {
 
     // TODO do we need ConcurrentHashMap?
     // fgID -> FGI. FlowGroups that are currently being sent by this SendingAgent
-    @Deprecated
-    public ConcurrentHashMap<String, AggFlowGroupInfo> aggFlowGroups = new ConcurrentHashMap<String, AggFlowGroupInfo>();
+//    public ConcurrentHashMap<String, AggFlowGroupInfo> aggFlowGroups = new ConcurrentHashMap<String, AggFlowGroupInfo>();
     public ConcurrentHashMap<String, FlowGroupInfo> flowGroupInfoConcurrentHashMap = new ConcurrentHashMap<>();
 
     // RAID , pathID -> FGID -> subscription info // ArrayList works good here!
     // TODO remove subscription mechanism, we should be able to directly set the rate and paths.
-    @Deprecated
-    public HashMap<String, ArrayList<ConcurrentHashMap<String, SubscriptionInfo>>> subscriptionRateMaps = new HashMap<>();
+//    public HashMap<String, ArrayList<ConcurrentHashMap<String, SubscriptionInfo>>> subscriptionRateMaps = new HashMap<>();
 
-    // faID , pathID -> workerQueue.
-    HashMap<String, LinkedBlockingQueue<CTRL_to_WorkerMsg>[]> workerQueues = new HashMap<>();
+            // faID , pathID -> workerQueue.
+            HashMap<String, LinkedBlockingQueue<CTRL_to_WorkerMsg>[]> workerQueues = new HashMap<>();
 
 //    public List< HashMap<String , SubscriptionInfo> > subscriptionRateMaps;
 
@@ -78,43 +76,44 @@ public class AgentSharedData {
         this.saName = Constants.node_id_to_trace_id.get(saID);
         this.netGraph = netGraph;
 
-//        IMPORTANT: initializing subscriptionRateMaps
+/*//        IMPORTANT: initializing subscriptionRateMaps
         for (String ra_id : netGraph.nodes_) {
             if (!saID.equals(ra_id)) { // don't consider path to SA itself.
                 // because apap is consistent among different programs.
                 int pathSize = netGraph.apap_.get(saID).get(ra_id).size();
                 ArrayList<ConcurrentHashMap<String, SubscriptionInfo>> maplist = new ArrayList<>(pathSize);
-                subscriptionRateMaps.put(ra_id, maplist);
+//                subscriptionRateMaps.put(ra_id, maplist);
 
                 for (int i = 0; i < pathSize; i++) {
                     maplist.add(new ConcurrentHashMap<>());
                 }
             }
-        }
+        }*/
 
     }
 
 
+    // Version 2.0 of finishFlow
     public void finishFlow(String fgID) {
 
         // null pointer because of double sending FG_FIN
-        if (aggFlowGroups.get(fgID) == null) {
+        if (flowGroupInfoConcurrentHashMap.get(fgID) == null) {
             // already sent the TRANSFER_FIN message, do nothing
             return;
         }
 
-        if (aggFlowGroups.get(fgID).getFlowState() == AggFlowGroupInfo.FlowState.FIN) {
+/*        if (aggFlowGroups.get(fgID).getFlowState() == AggFlowGroupInfo.FlowState.FIN) {
             // already sent the TRANSFER_FIN message, do nothing
             logger.warn("Already sent the TRANSFER_FIN for {}", fgID);
             aggFlowGroups.remove(fgID);
             return;
-        }
+        }*/
 
-        aggFlowGroups.get(fgID).setFlowState(AggFlowGroupInfo.FlowState.FIN);
+//        aggFlowGroups.get(fgID).setFlowState(AggFlowGroupInfo.FlowState.FIN);
         logger.info("Sending FLOW_FIN for {} to CTRL", fgID);
-//        rpcClient.sendFG_FIN(fgID); // TODO remove
+//        rpcClient.sendFG_FIN(fgID);
         pushFG_FIN(fgID);
-        aggFlowGroups.remove(fgID);
+        flowGroupInfoConcurrentHashMap.remove(fgID);
     }
 
     public void pushFG_FIN(String fgID) {
@@ -137,7 +136,7 @@ public class AgentSharedData {
 
 
     public void pushStatusUpdate() {
-        int size = aggFlowGroups.size();
+        int size = flowGroupInfoConcurrentHashMap.size();
         if (size == 0) {
 //            System.out.println("FG_SIZE = 0");
             return;         // if there is no data to send (i.e. the master has not come online), we simply skip.
@@ -223,7 +222,7 @@ public class AgentSharedData {
         }
     }
 
-    public void printSAStatus() {
+/*    public void printSAStatus() {
 
         StringBuilder strBuilder = new StringBuilder();
 //        System.out.println("---------SA STATUS---------");
@@ -241,13 +240,23 @@ public class AgentSharedData {
 
         logger.info(strBuilder.toString());
 
-    }
+    }*/
 
     public GaiaMessageProtos.FlowStatusReport buildCurrentFlowStatusReport() {
 
         GaiaMessageProtos.FlowStatusReport.Builder statusReportBuilder = GaiaMessageProtos.FlowStatusReport.newBuilder();
 
-        for (Map.Entry<String, AggFlowGroupInfo> entry : aggFlowGroups.entrySet()) {
+        for (Map.Entry<String, FlowGroupInfo> entry : flowGroupInfoConcurrentHashMap.entrySet()) {
+            FlowGroupInfo fgi = entry.getValue();
+
+            // Version 2.0
+            GaiaMessageProtos.FlowStatusReport.FlowStatus.Builder fsBuilder = GaiaMessageProtos.FlowStatusReport.FlowStatus.newBuilder()
+                    .setFinished(fgi.finished).setId(fgi.fgID).setTransmitted(fgi.totalVolume - fgi.remainingVolume);
+
+            statusReportBuilder.addStatus(fsBuilder);
+        }
+
+        /*for (Map.Entry<String, AggFlowGroupInfo> entry : aggFlowGroups.entrySet()) {
             AggFlowGroupInfo afgi = entry.getValue();
 
             if (afgi.getFlowState() == AggFlowGroupInfo.FlowState.INIT) {
@@ -271,7 +280,7 @@ public class AgentSharedData {
                     .setFinished(afgi.isFinished()).setId(afgi.getID()).setTransmitted(afgi.getTransmitted_agg());
 
             statusReportBuilder.addStatus(fsBuilder);
-        }
+        }*/
 
         return statusReportBuilder.build();
     }
