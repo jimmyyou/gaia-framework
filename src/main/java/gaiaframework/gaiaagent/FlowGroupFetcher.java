@@ -92,14 +92,15 @@ public class FlowGroupFetcher {
                 int total_bytes_sent = 0;
                 while (true) {
 
-                    // Define the max buffer
-                    byte[] buf = new byte[chunkSize];
                     int data_length = chunkSize;
 
                     // Make sure we will not read EOF.
                     if (data_length + total_bytes_sent > totalBlockLength) {
                         data_length = (int) (totalBlockLength - total_bytes_sent);
                     }
+
+                    // Define the max buffer
+                    byte[] buf = new byte[data_length];
 
                     try {
                         logger.info("Fetcher: fetch {} off: {}", data_length, total_bytes_sent);
@@ -179,14 +180,15 @@ public class FlowGroupFetcher {
                     if (flowGroupInfo.finished) {
                         return;
                     } else {
+                        // TODO remove this debug output
                         logger.warn("Polling from buffer failed but FG remaining Volume = {}", flowGroupInfo.remainingVolume);
                     }
                 } else {
-                    logger.info("Polled dm {} ", pathID);
+//                    logger.info("Polled dm {} ", pathID);
                     try {
                         agentSharedData.workerQueues.get(flowGroupInfo.faID)[pathID].put(new CTRL_to_WorkerMsg(dm));
                         // If sent, need to update status
-                        logger.info("Try to call onTransmit {}", pathID);
+                        logger.info("Try to call onTransmit {}, size = {}", pathID, dm.getData().length);
                         flowGroupInfo.onTransmit(dm.getData().length);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
