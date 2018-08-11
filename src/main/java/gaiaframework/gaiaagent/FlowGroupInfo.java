@@ -41,6 +41,16 @@ public class FlowGroupInfo {
 
         this.fgID = fgID;
         this.faID = forwardingAgentID;
+        // TODO fix here! nullpointer!!
+        if (agentSharedData.netGraph == null) {
+            logger.info("DEBUG: netgrapch=null");
+        } else if (agentSharedData.netGraph.apap_ == null){
+            logger.info("apap=null");
+        } else if (agentSharedData.netGraph.apap_.get(agentSharedData.saID) == null){
+            logger.info("DEBUG: get(_)=null");
+        } else if (agentSharedData.netGraph.apap_.get(agentSharedData.saID).get(faID) == null){
+            logger.info("DEBUG get().get() = null");
+        }
         this.pathSize = agentSharedData.netGraph.apap_.get(agentSharedData.saID).get(faID).size();
         this.rateLimiterArrayList = new ArrayList<>(pathSize);
 
