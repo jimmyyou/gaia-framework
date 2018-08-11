@@ -28,7 +28,7 @@ public class FlowGroupFetcher {
     private static final Logger logger = LogManager.getLogger();
 
     FlowGroupInfo flowGroupInfo;
-    LinkedBlockingQueue<DataChunkMessage> dataChunkInputQueue = new LinkedBlockingQueue<>(Constants.FETCHER_QUEUE_LENGTH);
+    LinkedBlockingQueue<DataChunkMessage> dataChunkBufferQueue = new LinkedBlockingQueue<>(Constants.FETCHER_QUEUE_LENGTH);
     AgentSharedData agentSharedData;
 
     /**
@@ -102,11 +102,14 @@ public class FlowGroupFetcher {
                     }
 
                     try {
+                        logger.info("Fetcher: fetch {} off: {}", data_length, total_bytes_sent);
                         input.readFully(buf, 0, data_length);
                         DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, blockId, (total_bytes_sent), totalBlockLength, 0, buf);
                         total_bytes_sent += data_length;
 
-                        dataQueue.put(dm);
+                        logger.info("Put dm into queue");
+//                        dataQueue.put(dm);
+                        dataChunkBufferQueue.put(dm);
 
                         //                        agentSharedData.workerQueues.get(faID)[pathID].put(new CTRL_to_WorkerMsg(dm));
                     } catch (EOFException e) {
@@ -157,10 +160,12 @@ public class FlowGroupFetcher {
                 rateLimiter.acquire();
                 if (pathRate.get() < Constants.DOUBLE_EPSILON) {
                     continue;
+                } else {
+                    logger.info("current pathRate = {}", pathRate.get());
                 }
 
                 // Then fetch one Chunk and forward
-                DataChunkMessage dm = dataChunkInputQueue.poll();
+                DataChunkMessage dm = dataChunkBufferQueue.poll();
 
                 if (dm == null) {
                     // Check if we need to stop this thread
@@ -198,7 +203,7 @@ public class FlowGroupFetcher {
         ExecutorService executor = Executors.newFixedThreadPool(1);
 
         for (ShuffleInfo.FlowInfo finfo : flowGroupInfo.flowInfos) {
-            executor.submit(new FileFetcherThread(finfo, dataChunkInputQueue, Constants.HTTP_CHUNKSIZE, flowGroupInfo.fgID));
+            executor.submit(new FileFetcherThread(finfo, dataChunkBufferQueue, Constants.HTTP_CHUNKSIZE, flowGroupInfo.fgID));
         }
 
         // also need to start consumer (rate enforcers)
