@@ -158,7 +158,7 @@ public class AgentSharedData {
         logger.info("STARTING : {}", fgID);
 
         // HOWTO: create a Object FlowGroupInfo: containing flowInfo/progress, current rate, path
-        if (!flowGroupInfoConcurrentHashMap.containsKey(fgID)) {
+        if (flowGroupInfoConcurrentHashMap.containsKey(fgID)) {
             logger.info("START failed: an existing flow {}", fgID);
             return;
         }
