@@ -168,7 +168,7 @@ public class AgentSharedData {
 //        }
 
         logger.info("Creating FGI {}", fgID);
-        FlowGroupInfo fgi = new FlowGroupInfo(forwardingAgentID, fgID, fue);
+        FlowGroupInfo fgi = new FlowGroupInfo(this, forwardingAgentID, fgID, fue);
         logger.info("Saving FGI to hashmap");
         flowGroupInfoConcurrentHashMap.put(fgID, fgi);
 

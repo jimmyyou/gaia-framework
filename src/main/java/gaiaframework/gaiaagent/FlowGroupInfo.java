@@ -21,6 +21,7 @@ public class FlowGroupInfo {
     final String faID;
     final int pathSize;
     final long totalVolume;
+    final AgentSharedData agentSharedData;
 
     // Because we create one chunk for each path, so we don't really need total rate. (we will sum up the rate on the fly)
     //    HashMap<Integer, RateLimiter> rateLimiterHashMap = new HashMap<>();
@@ -31,27 +32,27 @@ public class FlowGroupInfo {
     volatile long remainingVolume;
 //    volatile double rate;
 
-    AgentSharedData agentSharedData;
     volatile boolean finished = false;
     AtomicBoolean isFinished = new AtomicBoolean(false);
 
 //    Thread fetcher;
 
-    public FlowGroupInfo(String forwardingAgentID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fue) {
+    public FlowGroupInfo(AgentSharedData agentSharedData, String forwardingAgentID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fue) {
 
         this.fgID = fgID;
         this.faID = forwardingAgentID;
+        this.agentSharedData = agentSharedData;
         // TODO fix here! nullpointer!!
-        if (agentSharedData.netGraph == null) {
+        if (this.agentSharedData.netGraph == null) {
             logger.info("DEBUG: netgrapch=null");
-        } else if (agentSharedData.netGraph.apap_ == null){
+        } else if (this.agentSharedData.netGraph.apap_ == null){
             logger.info("apap=null");
-        } else if (agentSharedData.netGraph.apap_.get(agentSharedData.saID) == null){
+        } else if (this.agentSharedData.netGraph.apap_.get(this.agentSharedData.saID) == null){
             logger.info("DEBUG: get(_)=null");
-        } else if (agentSharedData.netGraph.apap_.get(agentSharedData.saID).get(faID) == null){
+        } else if (this.agentSharedData.netGraph.apap_.get(this.agentSharedData.saID).get(faID) == null){
             logger.info("DEBUG get().get() = null");
         }
-        this.pathSize = agentSharedData.netGraph.apap_.get(agentSharedData.saID).get(faID).size();
+        this.pathSize = this.agentSharedData.netGraph.apap_.get(this.agentSharedData.saID).get(faID).size();
         this.rateLimiterArrayList = new ArrayList<>(pathSize);
 
         if (fue.getOp() != GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.START) {
