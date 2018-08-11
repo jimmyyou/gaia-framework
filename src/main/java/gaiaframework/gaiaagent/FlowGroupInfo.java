@@ -74,6 +74,7 @@ public class FlowGroupInfo {
         for (int i = 0; i < pathSize; i++) {
             // Search for rate in Entries
             if (PathToRateMap.containsKey(i)) {
+                logger.info("setRateLimiters() set path {} to rate {}", i, PathToRateMap.get(i));
                 // TODO verify this: convert to token rate.
                 rateLimiterArrayList.get(i).setRate(PathToRateMap.get(i) / Constants.HTTP_CHUNKSIZE);
             } else {
