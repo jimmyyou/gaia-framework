@@ -564,7 +564,7 @@ public class CoflowScheduler extends Scheduler {
                 unscheduled_coflows.add(cfse);
                 continue;
             }
-            
+
             if (cfse != null && cfse.lastLPOutput != null) {
                 logger.info("Coflow {} (last) expected to complete in {} seconds", cfse.getCfID(), cfse.getLastLPOutput().completion_time_);
             }
