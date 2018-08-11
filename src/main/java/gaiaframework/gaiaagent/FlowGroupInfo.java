@@ -29,6 +29,7 @@ public class FlowGroupInfo {
     final ArrayList<RateLimiter> rateLimiterArrayList;
     final ArrayList<AtomicDouble> pathRateArrayList;
 
+    @Deprecated
     LinkedList<ShuffleInfo.FlowInfo> flowInfos = new LinkedList<>();
 
     volatile long remainingVolume;
@@ -52,14 +53,17 @@ public class FlowGroupInfo {
             logger.error("FATAL: starting FG {}, but OP != START", fgID);
         }
 
+        logger.info("FlowGroupInfo: summing volume");
         this.totalVolume = fue.getFlowInfosList().stream().mapToLong(ShuffleInfo.FlowInfo::getFlowSize).sum();
         this.remainingVolume = totalVolume;
 //        logger.info("");
 //        this.remainingVolume = fue.getRemainingVolume();
 //        this.totalVolume = fue.getRemainingVolume();
+        logger.info("FlowGroupInfo: add flowInfos");
         this.flowInfos.addAll(fue.getFlowInfosList());
 
         // init rateLimiterArrayList
+
         for (int i = 0; i < pathSize; i++) {
             RateLimiter rateLimiter = RateLimiter.create(Constants.DEFAULT_TOKEN_RATE);
             this.rateLimiterArrayList.add(rateLimiter);
