@@ -37,7 +37,7 @@ public class Master {
     MasterSharedData masterSharedData = new MasterSharedData();
 
     // SubModules of Master
-    protected Thread coflowListener;
+//    protected Thread coflowListener;
     //    protected Thread agentController; // This is similar to the Manager eventloop in old version. // maybe multiple threads?
     protected final ScheduledExecutorService mainExec; // For periodic call of schedule()
 
@@ -150,13 +150,9 @@ public class Master {
         }
 
         logger.info("All SA heartbeat started");
+        logger.info("Master: starting periodical scheduler at every {} ms.", Constants.SCHEDULE_INTERVAL_MS);
 
-        // start the other two threads.
-        coflowListener.start();
-
-        System.out.println("Master: starting periodical scheduler at every " + Constants.SCHEDULE_INTERVAL_MS + " ms.");
         // start the periodic execution of schedule()
-
 //        final Runnable runSchedule = () -> schedule();
         final Runnable runSchedule = () -> onSchedule();
         ScheduledFuture<?> mainHandler = mainExec.scheduleAtFixedRate(runSchedule, 0, Constants.SCHEDULE_INTERVAL_MS, MILLISECONDS);
