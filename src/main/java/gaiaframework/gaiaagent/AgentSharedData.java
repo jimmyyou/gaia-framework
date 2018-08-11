@@ -170,6 +170,7 @@ public class AgentSharedData {
         FlowGroupInfo fgi = new FlowGroupInfo(forwardingAgentID, fgID, fue);
         flowGroupInfoConcurrentHashMap.put(fgID, fgi);
 
+        logger.info("Created FlowGroup Info, now starting FlowGroupFetcher for {}", fgID);
         // start the fetcher for this FG
         FlowGroupFetcher fgfetcher = new FlowGroupFetcher(fgi, this);
         fgfetcher.start();
