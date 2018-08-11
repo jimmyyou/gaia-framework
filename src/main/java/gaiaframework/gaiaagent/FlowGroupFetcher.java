@@ -110,6 +110,8 @@ public class FlowGroupFetcher {
                         logger.info("Put dm into queue");
 //                        dataQueue.put(dm);
                         dataChunkBufferQueue.put(dm);
+                        DataChunkMessage dmp = dataChunkBufferQueue.peek();
+                        logger.info("peek return: {}", dmp);
 
                         if (total_bytes_sent >= totalBlockLength) {
                             logger.info("Fetcher finished fetching.");
@@ -165,9 +167,9 @@ public class FlowGroupFetcher {
                 rateLimiter.acquire();
                 if (pathRate.get() < Constants.DOUBLE_EPSILON) {
                     continue;
-                } else {
+                } /*else {
                     logger.info("current pathRate = {}", pathRate.get());
-                }
+                }*/
 
                 // Then fetch one Chunk and forward
                 DataChunkMessage dm = dataChunkBufferQueue.poll();
@@ -218,7 +220,7 @@ public class FlowGroupFetcher {
         for (int i = 0; i < pathSize; i++) {
             // Start a thread to enforce rate. Thread will be stopped after all the data is transmitted.
             RateLimiter rateLimiter = flowGroupInfo.rateLimiterArrayList.get(i);
-            AtomicDouble pathRate = flowGroupInfo.pathRateArrayList.get(i);
+            AtomicDouble pathRate = flowGroupInfo.pathTokenRateArrayList.get(i);
             Thread rateEnforcerThread = new Thread(new RateEnforcerThread(i, rateLimiter, pathRate));
             rateEnforcerThread.start();
         }
