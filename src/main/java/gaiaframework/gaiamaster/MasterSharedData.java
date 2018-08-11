@@ -18,7 +18,7 @@ public class MasterSharedData {
     // only need to add entry, no need to delete entry.
     // TODO(future) implement delete entry.
     private volatile ConcurrentHashMap<String, Coflow> flowIDtoCoflow;
-    volatile HashMap<String, Coflow> fileNametoCoflow;
+//    volatile HashMap<String, Coflow> fileNametoCoflow;
 
     volatile boolean flag_CF_ADD = false;
     volatile boolean flag_CF_FIN = false;
@@ -66,10 +66,10 @@ public class MasterSharedData {
         // first add index
         for (FlowGroup fg : cf.getFlowGroups().values()) {
             flowIDtoCoflow.put(fg.getId(), cf);
-
-            if (!fileNametoCoflow.containsKey(fg.getFilename())) {
-                fileNametoCoflow.put(fg.getFilename(), cf);
-            }
+//
+//            if (!fileNametoCoflow.containsKey(fg.getFilename())) {
+//                fileNametoCoflow.put(fg.getFilename(), cf);
+//            }
         }
         //  then add coflow
         coflowPool.put(id, cf);
@@ -88,7 +88,7 @@ public class MasterSharedData {
     public MasterSharedData() {
         this.coflowPool = new ConcurrentHashMap<>();
         this.flowIDtoCoflow = new ConcurrentHashMap<>();
-        this.fileNametoCoflow = new HashMap<>();
+//        this.fileNametoCoflow = new HashMap<>();
     }
 
     public void onFinishFlowGroup(String fid, long timestamp) {

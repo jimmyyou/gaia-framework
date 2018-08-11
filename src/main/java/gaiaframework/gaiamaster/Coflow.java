@@ -170,7 +170,7 @@ public class Coflow {
 
             sb.append("\nFGID: ").append(fg.getId()).append(' ');
             sb.append("\nVolume: ").append(fg.getTotalVolume()).append(' ');
-            sb.append("\nFile: ").append(fg.getFilename()).append('\n');
+//            sb.append("\nFile: ").append(fg.getFilename()).append('\n');
         }
 
         return sb.toString();

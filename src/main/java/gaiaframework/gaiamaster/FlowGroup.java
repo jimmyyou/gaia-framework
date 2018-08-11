@@ -7,6 +7,7 @@ package gaiaframework.gaiamaster;
  */
 
 // TODO(future) clear definition of FG_FIN, and corresponding API (e.g. fg.isFinished())
+
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.util.Constants;
 
@@ -41,16 +42,14 @@ public class FlowGroup {
         FILE_FIN
     }
 
-    private FlowGroupState flowGroupState;
+    private FlowGroupState flowGroupState = FlowGroupState.NEW;
 
-    @Deprecated
-    String filename = null;
-    @Deprecated
+/*    @Deprecated
     String mapID;
     @Deprecated
-    String redID;
+    String redID;*/
 
-    @Deprecated
+/*    @Deprecated
     public FlowGroup(String id, String srcLocation, String dstLocation, String owningCoflowID, double totalVolume, String filename, String mapID, String redID) {
         this.id = id;
         this.srcLocation = srcLocation;
@@ -58,10 +57,9 @@ public class FlowGroup {
         this.owningCoflowID = owningCoflowID;
         this.totalVolume = totalVolume;
         this.flowGroupState = FlowGroupState.NEW;
-        this.filename = filename;
         this.mapID = mapID;
         this.redID = redID;
-    }
+    }*/
 
     public FlowGroup(String cfID, String srcLoc, String dstLoc, List<ShuffleInfo.FlowInfo> flowInfos) {
         this.id = cfID + ":" + srcLoc + "-" + dstLoc;
@@ -71,12 +69,6 @@ public class FlowGroup {
         this.flowInfos = flowInfos;
         this.totalVolume = flowInfos.stream().mapToLong(ShuffleInfo.FlowInfo::getFlowSize).sum();
         // TODO(future) check the long to double conversion here
-    }
-
-
-    @Deprecated
-    public String getFilename() {
-        return filename;
     }
 
     // This method is called upon receiving Status Update, this method must be call if a Flow is finishing
