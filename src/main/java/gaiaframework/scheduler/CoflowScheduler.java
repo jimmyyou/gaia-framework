@@ -564,11 +564,13 @@ public class CoflowScheduler extends Scheduler {
                 unscheduled_coflows.add(cfse);
                 continue;
             }
-
-            // schedule this CF
-            logger.info("Coflow {} (last) expected to complete in {} seconds", cfse.getCfID(), cfse.getLastLPOutput().completion_time_);
+            
+            if (cfse != null && cfse.lastLPOutput != null) {
+                logger.info("Coflow {} (last) expected to complete in {} seconds", cfse.getCfID(), cfse.getLastLPOutput().completion_time_);
+            }
 //            bwrt.write(c.getId() + " " + e.cct + "\n");
 
+            // schedule this CF
             MMCFOptimizer.MMCFOutput mmcf_out = MMCFOptimizer.glpk_optimizeNew(cfse, net_graph_, links_); // This is the recursive part.
 
             boolean all_flows_scheduled = true;
