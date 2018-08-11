@@ -35,6 +35,7 @@ public class FlowGroupInfo {
     volatile long remainingVolume;
 //    volatile double rate;
 
+    // TODO(future) combine finished and isFinished.
     volatile boolean finished = false;
     AtomicBoolean isFinished = new AtomicBoolean(false);
 
@@ -121,6 +122,7 @@ public class FlowGroupInfo {
         if (remainingVolume == 0) {
             if (!isFinished.getAndSet(true)) {
                 // We are the first to observe the finish
+                finished = true;
                 agentSharedData.finishFlow(fgID);
             }
         }
