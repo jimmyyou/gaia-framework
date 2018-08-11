@@ -327,6 +327,7 @@ public class Master {
                         //                        fgoToSend.add ( FlowGroup.toFlowGroup_Old(fg, 0).setFlowGroupState(FlowGroup_Old_Compressed.FlowGroupState.PAUSING) );
                     }
                 } else { // case: NEW/PAUSED
+                    logger.info("DEBUG: fgID = {}, fgos = {}", fgID, scheduledFGOs.entrySet().toArray().toString());
                     if (scheduledFGOs.containsKey(fgID)) { // we take action only if the flow get (re)scheduled
                         if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.NEW) { // start the flow
                             fg.setFlowGroupState(FlowGroup.FlowGroupState.RUNNING);
