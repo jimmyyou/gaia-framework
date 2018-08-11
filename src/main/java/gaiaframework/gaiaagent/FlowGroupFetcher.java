@@ -179,12 +179,14 @@ public class FlowGroupFetcher {
                     if (flowGroupInfo.finished) {
                         return;
                     } else {
-                        logger.warn("Polling from fetcher failed but FG remaining Volume = {}", flowGroupInfo.remainingVolume);
+                        logger.warn("Polling from buffer failed but FG remaining Volume = {}", flowGroupInfo.remainingVolume);
                     }
                 } else {
+                    logger.info("Polled dm {} ", pathID);
                     try {
                         agentSharedData.workerQueues.get(flowGroupInfo.faID)[pathID].put(new CTRL_to_WorkerMsg(dm));
                         // If sent, need to update status
+                        logger.info("Try to call onTransmit {}", pathID);
                         flowGroupInfo.onTransmit(dm.getData().length);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
