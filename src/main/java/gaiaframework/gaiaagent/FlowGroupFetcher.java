@@ -178,6 +178,7 @@ public class FlowGroupFetcher {
                 if (dm == null) {
                     // Check if we need to stop this thread
                     if (flowGroupInfo.finished) {
+                        logger.info("Leaving rate enforcer {}", pathID);
                         return;
                     } else {
                         // TODO remove this debug output

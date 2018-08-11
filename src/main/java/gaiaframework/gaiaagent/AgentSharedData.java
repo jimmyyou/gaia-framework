@@ -107,7 +107,7 @@ public class AgentSharedData {
 
     public void pushFG_FIN(String fgID) {
         if (fgID == null) {
-            System.err.println("fgID = null when sending FG_FIN");
+            logger.error("fgID = null when sending FG_FIN");
             return;
         }
 

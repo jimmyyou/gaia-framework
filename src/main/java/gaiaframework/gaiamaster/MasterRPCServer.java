@@ -163,6 +163,7 @@ public class MasterRPCServer {
             // first get the current flowGroup ID
             String fid = status.getId();
             if (status.getFinished()) {
+                logger.info("Received FG_FIN for {}", fid);
                 onFinishFlowGroup(fid, System.currentTimeMillis());
                 continue;
             } else {
