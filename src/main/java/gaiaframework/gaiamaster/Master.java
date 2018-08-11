@@ -271,6 +271,11 @@ public class Master {
         try {
             scheduledFGOs = scheduler.scheduleRRF(currentTime);
 
+            for (Map.Entry<String, ScheduleOutputFG> fgoE : scheduledFGOs.entrySet()) {
+                ScheduleOutputFG fgo = fgoE.getValue();
+                logger.info("FGOID: {}, {} / {} : {}", fgoE.getKey(), fgo.getId(), fgo.getCoflow_id(), fgo.getFgoState());
+            }
+
             // generate and send rpc msgs. 1. parse FGState 2. gen msg 3. send msg
             generateAndSendCtrlMsg(scheduledFGOs);
 //                decompressedFGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
@@ -327,7 +332,6 @@ public class Master {
                         //                        fgoToSend.add ( FlowGroup.toFlowGroup_Old(fg, 0).setFlowGroupState(FlowGroup_Old_Compressed.FlowGroupState.PAUSING) );
                     }
                 } else { // case: NEW/PAUSED
-                    logger.info("DEBUG: fgID = {}, fgos = {}", fgID, scheduledFGOs.entrySet().toArray().toString());
                     if (scheduledFGOs.containsKey(fgID)) { // we take action only if the flow get (re)scheduled
                         if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.NEW) { // start the flow
                             fg.setFlowGroupState(FlowGroup.FlowGroupState.RUNNING);
