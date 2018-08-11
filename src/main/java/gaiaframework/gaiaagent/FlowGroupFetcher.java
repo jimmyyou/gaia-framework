@@ -111,6 +111,11 @@ public class FlowGroupFetcher {
 //                        dataQueue.put(dm);
                         dataChunkBufferQueue.put(dm);
 
+                        if (total_bytes_sent >= totalBlockLength) {
+                            logger.info("Fetcher finished fetching.");
+                            break;
+                        }
+
                         //                        agentSharedData.workerQueues.get(faID)[pathID].put(new CTRL_to_WorkerMsg(dm));
                     } catch (EOFException e) {
                         logger.error("ERROR: Reading EOF from {}, NOP", srcFilename);
