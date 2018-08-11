@@ -4,6 +4,7 @@ package gaiaframework.gaiaagent;
  * Stores information of FlowGroup for Sending Agent. version 2.0
  */
 
+import com.google.common.util.concurrent.AtomicDouble;
 import com.google.common.util.concurrent.RateLimiter;
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.gaiaprotos.GaiaMessageProtos;
@@ -25,7 +26,8 @@ public class FlowGroupInfo {
 
     // Because we create one chunk for each path, so we don't really need total rate. (we will sum up the rate on the fly)
     //    HashMap<Integer, RateLimiter> rateLimiterHashMap = new HashMap<>();
-    ArrayList<RateLimiter> rateLimiterArrayList;
+    final ArrayList<RateLimiter> rateLimiterArrayList;
+    final ArrayList<AtomicDouble> pathRateArrayList;
 
     LinkedList<ShuffleInfo.FlowInfo> flowInfos = new LinkedList<>();
 
@@ -42,18 +44,9 @@ public class FlowGroupInfo {
         this.fgID = fgID;
         this.faID = forwardingAgentID;
         this.agentSharedData = agentSharedData;
-        // TODO fix here! nullpointer!!
-        if (this.agentSharedData.netGraph == null) {
-            logger.info("DEBUG: netgrapch=null");
-        } else if (this.agentSharedData.netGraph.apap_ == null){
-            logger.info("apap=null");
-        } else if (this.agentSharedData.netGraph.apap_.get(this.agentSharedData.saID) == null){
-            logger.info("DEBUG: get(_)=null");
-        } else if (this.agentSharedData.netGraph.apap_.get(this.agentSharedData.saID).get(faID) == null){
-            logger.info("DEBUG get().get() = null");
-        }
         this.pathSize = this.agentSharedData.netGraph.apap_.get(this.agentSharedData.saID).get(faID).size();
         this.rateLimiterArrayList = new ArrayList<>(pathSize);
+        this.pathRateArrayList = new ArrayList<>(pathSize);
 
         if (fue.getOp() != GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.START) {
             logger.error("FATAL: starting FG {}, but OP != START", fgID);
@@ -66,11 +59,12 @@ public class FlowGroupInfo {
 //        this.totalVolume = fue.getRemainingVolume();
         this.flowInfos.addAll(fue.getFlowInfosList());
 
-        // store pathToRate Info
+        // init rateLimiterArrayList
         for (int i = 0; i < pathSize; i++) {
             RateLimiter rateLimiter = RateLimiter.create(Constants.DEFAULT_TOKEN_RATE);
             this.rateLimiterArrayList.add(rateLimiter);
         }
+        // init pathRateArrayList
         setRateLimiters(fue.getPathIDToRateMapMap());
     }
 
@@ -83,14 +77,27 @@ public class FlowGroupInfo {
 
         // Iterate through all rate limiters. set the rate.
         for (int i = 0; i < pathSize; i++) {
+            pathRateArrayList.add(new AtomicDouble(0));
+
             // Search for rate in Entries
             if (PathToRateMap.containsKey(i)) {
                 logger.info("setRateLimiters() set path {} to rate {}", i, PathToRateMap.get(i));
-                // TODO verify this: convert to token rate.
-                rateLimiterArrayList.get(i).setRate(PathToRateMap.get(i) / Constants.HTTP_CHUNKSIZE);
+                double tokenRate = PathToRateMap.get(i) / Constants.HTTP_CHUNKSIZE;
+                if (tokenRate > Constants.DOUBLE_EPSILON) {
+                    // TODO verify this: convert to token rate. also check if rate is zero
+                    logger.info("{} : {} token rate to {}", fgID, i, tokenRate);
+                    rateLimiterArrayList.get(i).setRate(tokenRate);
+                    pathRateArrayList.get(i).set(tokenRate);
+                } else {
+                    // rate can't be zero
+                    rateLimiterArrayList.get(i).setRate(Constants.DEFAULT_TOKEN_RATE);
+                    pathRateArrayList.get(i).set(0);
+                }
             } else {
                 // This path has zero rate.
-                rateLimiterArrayList.get(i).setRate(0);
+                // rate can't be zero
+                rateLimiterArrayList.get(i).setRate(Constants.DEFAULT_TOKEN_RATE);
+                pathRateArrayList.get(i).set(0);
             }
         }
     }
@@ -99,7 +106,9 @@ public class FlowGroupInfo {
         // pause Flow Group by setting rate limiter to 0
         // Iterate through all rate limiters. set the rate.
         for (int i = 0; i < pathSize; i++) {
-            rateLimiterArrayList.get(i).setRate(0);
+            // rate can't be zero
+            rateLimiterArrayList.get(i).setRate(Constants.DEFAULT_TOKEN_RATE);
+            pathRateArrayList.get(i).set(0);
         }
     }
 

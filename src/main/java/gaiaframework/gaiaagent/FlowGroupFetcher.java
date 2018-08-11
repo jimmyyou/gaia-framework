@@ -1,5 +1,6 @@
 package gaiaframework.gaiaagent;
 
+import com.google.common.util.concurrent.AtomicDouble;
 import com.google.common.util.concurrent.RateLimiter;
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.transmission.DataChunkMessage;
@@ -135,10 +136,12 @@ public class FlowGroupFetcher {
 
         private final RateLimiter rateLimiter;
         private final int pathID;
+        private final AtomicDouble pathRate;
 
-        public RateEnforcerThread(int pathID, RateLimiter rateLimiter) {
+        public RateEnforcerThread(int pathID, RateLimiter rateLimiter, AtomicDouble pathRate) {
             this.rateLimiter = rateLimiter;
             this.pathID = pathID;
+            this.pathRate = pathRate;
         }
 
         // HOWTO enforce rate/path allocation?
@@ -147,8 +150,14 @@ public class FlowGroupFetcher {
         public void run() {
 
             while (true) {
-                // Rate control
+
+                // Rate control: when rate = 0, permitPerSecond is 100.
+                // Hence we check if rate is back to positive for every 10ms.
+                // TODO(future) better solution for signaling PAUSE/RESUME of flow group
                 rateLimiter.acquire();
+                if (pathRate.get() < Constants.DOUBLE_EPSILON) {
+                    continue;
+                }
 
                 // Then fetch one Chunk and forward
                 DataChunkMessage dm = dataChunkInputQueue.poll();
@@ -199,7 +208,8 @@ public class FlowGroupFetcher {
         for (int i = 0; i < pathSize; i++) {
             // Start a thread to enforce rate. Thread will be stopped after all the data is transmitted.
             RateLimiter rateLimiter = flowGroupInfo.rateLimiterArrayList.get(i);
-            Thread rateEnforcerThread = new Thread(new RateEnforcerThread(i, rateLimiter));
+            AtomicDouble pathRate = flowGroupInfo.pathRateArrayList.get(i);
+            Thread rateEnforcerThread = new Thread(new RateEnforcerThread(i, rateLimiter, pathRate));
             rateEnforcerThread.start();
         }
 
