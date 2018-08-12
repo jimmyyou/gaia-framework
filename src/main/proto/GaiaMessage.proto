@@ -42,7 +42,7 @@ service MasterService {
 message FlowStatusReport {
     message FlowStatus {
         string id = 1;
-        double transmitted = 2;
+        double transmitted = 2; // TODO change to long. Also change all rate related number to long etc.
         bool finished = 3;
     }
 
@@ -100,19 +100,19 @@ message FlowUpdate {
 }
 
 // Msg to change the rate of a FlowGroup
-message FlowGroupRate {
-
-    enum Operation {
-        START = 0;
-        CHANGE = 1;
-        PAUSE = 2;
-    }
-    Operation op = 1;
-
-
-    repeated FlowGroupInfoMsg sendingFGIs = 5; // this is optional
-
-}
+//message FlowGroupRate {
+//
+//    enum Operation {
+//        START = 0;
+//        CHANGE = 1;
+//        PAUSE = 2;
+//    }
+//    Operation op = 1;
+//
+//
+//    repeated FlowGroupInfoMsg sendingFGIs = 5; // this is optional
+//
+//}
 
 message SmallFlow {
     string srcIP = 1;
