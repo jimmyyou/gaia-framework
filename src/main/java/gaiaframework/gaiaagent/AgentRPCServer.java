@@ -259,6 +259,8 @@ public class AgentRPCServer {
         @Override
         public void finishFile(gaiaframework.gaiaprotos.GaiaMessageProtos.FileFinishMsg request,
                                io.grpc.stub.StreamObserver<gaiaframework.gaiaprotos.GaiaMessageProtos.ACK> responseObserver) {
+
+            logger.info("Received FILEFIN msg for {}", request);
             sharedData.onSingleFILEFIN(request.getFilename());
 
             responseObserver.onNext(GaiaMessageProtos.ACK.getDefaultInstance());
