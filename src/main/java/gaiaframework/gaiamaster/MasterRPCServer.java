@@ -130,7 +130,7 @@ public class MasterRPCServer {
         String fgID = request.getStatus(0).getId();
         FlowGroup fg = masterSharedData.getFlowGroup(fgID);
         Coflow cf = masterSharedData.coflowPool.get(fg.getOwningCoflowID());
-        logger.info("Found FlowGroup {} and Coflow {} for FG_FILE_FIN of {}", fg, fgID);
+        logger.info("Found FlowGroup {} and Coflow {} for FG_FILE_FIN of fgID = {}", fg, cf, fgID);
 
         // Reuse the old onFGFileFIN here. Should be OK.
         masterSharedData.onFGFileFIN(fg, cf);
