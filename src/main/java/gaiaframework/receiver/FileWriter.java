@@ -3,7 +3,7 @@ package gaiaframework.receiver;
 // A thread that writes the received data into files
 // maintains a pool of RandomAccessFile to write into
 
-// TODO use multiple threads to parallelly handle I/O
+// TODO(future) use multiple threads to parallelly handle I/O
 
 import com.google.common.util.concurrent.Uninterruptibles;
 import gaiaframework.gaiaprotos.GaiaMessageProtos;
@@ -108,7 +108,7 @@ public class FileWriter implements Runnable {
             if (!finished) {
                 activeFileBlocks.put(handlerId, fileBlockHandler);
             } else {
-                // TODO Send out TRANSFER_FIN
+                // Send out TRANSFER_FIN
                 sendFileFIN_WithRetry(filename);
             }
         }
@@ -182,66 +182,5 @@ public class FileWriter implements Runnable {
             return true;
         }
     }
-
-/*    private void NaiveCreateFile(DataChunkMessage dataChunk) {
-        String filename = dataChunk.getFilename();
-        File datafile = new File(filename);
-
-        if (datafile.exists()) {
-            logger.error("File {} exists", filename);
-            return;
-        }
-
-        // continue to create the File, and put into the map
-        logger.info("Creating file and index for {}", filename);
-
-        FileBlockHandler fileBlockHandler = new FileBlockHandler(filename, dataChunk.getTotalBlockLength());
-
-        activeFileBlocks.put(filename, fileBlockHandler);
-
-    }*/
-
-    // upon receiving the first chunk, create and write to index file, also create data file.
-/*    private void createFileandIndex(DataChunkMessage dataChunk) {
-        // first check if file exists
-        String filename = dataChunk.getFilename();
-        File datafile = new File(filename);
-        File indexfile = new File(filename + ".index");
-
-        if (datafile.exists()) {
-            logger.error("File {} exists", filename);
-            return;
-        }
-
-        if (indexfile.exists()) {
-            logger.error("Index file of {} exists", filename);
-            return;
-        }
-
-        // continue to create the File, and put into the map
-        logger.info("Creating file and index for {}", filename);
-
-
-        // TODO WRONG ChunkLength
-        FileBlockHandler fileBlockHandler = new FileBlockHandler(filename, dataChunk.getTotalBlockLength());
-
-        activeFileBlocks.put(filename, fileBlockHandler);
-
-        // create and write to the index file
-
-        try {
-            FileOutputStream fos = new FileOutputStream(filename + ".index");
-
-            fos.write(dataChunk.getData());
-            fos.flush();
-            fos.close();
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }*/
 
 }

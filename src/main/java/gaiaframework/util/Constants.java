@@ -84,7 +84,6 @@ public class Constants {
      * @param fgID
      * @return
      */
-    // TODO verify this
     public static String getDstFileName(ShuffleInfo.FlowInfo flowInfo, String fgID) {
 
         int off0 = fgID.indexOf("_");
