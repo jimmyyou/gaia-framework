@@ -55,7 +55,8 @@ public class Constants {
     public static final int MAX_CHUNK_SIZE_Bytes = 64 * 1024;
     public static final int SENDER_QUEUE_LENGTH = 1000;
     public static final String SCHEDULER_NAME_GAIA = "gaia";
-    public static final int HTTP_CHUNKSIZE = 8192;
+//    public static final int HTTP_CHUNKSIZE = 8192;
+    public static final int HTTP_CHUNKSIZE = 32768;
     public static final int DEFAULT_HTTP_SERVER_PORT = 20020;
     public static final int FETCHER_QUEUE_LENGTH = 100; // TODO: check other queue length
 

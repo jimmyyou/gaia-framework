@@ -181,8 +181,8 @@ public class FlowGroupFetcher {
                         logger.info("Leaving rate enforcer {}", pathID);
                         return;
                     } else {
-                        // TODO remove this debug output
-                        logger.warn("Polling from buffer failed but FG remaining Volume = {}", flowGroupInfo.remainingVolume);
+                        // removed this debug output
+//                        logger.warn("Polling from buffer failed but FG remaining Volume = {}", flowGroupInfo.remainingVolume);
                     }
                 } else {
 //                    logger.info("Polled dm {} ", pathID);
