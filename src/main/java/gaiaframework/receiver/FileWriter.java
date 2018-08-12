@@ -43,7 +43,7 @@ public class FileWriter implements Runnable {
     public void run() {
 
         // TODO(future) load master port from config
-        grpcChannel = ManagedChannelBuilder.forAddress(masterHostname, 23000).usePlaintext().build();
+        grpcChannel = ManagedChannelBuilder.forAddress(masterHostname, 23330).usePlaintext().build();
 
         logger.info("Filewriter Thread started, and grpcChannel established");
 
