@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 public class FileWriter implements Runnable {
     private static final Logger logger = LogManager.getLogger();
+    private final String masterHostname;
 
     LinkedBlockingQueue<DataChunkMessage> dataChunkQueue;
 
@@ -32,16 +33,17 @@ public class FileWriter implements Runnable {
     boolean isOutputEnabled = true;
     private ManagedChannel grpcChannel;
 
-    public FileWriter(LinkedBlockingQueue<DataChunkMessage> dataChunkQueue, boolean isOutputEnabled) {
+    public FileWriter(LinkedBlockingQueue<DataChunkMessage> dataChunkQueue, boolean isOutputEnabled, String masterHostname) {
         this.dataChunkQueue = dataChunkQueue;
         this.isOutputEnabled = isOutputEnabled;
+        this.masterHostname = masterHostname;
     }
 
     @Override
     public void run() {
 
-        // FIXME should use co-sited SA's IP
-        grpcChannel = ManagedChannelBuilder.forAddress("dc1master", 8888).usePlaintext().build();
+        // TODO(future) load master port from config
+        grpcChannel = ManagedChannelBuilder.forAddress(masterHostname, 23000).usePlaintext().build();
 
         logger.info("Filewriter Thread started, and grpcChannel established");
 
@@ -113,7 +115,7 @@ public class FileWriter implements Runnable {
 
     }
 
-    void sendFileFIN_WithRetry(String filename){
+    void sendFileFIN_WithRetry(String filename) {
         boolean retry = true;
         while (retry) {
             try {
@@ -128,7 +130,7 @@ public class FileWriter implements Runnable {
         }
     }
 
-    void sendFileFIN(String filename) throws RuntimeException{
+    void sendFileFIN(String filename) throws RuntimeException {
 
         SendingAgentServiceGrpc.SendingAgentServiceStub stub = SendingAgentServiceGrpc.newStub(grpcChannel);
         GaiaMessageProtos.FileFinishMsg request = GaiaMessageProtos.FileFinishMsg.newBuilder().setFilename(filename).build();
