@@ -12,7 +12,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class MasterRPCServer {
     private static final Logger logger = LogManager.getLogger();
@@ -159,6 +158,8 @@ public class MasterRPCServer {
 
     public void handleFlowStatusReport(GaiaMessageProtos.FlowStatusReport statusReport) {
 
+        logger.info("DEBUG: Handle FSR: {}", statusReport);
+
         for (GaiaMessageProtos.FlowStatusReport.FlowStatus status : statusReport.getStatusList()) {
             // first get the current flowGroup ID
             String fid = status.getId();
@@ -185,7 +186,7 @@ public class MasterRPCServer {
         // set the current status
 
         // FIXME(future) Moved to onFileFinish
-        masterSharedData.onFinishFlowGroup(fid, timestamp);
+        masterSharedData.onFinishSendingFlowGroup(fid, timestamp);
     }
 
 }

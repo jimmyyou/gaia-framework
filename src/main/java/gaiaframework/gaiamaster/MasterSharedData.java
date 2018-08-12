@@ -4,8 +4,6 @@ import gaiaframework.gaiaprotos.GaiaMessageProtos;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -37,7 +35,7 @@ public class MasterSharedData {
     int flowFINCnt = 0;
 
     // handles coflow finish.
-    public synchronized boolean onFinishCoflow(String coflowID) {
+    public synchronized boolean onFinishSendingCoflow(String coflowID) {
         logger.info("Master: trying to finish Coflow {}", coflowID);
 
 
@@ -48,7 +46,8 @@ public class MasterSharedData {
 
             this.flag_CF_FIN = true;
 
-            coflowPool.remove(coflowID);
+            // We don't remove it right now, only remove when returning to YARN.
+//            coflowPool.remove(coflowID);
 
             return true;
         }
@@ -91,7 +90,7 @@ public class MasterSharedData {
 //        this.fileNametoCoflow = new HashMap<>();
     }
 
-    public void onFinishFlowGroup(String fid, long timestamp) {
+    public void onFinishSendingFlowGroup(String fid, long timestamp) {
 
         flowFINCnt++;
 
@@ -123,7 +122,7 @@ public class MasterSharedData {
         // if so set coflow status, send COFLOW_FIN
         if (flag) {
             String coflowID = fg.getOwningCoflowID();
-            if (onFinishCoflow(coflowID)) {
+            if (onFinishSendingCoflow(coflowID)) {
                 // No need for YARNMsg now.
 //                try {
 //                    yarnEventQueue.put(new YARNMessages(coflowID));
@@ -168,6 +167,17 @@ public class MasterSharedData {
 
         cf.isCoflowFileFinishedLatch.countDown();
         logger.info("Counting down for cf {} : {}", cf.getId(), cf.isCoflowFileFinishedLatch.getCount());
+
+    }
+
+    public void onCoflowTransmissionFinish(String cfID) {
+        // check if the owning coflow is finished
+        Coflow cf = coflowPool.get(cfID);
+        if (cf != null) {
+            coflowPool.remove(cfID);
+        } else {
+            logger.warn("Try to remove CF when it is not in cfPool");
+        }
 
     }
 }
