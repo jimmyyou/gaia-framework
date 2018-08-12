@@ -64,7 +64,7 @@ public class ReceivingAgent {
                     InetAddress myHost = InetAddress.getLocalHost();
                     String localHostname = myHost.getHostName();
                     masterHostname = "dc" + localHostname.substring(1, 2) + "master";
-                    logger.info("Inferring master hostname from {} : ", localHostname, masterHostname);
+                    logger.info("Inferring master hostname from {} : {}", localHostname, masterHostname);
                 } catch (UnknownHostException ex) {
                     ex.printStackTrace();
                 }
