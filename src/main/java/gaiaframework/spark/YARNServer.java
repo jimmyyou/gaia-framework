@@ -111,6 +111,9 @@ public class YARNServer extends GaiaAbstractServer {
      */
     private Map<String, Map<String, List<ShuffleInfo.FlowInfo>>> pruneAndGroupFlowInfos(List<ShuffleInfo.FlowInfo> flowList) {
 
+        int flowCounter = 0;
+        int beforePrune = flowList.size();
+
         // iterate through the list and prune
         Iterator<ShuffleInfo.FlowInfo> iter = flowList.iterator();
         Map<String, Map<String, List<ShuffleInfo.FlowInfo>>> groupedFlowInfo = new HashMap<>();
@@ -164,6 +167,7 @@ public class YARNServer extends GaiaAbstractServer {
                     LinkedList<ShuffleInfo.FlowInfo> tmpList = new LinkedList<>();
                     tmpList.add(flowInfo);
                     groupedFlowInfo.get(srcLoc).put(dstLoc, tmpList);
+                    flowCounter++;
                 }
             } else {
                 HashMap<String, List<ShuffleInfo.FlowInfo>> tmpMap = new HashMap<String, List<ShuffleInfo.FlowInfo>>();
@@ -171,9 +175,11 @@ public class YARNServer extends GaiaAbstractServer {
                 tmpList.add(flowInfo);
                 tmpMap.put(dstLoc, tmpList);
                 groupedFlowInfo.put(srcLoc, tmpMap);
+                flowCounter++;
             }
         }
 
+        logger.info("Prune {} flowInfos to {}", beforePrune, flowCounter);
         return groupedFlowInfo;
     }
 
