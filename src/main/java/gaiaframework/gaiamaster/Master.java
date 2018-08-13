@@ -165,7 +165,7 @@ public class Master {
             e.printStackTrace();
         }
 
-        logger.info("Master init finished, block the main thread");
+        logger.info("Master init finished, block the main thread (version 2.0)");
         try {
             rpcServer.blockUntilShutdown();
         } catch (InterruptedException e) {
