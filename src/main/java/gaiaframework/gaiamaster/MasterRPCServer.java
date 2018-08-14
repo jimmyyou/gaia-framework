@@ -125,8 +125,8 @@ public class MasterRPCServer {
      * @param request
      */
     private void handleFGFileFIN(GaiaMessageProtos.FlowStatusReport request) {
-        logger.info("Received Status Report for FG_FILE_FIN, content {}", request);
         String fgID = request.getStatus(0).getId();
+        logger.info("Received FG_FILE_FIN for ", fgID);
         FlowGroup fg = masterSharedData.getFlowGroup(fgID);
         Coflow cf = masterSharedData.coflowPool.get(fg.getOwningCoflowID());
         logger.info("Found FlowGroup {} and Coflow {} for FG_FILE_FIN of fgID = {}", fg, cf, fgID);
