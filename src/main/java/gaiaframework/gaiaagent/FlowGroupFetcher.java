@@ -103,19 +103,19 @@ public class FlowGroupFetcher {
                     byte[] buf = new byte[data_length];
 
                     try {
-                        logger.info("Fetcher: fetch {} off: {}", data_length, total_bytes_sent);
+//                        logger.info("Fetcher: fetch {} off: {}", data_length, total_bytes_sent);
                         input.readFully(buf, 0, data_length);
                         DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, blockId, (total_bytes_sent), totalBlockLength, 0, buf);
                         total_bytes_sent += data_length;
 
-                        logger.info("Put dm into queue");
+//                        logger.info("Put dm into queue");
 //                        dataQueue.put(dm);
                         dataChunkBufferQueue.put(dm);
                         DataChunkMessage dmp = dataChunkBufferQueue.peek();
-                        logger.info("peek return: {}", dmp);
+//                        logger.info("peek return: {}", dmp);
 
                         if (total_bytes_sent >= totalBlockLength) {
-                            logger.info("Fetcher finished fetching.");
+                            logger.info("Fetcher finished fetching for {}", dstFilename);
                             break;
                         }
 
@@ -190,7 +190,7 @@ public class FlowGroupFetcher {
                     try {
                         agentSharedData.workerQueues.get(flowGroupInfo.faID)[pathID].put(new CTRL_to_WorkerMsg(dm));
                         // If sent, need to update status
-                        logger.info("Try to call onTransmit {}, size = {}", pathID, dm.getData().length);
+//                        logger.info("Try to call onTransmit {}, size = {}", pathID, dm.getData().length);
                         flowGroupInfo.onTransmit(dm.getData().length);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
