@@ -182,7 +182,7 @@ public class MasterRPCServer {
 
     private void onFinishFlowGroup(String fid, long timestamp) {
 
-        logger.info("Received FG_FIN for {}", fid);
+//        logger.info("Received FG_FIN for {}", fid);
         // set the current status
 
         // FIXME(future) Moved to onFileFinish

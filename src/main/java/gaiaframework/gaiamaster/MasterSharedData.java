@@ -100,7 +100,7 @@ public class MasterSharedData {
             return;
         }
         if (fg.getAndSetFinish(timestamp)) {
-            logger.warn("Finishing a flow that should have been finished {}", fg.getId());
+            logger.warn("Received FG_SENDING_FIN for a FG that should have been finished {}", fg.getId());
             return; // if already finished, do nothing.
         }
 
