@@ -212,7 +212,7 @@ public class FlowGroupFetcher {
     public void start() {
 
         // Use a threadpool to exec through all flowinfo
-        ExecutorService executor = Executors.newFixedThreadPool(1);
+        ExecutorService executor = Executors.newFixedThreadPool(Constants.FETCHER_THREADS);
 
         for (ShuffleInfo.FlowInfo finfo : flowGroupInfo.flowInfos) {
             executor.submit(new FileFetcherThread(finfo, dataChunkBufferQueue, Constants.HTTP_CHUNKSIZE, flowGroupInfo.fgID));
