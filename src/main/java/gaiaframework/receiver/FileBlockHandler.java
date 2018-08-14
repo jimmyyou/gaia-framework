@@ -89,12 +89,14 @@ public class FileBlockHandler {
 
     /**
      * Upon receiving the dataChunk, write it, and check if we have finished.
+     *
      * @param dataChunk
      * @return true if this is the last chunk
      */
     public boolean writeDataAndCheck(DataChunkMessage dataChunk) {
 
         // first write the data, then check if it is finished
+        long startTime = System.currentTimeMillis();
 
         long startIndex = dataChunk.getStartIndex();
 
@@ -145,10 +147,12 @@ public class FileBlockHandler {
 //            receivedChunks++;
             receivedBytes += dataChunk.getData().length;
 
-            logger.info("File {}, progress {} / {} ({})", filename, receivedBytes, totalSize_bytes, startIndex);
+            long deltaTime = System.currentTimeMillis() - startTime;
+            logger.info("File {}, progress {} / {} off: {} chunksize: {} took {} ms", filename, receivedBytes,
+                    totalSize_bytes, startIndex, dataChunk.getData().length, deltaTime);
 
             // how to support multipath?
-            if (receivedBytes >= totalSize_bytes){
+            if (receivedBytes >= totalSize_bytes) {
                 finishAndClose();
                 return true;
             }
@@ -176,7 +180,7 @@ public class FileBlockHandler {
             reqLength = dataChunk.getTotalFileLength();
         }
 
-        if (currentLength < reqLength){
+        if (currentLength < reqLength) {
             currentLength = reqLength;
             dataFile.setLength(currentLength);
         }

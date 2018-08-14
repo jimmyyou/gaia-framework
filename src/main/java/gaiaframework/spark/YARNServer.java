@@ -54,7 +54,7 @@ public class YARNServer extends GaiaAbstractServer {
         // Create the CF and submit it.
         String cfID = username + "_" + jobID;
 
-        logger.info("Pruning req: {} \n{}", cfID, flowsList.toArray());
+//        logger.info("Pruning req: {} \n{}", cfID, flowsList.toArray());
         Map<String, Map<String, List<ShuffleInfo.FlowInfo>>> groupedFlowInfo = pruneAndGroupFlowInfos(flowsList);
 
         if (flowsList.size() > 0) {
