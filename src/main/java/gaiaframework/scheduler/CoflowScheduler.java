@@ -566,12 +566,18 @@ public class CoflowScheduler extends Scheduler {
             }
 
             if (cfse != null && cfse.lastLPOutput != null) {
-                logger.info("Coflow {} (last) expected to complete in {} seconds", cfse.getCfID(), cfse.getLastLPOutput().completion_time_);
+                logger.info("Last schedule: Coflow {} expected to complete in {} seconds", cfse.getCfID(), cfse.getLastLPOutput().completion_time_);
             }
 //            bwrt.write(c.getId() + " " + e.cct + "\n");
 
             // schedule this CF
             MMCFOptimizer.MMCFOutput mmcf_out = MMCFOptimizer.glpk_optimizeNew(cfse, net_graph_, links_); // This is the recursive part.
+
+            if (mmcf_out != null) {
+                logger.info("This schedule: Coflow {} expected to complete in {} seconds", cfse.getCfID(), mmcf_out.completion_time_);
+            } else {
+                logger.info("This schedule: Coflow {} failed to run LP", cfse.getCfID());
+            }
 
             boolean all_flows_scheduled = true;
             for (Map.Entry<String, CoflowSchedulerEntry.FlowGroupSchedulerEntry> fgseE : cfse.getFlowgroups().entrySet()) {
