@@ -271,10 +271,10 @@ public class Master {
         try {
             scheduledFGOs = scheduler.scheduleRRF(currentTime);
 
-            for (Map.Entry<String, ScheduleOutputFG> fgoE : scheduledFGOs.entrySet()) {
-                ScheduleOutputFG fgo = fgoE.getValue();
-                logger.info("FGOID: {}, {} / {} : {}", fgoE.getKey(), fgo.getId(), fgo.getCoflow_id(), fgo.getFgoState());
-            }
+//            for (Map.Entry<String, ScheduleOutputFG> fgoE : scheduledFGOs.entrySet()) {
+//                ScheduleOutputFG fgo = fgoE.getValue();
+//                logger.info("FGOID: {}, {} / {} : {}", fgoE.getKey(), fgo.getId(), fgo.getCoflow_id(), fgo.getFgoState());
+//            }
 
             // generate and send rpc msgs. 1. parse FGState 2. gen msg 3. send msg
             generateAndSendCtrlMsg(scheduledFGOs);

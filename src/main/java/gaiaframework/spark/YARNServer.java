@@ -61,6 +61,7 @@ public class YARNServer extends GaiaAbstractServer {
             Coflow cf = generateCoflow(cfID, groupedFlowInfo);
             long cfGenTime = System.currentTimeMillis();
             logger.info("YARN Server generated CF: {}, took {} ms", cf.getId(), (cfGenTime - cfStartTime));
+            cf.setStartTime(cfStartTime);
 
             try {
                 // we first broadcast flowInfos

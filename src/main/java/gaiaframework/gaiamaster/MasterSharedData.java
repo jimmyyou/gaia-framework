@@ -36,13 +36,15 @@ public class MasterSharedData {
 
     // handles coflow finish.
     public synchronized boolean onFinishSendingCoflow(String coflowID) {
-        logger.info("Master: trying to finish Coflow {}", coflowID);
-
 
         // use the get and set method, to make sure that:
         // 1. the value is false before we send COFLOW_FIN
         // 2. the value must be set to true, after whatever we do.
         if (coflowPool.containsKey(coflowID) && !coflowPool.get(coflowID).finish(true)) {
+
+            // Time elapsed since Coflow submission.
+            long elapsedTime = System.currentTimeMillis() - coflowPool.get(coflowID).getStartTime();
+            logger.info("Master: Sending stage of Coflow {} finished! elapsed time: {} ms", coflowID, elapsedTime);
 
             this.flag_CF_FIN = true;
 
