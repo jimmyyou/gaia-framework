@@ -112,6 +112,16 @@ public class SimpleBestEfforWorker implements Runnable {
                 logger.info("Worker {} connected to {} : {} from {}, keepAlive {}", connID, faIP, faPort, dataSocket.getLocalSocketAddress(), dataSocket.getKeepAlive());
             } catch (BindException e) {
                 logger.warn("Bind failed, addr may be in use, retry in {} seconds", 5);
+
+                // sleep for some time
+                try {
+                    logger.error("Retry-connection in {} seconds", 5);
+                    Thread.sleep(5000);
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
+
+                continue;
             } catch (IOException e) {
                 logger.error("Error while connecting to {} {} from port {}", faIP, faPort, localPort);
                 e.printStackTrace();
