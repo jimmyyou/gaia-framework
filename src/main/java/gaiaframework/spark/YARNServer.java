@@ -159,6 +159,8 @@ public class YARNServer extends GaiaAbstractServer {
                 continue;
             }
 
+            flowCounter++;
+
             // Group the flowInfos
             if (groupedFlowInfo.containsKey(srcLoc)) {
                 if (groupedFlowInfo.get(srcLoc).containsKey(dstLoc)) {
@@ -167,7 +169,6 @@ public class YARNServer extends GaiaAbstractServer {
                     LinkedList<ShuffleInfo.FlowInfo> tmpList = new LinkedList<>();
                     tmpList.add(flowInfo);
                     groupedFlowInfo.get(srcLoc).put(dstLoc, tmpList);
-                    flowCounter++;
                 }
             } else {
                 HashMap<String, List<ShuffleInfo.FlowInfo>> tmpMap = new HashMap<String, List<ShuffleInfo.FlowInfo>>();
@@ -175,7 +176,6 @@ public class YARNServer extends GaiaAbstractServer {
                 tmpList.add(flowInfo);
                 tmpMap.put(dstLoc, tmpList);
                 groupedFlowInfo.put(srcLoc, tmpMap);
-                flowCounter++;
             }
         }
 
