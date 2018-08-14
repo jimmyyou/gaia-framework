@@ -96,7 +96,7 @@ public class FileBlockHandler {
     public boolean writeDataAndCheck(DataChunkMessage dataChunk) {
 
         // first write the data, then check if it is finished
-        long startTime = System.currentTimeMillis();
+        long startTime = System.nanoTime();
 
         long startIndex = dataChunk.getStartIndex();
 
@@ -147,8 +147,8 @@ public class FileBlockHandler {
 //            receivedChunks++;
             receivedBytes += dataChunk.getData().length;
 
-            long deltaTime = System.currentTimeMillis() - startTime;
-            logger.info("File {}, progress {} / {} off: {} chunksize: {} took {} ms", filename, receivedBytes,
+            long deltaTime = System.nanoTime() - startTime;
+            logger.info("File {}, progress {} / {} off: {} chunksize: {} took {} ns", filename, receivedBytes,
                     totalSize_bytes, startIndex, dataChunk.getData().length, deltaTime);
 
             // how to support multipath?

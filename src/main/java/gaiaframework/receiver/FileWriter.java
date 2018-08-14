@@ -50,16 +50,19 @@ public class FileWriter implements Runnable {
         DataChunkMessage dataChunk;
         while (true) {
             try {
+                long startTime = System.currentTimeMillis();
+
                 dataChunk = dataChunkQueue.take();
 
-                processData(dataChunk);
+                processData(dataChunk); // TODO, use multiple thread to write data
+
+                long deltaTime = System.currentTimeMillis() - startTime;
+                logger.info("ProcessData took {} ms", deltaTime);
 
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
         }
-
     }
 
     /**
