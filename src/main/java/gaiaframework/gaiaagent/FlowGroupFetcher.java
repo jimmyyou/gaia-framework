@@ -182,6 +182,7 @@ public class FlowGroupFetcher {
                         return;
                     } else {
                         // removed this debug output
+                        // TODO use poison pill may be better here?
 //                        logger.warn("Polling from buffer failed but FG remaining Volume = {}", flowGroupInfo.remainingVolume);
                     }
                 } else {

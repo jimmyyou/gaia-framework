@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.net.BindException;
 import java.net.Socket;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -109,6 +110,8 @@ public class SimpleBestEfforWorker implements Runnable {
                 dataSocket.setKeepAlive(true);
 
                 logger.info("Worker {} connected to {} : {} from {}, keepAlive {}", connID, faIP, faPort, dataSocket.getLocalSocketAddress(), dataSocket.getKeepAlive());
+            } catch (BindException e) {
+                logger.warn("Bind failed, addr may be in use, retry in {} seconds", 5);
             } catch (IOException e) {
                 logger.error("Error while connecting to {} {} from port {}", faIP, faPort, localPort);
                 e.printStackTrace();
