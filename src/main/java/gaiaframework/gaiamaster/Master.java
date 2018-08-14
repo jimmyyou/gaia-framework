@@ -332,12 +332,12 @@ public class Master {
                         //                        fgoToSend.add ( FlowGroup.toFlowGroup_Old(fg, 0).setFlowGroupState(FlowGroup_Old_Compressed.FlowGroupState.PAUSING) );
                     }
                 } else { // case: NEW/PAUSED
-                    logger.info("DEBUG: FG {} not in RUNNING state", fgID);
+//                    logger.info("DEBUG: FG {} not in RUNNING state", fgID);
                     if (scheduledFGOs.containsKey(fgID)) { // we take action only if the flow get (re)scheduled
                         if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.NEW) { // start the flow
                             fg.setFlowGroupState(FlowGroup.FlowGroupState.RUNNING);
                             scheduledFGOs.get(fgID).setFgoState(ScheduleOutputFG.FGOState.STARTING);
-                            logger.info("DEBUG: set fgo {} state to {}", fgID, scheduledFGOs.get(fgID).getFgoState());
+//                            logger.info("DEBUG: set fgo {} state to {}", fgID, scheduledFGOs.get(fgID).getFgoState());
 //                            fgoToSend.add(fgoHashMap.get(fg.getId()).setFlowState(FlowGroup_Old_Compressed.FlowState.STARTING));
                             masterSharedData.flowStartCnt++; // Simply for stats
                         } else if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.PAUSED) { // RESUME the flow

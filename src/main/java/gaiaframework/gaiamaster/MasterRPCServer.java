@@ -158,7 +158,7 @@ public class MasterRPCServer {
 
     public void handleFlowStatusReport(GaiaMessageProtos.FlowStatusReport statusReport) {
 
-        logger.info("DEBUG: Handle FSR: {}", statusReport);
+//        logger.info("DEBUG: Handle FSR: {}", statusReport);
 
         for (GaiaMessageProtos.FlowStatusReport.FlowStatus status : statusReport.getStatusList()) {
             // first get the current flowGroup ID
