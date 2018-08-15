@@ -149,12 +149,12 @@ public class FileWriter implements Runnable {
         SendingAgentServiceGrpc.SendingAgentServiceStub stub = SendingAgentServiceGrpc.newStub(grpcChannel);
         GaiaMessageProtos.FileFinishMsg request = GaiaMessageProtos.FileFinishMsg.newBuilder().setFilename(filename).build();
 
-        final CountDownLatch latch = new CountDownLatch(1);
+//        final CountDownLatch latch = new CountDownLatch(1);
         StreamObserver<GaiaMessageProtos.ACK> responseObserver = new StreamObserver<GaiaMessageProtos.ACK>() {
 
             @Override
             public void onNext(GaiaMessageProtos.ACK flowStatus_ack) {
-                latch.countDown();
+//                latch.countDown();
             }
 
             @Override
