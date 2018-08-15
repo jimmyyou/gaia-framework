@@ -55,7 +55,7 @@ public class FileWriter implements Runnable {
 
                 long startTime = System.currentTimeMillis();
 
-                processData(dataChunk); // TODO, use multiple thread to write data
+                processData(dataChunk); // TODO, use multiple thread to write data, throw this into a threadpool
 
                 long deltaTime = System.currentTimeMillis() - startTime;
                 logger.info("ProcessData took {} ms", deltaTime);
@@ -169,6 +169,7 @@ public class FileWriter implements Runnable {
         };
 
         stub.finishFile(request, responseObserver);
+//        stub.withDeadlineAfter(100, TimeUnit.MILLISECONDS).finishFile(request, responseObserver);
 
     }
 
