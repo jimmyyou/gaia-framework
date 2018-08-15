@@ -50,9 +50,10 @@ public class FileWriter implements Runnable {
         DataChunkMessage dataChunk;
         while (true) {
             try {
-                long startTime = System.currentTimeMillis();
 
                 dataChunk = dataChunkQueue.take();
+
+                long startTime = System.currentTimeMillis();
 
                 processData(dataChunk); // TODO, use multiple thread to write data
 
