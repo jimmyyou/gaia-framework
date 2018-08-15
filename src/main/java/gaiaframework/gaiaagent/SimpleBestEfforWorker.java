@@ -115,7 +115,7 @@ public class SimpleBestEfforWorker implements Runnable {
 
                 // sleep for some time
                 try {
-                    logger.error("Retry-connection in {} seconds", 5);
+//                    logger.error("Retry-connection in {} seconds", 5);
                     Thread.sleep(5000);
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
