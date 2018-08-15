@@ -28,7 +28,7 @@ public class FileWriter implements Runnable {
 
     LinkedBlockingQueue<DataChunkMessage> dataChunkQueue;
 
-    HashMap<String, FileBlockHandler> activeFileBlocks = new HashMap<String, FileBlockHandler>();
+    HashMap<String, FileBlockHandler> activeFileBlocks = new HashMap<>();
 
     boolean isOutputEnabled = true;
     private ManagedChannel grpcChannel;
@@ -118,7 +118,12 @@ public class FileWriter implements Runnable {
 
     }
 
+    /** Send FILE_FIN message, retry when failed. We must fork a thread here so that we can unblock
+     *
+     * @param filename
+     */
     void sendFileFIN_WithRetry(String filename) {
+//        long startTime = System.nanoTime();
         boolean retry = true;
         while (retry) {
             try {
@@ -131,8 +136,14 @@ public class FileWriter implements Runnable {
                 retry = false;
             }
         }
+//        long deltaTime = System.nanoTime() - startTime;
     }
 
+    /**
+     * Async send FileFIN. Don't need to explicitly wait for time out exception here.
+     * @param filename
+     * @throws RuntimeException
+     */
     void sendFileFIN(String filename) throws RuntimeException {
 
         SendingAgentServiceGrpc.SendingAgentServiceStub stub = SendingAgentServiceGrpc.newStub(grpcChannel);
@@ -148,6 +159,7 @@ public class FileWriter implements Runnable {
 
             @Override
             public void onError(Throwable t) {
+                throw new RuntimeException("error!");
             }
 
             @Override
@@ -157,9 +169,6 @@ public class FileWriter implements Runnable {
 
         stub.finishFile(request, responseObserver);
 
-        if (!Uninterruptibles.awaitUninterruptibly(latch, 3, TimeUnit.SECONDS)) {
-            throw new RuntimeException("timeout!");
-        }
     }
 
 
