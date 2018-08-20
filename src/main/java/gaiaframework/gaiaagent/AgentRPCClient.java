@@ -27,7 +27,7 @@ public class AgentRPCClient {
 
     volatile boolean isStreamReady = false;
 
-    public AgentRPCClient (String masterIP, int masterPort, AgentSharedData sharedData) {
+    public AgentRPCClient(String masterIP, int masterPort, AgentSharedData sharedData) {
         this(ManagedChannelBuilder.forAddress(masterIP, masterPort).usePlaintext(true).build());
         this.agentSharedData = sharedData;
         logger.info("Agent RPC Client connecting to {}:{}", masterIP, masterPort);
@@ -63,7 +63,6 @@ public class AgentRPCClient {
             public void onError(Throwable t) {
                 logger.error("ERROR in agent {} when calling path status update RPC: {}", agentSharedData.saID, t.toString());
                 t.printStackTrace();
-                // TODO retry??
             }
 
             @Override
@@ -91,7 +90,7 @@ public class AgentRPCClient {
     }
 
 
-    public void testStatusUpdate(){
+    public void testStatusUpdate() {
         GaiaMessageProtos.FlowStatusReport.FlowStatus.Builder fsBuilder = GaiaMessageProtos.FlowStatusReport.FlowStatus.newBuilder()
                 .setFinished(false).setId("test").setTransmitted(10);
         GaiaMessageProtos.FlowStatusReport.Builder statusReportBuilder = GaiaMessageProtos.FlowStatusReport.newBuilder();
@@ -99,7 +98,7 @@ public class AgentRPCClient {
 
         GaiaMessageProtos.FlowStatusReport statusReport = statusReportBuilder.build();
 
-        if ( !isStreamReady ) {
+        if (!isStreamReady) {
             initStream();
         }
 
@@ -116,22 +115,22 @@ public class AgentRPCClient {
 //    }
 
     // send the LinkStatus
-    public void sendPathStatus(GaiaMessageProtos.PathStatusReport pathStatusReport){
+    public void sendPathStatus(GaiaMessageProtos.PathStatusReport pathStatusReport) {
 
         synchronized (blockingStub) {
             blockingStub.updatePathStatus(pathStatusReport);
         }
     }
 
-    void asyncSendPathStatus(GaiaMessageProtos.PathStatusReport pathStatusReport){
-        synchronized (asyncStub){
+    void asyncSendPathStatus(GaiaMessageProtos.PathStatusReport pathStatusReport) {
+        synchronized (asyncStub) {
             asyncStub.updatePathStatus(pathStatusReport, pathStatusAckStreamObserver);
         }
     }
 
     // should only be called by the sender thread
     void sendFlowStatus(GaiaMessageProtos.FlowStatusReport statusReport) {
-        if ( !isStreamReady ) {
+        if (!isStreamReady) {
             initStream();
         }
         synchronized (this) {
@@ -140,4 +139,16 @@ public class AgentRPCClient {
         }
     }
 
+    /** send FG File FIN msg to master
+     *
+     * @param fgID
+     */
+    void sendFGFileFIN(String fgID) {
+        // reuse the flowStatusReport
+        GaiaMessageProtos.FlowStatusReport.FlowStatus.Builder fsBuilder = GaiaMessageProtos.FlowStatusReport.FlowStatus.newBuilder().setId(fgID);
+        GaiaMessageProtos.FlowStatusReport.Builder fgFileFINBuilder = GaiaMessageProtos.FlowStatusReport.newBuilder().addStatus(fsBuilder);
+
+        // Use the blocking stub
+        blockingStub.finishFGFile(fgFileFINBuilder.build());
+    }
 }

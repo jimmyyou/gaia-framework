@@ -23,6 +23,9 @@ public class TestClientNew {
 //            if (args.length > 0) {
 //                shuffleSize = Long.parseLong(args[0]);
 //            }
+            if(args.length == 0){
+                System.out.println("Usage: TestClientNew <srcIP> <dstIP> <file> <start> <length>");
+            }
 
             Map<String, String> mappersIP = new HashMap<String, String>();
             Map<String, String> reducersIP = new HashMap<String, String>();

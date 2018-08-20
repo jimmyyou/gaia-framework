@@ -3,9 +3,9 @@ package gaiaframework.gaiamaster;
 
 import gaiaframework.gaiaprotos.GaiaMessageProtos;
 import gaiaframework.gaiaprotos.SendingAgentServiceGrpc;
-import gaiaframework.network.FlowGroup_Old_Compressed;
 import gaiaframework.network.NetGraph;
 import gaiaframework.network.Pathway;
+import gaiaframework.scheduler.ScheduleOutputFG;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -79,10 +80,66 @@ public class MasterRPCClient {
         return blockingStub.prepareConnections(req);
     }
 
-    public void setFlow(Collection<FlowGroup_Old_Compressed> fgos, NetGraph ng, String saID) {
 
-        GaiaMessageProtos.FlowUpdate fum = buildFUM(fgos, ng, saID);
-        logger.info("Built the FUM\n {}", fum);
+    public void startExp() {
+        GaiaMessageProtos.Exp_CTRL hb = GaiaMessageProtos.Exp_CTRL.newBuilder().build();
+        blockingStub.controlExperiment(hb);
+    }
+
+    /**
+     * Sends flowGroupInfo to Agent, count down when finished.
+     *
+     * @param flowGroupList
+     * @param downLatch
+     */
+    public void SetFlowInfoList(List<FlowGroup> flowGroupList, CountDownLatch downLatch) {
+
+        GaiaMessageProtos.FlowGroupInfoBundle.Builder fgibBuilder = GaiaMessageProtos.FlowGroupInfoBundle.newBuilder();
+        for (FlowGroup fg : flowGroupList) {
+
+            GaiaMessageProtos.FlowGroupInfoMsg.Builder fgimBuilder = GaiaMessageProtos.FlowGroupInfoMsg.newBuilder();
+            fgimBuilder.addAllFlowInfos(fg.flowInfos);
+            fgimBuilder.setSrcLoc(fg.getSrcLocation());
+            fgimBuilder.setDstLoc(fg.getDstLocation());
+            fgimBuilder.setFgID(fg.getId());
+
+            fgibBuilder.addFgimsg(fgimBuilder);
+        }
+
+        StreamObserver<GaiaMessageProtos.ACK> observer = new StreamObserver<GaiaMessageProtos.ACK>() {
+            @Override
+            public void onNext(GaiaMessageProtos.ACK ack) {
+
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                throw new RuntimeException(throwable);
+            }
+
+            @Override
+            public void onCompleted() {
+                downLatch.countDown();
+                logger.info("Finish SetFlowInfoList for {}", targetIP);
+            }
+        };
+
+        logger.info("Sending FlowInfoBundle to {}", targetIP);
+        asyncStub.setRecFlowInfoList(fgibBuilder.build(), observer);
+    }
+
+    /**
+     * send FlowUpdateMessage, version 2.0.
+     *
+     * @param outputFGList
+     * @param netGraph
+     * @param saID
+     * @param masterSharedData
+     */
+    public void setFlowNew(List<ScheduleOutputFG> outputFGList, NetGraph netGraph, String saID, MasterSharedData masterSharedData) {
+
+        GaiaMessageProtos.FlowUpdate fum = buildFUMNew(outputFGList, netGraph, saID, masterSharedData);
+//        logger.info("Built the FUM\n {}", fum);
 
         if (!isStreamReady) {
             initStream();
@@ -90,95 +147,63 @@ public class MasterRPCClient {
 
         fumStreamObserver.onNext(fum);
         logger.info("FUM sent ({} Byte) for saID = {}", fum.getSerializedSize(), saID);
-
     }
 
-    public void submitSmallFlow(FlowGroup smallfg, Coflow coflow) {
-
-        // TODO
-        GaiaMessageProtos.SmallFlow.Builder sfb = GaiaMessageProtos.SmallFlow.newBuilder()
-                .setFilename(smallfg.getFilename()).setSrcIP(smallfg.srcIPs.get(0));
-
-        StreamObserver<GaiaMessageProtos.SmallFlow_ACK> SmallFlowReqObserver = new StreamObserver<GaiaMessageProtos.SmallFlow_ACK>() {
-            @Override
-            public void onNext(GaiaMessageProtos.SmallFlow_ACK smallFlow_ack) {
-
-            }
-
-            @Override
-            public void onError(Throwable throwable) {
-
-            }
-
-            @Override
-            public void onCompleted() {
-                // TODO check here
-                logger.info("Finished Small Flow {}", smallfg.filename);
-                coflow.isSmallFlowDoneLatch.countDown();
-
-            }
-        };
-
-        asyncStub.fetchSmallFlow(sfb.build(), SmallFlowReqObserver);
-    }
-
-    public GaiaMessageProtos.FlowUpdate buildFUM(Collection<FlowGroup_Old_Compressed> fgos, NetGraph ng, String saID) {
-
+    private GaiaMessageProtos.FlowUpdate buildFUMNew(List<ScheduleOutputFG> outputFGList, NetGraph netGraph, String saID, MasterSharedData masterSharedData) {
         GaiaMessageProtos.FlowUpdate.Builder fumBuilder = GaiaMessageProtos.FlowUpdate.newBuilder();
 
         // first sort all fgos according to the RA.
-        Map<String, List<FlowGroup_Old_Compressed>> fgobyRA = fgos.stream().collect(Collectors.groupingBy(FlowGroup_Old_Compressed::getDst_loc));
+        Map<String, List<ScheduleOutputFG>> fgobyRA = outputFGList.stream().collect(Collectors.groupingBy(ScheduleOutputFG::getDst_loc));
 
-        for (Map.Entry<String, List<FlowGroup_Old_Compressed>> entrybyRA : fgobyRA.entrySet()) {
+        for (Map.Entry<String, List<ScheduleOutputFG>> entrybyRA : fgobyRA.entrySet()) {
 
 //            String raID = entrybyRA.getKey();
 
             GaiaMessageProtos.FlowUpdate.RAUpdateEntry.Builder raueBuilder = GaiaMessageProtos.FlowUpdate.RAUpdateEntry.newBuilder();
             raueBuilder.setRaID(entrybyRA.getKey());
 
-            for (FlowGroup_Old_Compressed fgo : entrybyRA.getValue()) { // for each FGO of this RA, we create an FlowUpdateEntry
-                assert (saID.equals(fgo.getSrc_loc()));
-                String fgoID = fgo.getId();
+            for (ScheduleOutputFG sofg : entrybyRA.getValue()) { // for each FGO of this RA, we create an FlowUpdateEntry
+                assert (saID.equals(sofg.getSrc_loc()));
+                String fgoID = sofg.getId();
 
                 GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Builder fueBuilder = GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.newBuilder();
                 fueBuilder.setFlowID(fgoID);
 
-                if (fgo.getFlowState() == FlowGroup_Old_Compressed.FlowState.INIT) {
-                    logger.error("ERROR: FUM message contains flows that have not been scheduled");
-                    continue;
-                } else if (fgo.getFlowState() == FlowGroup_Old_Compressed.FlowState.PAUSING) {
-                    fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.PAUSE);
-                } else if (fgo.getFlowState() == FlowGroup_Old_Compressed.FlowState.STARTING ||
-                        fgo.getFlowState() == FlowGroup_Old_Compressed.FlowState.CHANGING) { // STARTING && CHANGING
+                switch (sofg.getFgoState()) {
+                    case SCHEDULED:
+                        logger.error("ERROR: FUM message contains flows that have not be make_path()");
+                        continue; // skip this sofg.
+//                        break;
 
-                    if (fgo.getFlowState() == FlowGroup_Old_Compressed.FlowState.STARTING) {
-                        fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.START);
+                    case PAUSING:
+                        fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.PAUSE);
+                        break;
 
-                        // This is not the list of filenames, so should not be used here.
-//                        fueBuilder.setFilename(fgo.getFilename()); // set the filename only for the start message
-
-                        // also send the List<FlowInfo> along with the info
-                        fueBuilder.addAllFlowInfos(fgo.flowInfos);
-
-                        // also send the IP
-                        // TODO integrate IP into fields of FlowInfo
-                        fueBuilder.addAllSrcIP(fgo.srcIPs);
-                        fueBuilder.addAllDstIP(fgo.dstIPs);
-
-                    } else {
-                        fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.CHANGE);
-                    }
-
-                    fueBuilder.setRemainingVolume(fgo.remaining_volume());
-                    for (Pathway p : fgo.paths) {
-                        int pathID = ng.get_path_id(p);
-                        if (pathID != -1) {
-                            fueBuilder.addPathToRate(GaiaMessageProtos.FlowUpdate.PathRateEntry.newBuilder().setPathID(pathID).setRate(p.getBandwidth() * 1000000));
+                    case STARTING:
+                    case CHANGING:
+                        if (sofg.getFgoState() == ScheduleOutputFG.FGOState.STARTING) {
+                            fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.START);
+                            // IMPORTANT: also send the List<FlowInfo> along with the START FUM
+                            fueBuilder.addAllFlowInfos(masterSharedData.coflowPool.get(sofg.getCoflow_id()).getFlowGroup(sofg.getId()).flowInfos);
                         } else {
-                            System.err.println("FATAL: illegal path!");
-//                    System.exit(1); // don't fail yet!
+                            fueBuilder.setOp(GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.CHANGE);
                         }
-                    }
+
+                        // FIXME: this message field is deprecated? We can tell after implementing agent.
+                        fueBuilder.setRemainingVolume(masterSharedData.coflowPool.get(sofg.getCoflow_id()).getFlowGroup(sofg.getId()).getRemainingVolume());
+
+                        for (Pathway p : sofg.paths) {
+                            int pathID = netGraph.get_path_id(p);
+                            if (pathID != -1) {
+                                fueBuilder.putPathIDToRateMap(pathID, p.getBandwidth() * 1000000);
+//                                fueBuilder.addPathToRate(GaiaMessageProtos.FlowUpdate.PathRateEntry.newBuilder().setPathID(pathID).setRate(p.getBandwidth() * 1000000));
+                            } else {
+                                logger.error("FATAL: illegal path for {}", sofg.getId());
+//                                System.exit(1); // don't fail yet!
+                            }
+                        }
+
+                        break;
                 }
 
                 raueBuilder.addFges(fueBuilder);
@@ -188,10 +213,5 @@ public class MasterRPCClient {
         } // end of creating all the RAUpdateEntry
 
         return fumBuilder.build();
-    }
-
-    public void startExp() {
-        GaiaMessageProtos.Exp_CTRL hb = GaiaMessageProtos.Exp_CTRL.newBuilder().build();
-        blockingStub.controlExperiment(hb);
     }
 }

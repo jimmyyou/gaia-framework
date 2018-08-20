@@ -1,6 +1,8 @@
-package gaiaframework.gaiaagent;
+package gaiaframework.transmission;
 
 // Data Chunk to be transferred by agents
+
+// TODO(future): It would be better if we can make dataChunk be like a stream (can be easily divided into arbitrary size)
 
 import java.io.Serializable;
 

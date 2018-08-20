@@ -18,8 +18,6 @@ import java.util.concurrent.ScheduledFuture;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 
-@SuppressWarnings("Duplicates")
-
 public class SendingAgent {
     private static final Logger logger = LogManager.getLogger();
     protected static Configuration config;
@@ -99,7 +97,7 @@ public class SendingAgent {
             e.printStackTrace();
         }
 
-        // TODO: wait for the status become READY, then start the Client
+        // wait for the status become READY, then start the Client
         logger.info("Waiting for the READY status before starting the gRPC client");
 
         try {
@@ -117,7 +115,7 @@ public class SendingAgent {
 //        final Runnable sendStatus = () -> sharedData.rpcClient.sendStatusUpdate();
         final Runnable sendStatus = () -> sharedData.pushStatusUpdate();
 
-        (new Thread ( new CTRLMsgSenderThread(sharedData)) ).start();
+//        (new Thread ( new CTRLMsgSenderThread(sharedData)) ).start();
 
         ScheduledFuture<?> mainHandler = statusReportExec.scheduleAtFixedRate(sendStatus, 0, Constants.STATUS_MESSAGE_INTERVAL_MS, MILLISECONDS);
 

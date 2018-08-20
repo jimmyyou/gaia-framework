@@ -1,12 +1,9 @@
 package gaiaframework.gaiamaster;
 
 import gaiaframework.gaiaprotos.GaiaMessageProtos;
-import gaiaframework.spark.YARNMessages;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -16,16 +13,17 @@ public class MasterSharedData {
     volatile ConcurrentHashMap<String, Coflow> coflowPool;
 
     // index for searching flowGroup in this data structure.
-    // only need to add entry, no need to delete entry. TODO verify this.
+    // only need to add entry, no need to delete entry.
+    // TODO(future) implement delete entry.
     private volatile ConcurrentHashMap<String, Coflow> flowIDtoCoflow;
-    volatile HashMap<String, Coflow> fileNametoCoflow;
+//    volatile HashMap<String, Coflow> fileNametoCoflow;
 
     volatile boolean flag_CF_ADD = false;
     volatile boolean flag_CF_FIN = false;
     volatile boolean flag_FG_FIN = false;
 
     // move this event queue here because the RPC server module need to access it
-    protected LinkedBlockingQueue<YARNMessages> yarnEventQueue = new LinkedBlockingQueue<YARNMessages>();
+//    protected LinkedBlockingQueue<YARNMessages> yarnEventQueue = new LinkedBlockingQueue<YARNMessages>();
     LinkedBlockingQueue<GaiaMessageProtos.PathStatusReport> linkStatusQueue = new LinkedBlockingQueue<>();
 
 /*        public AtomicBoolean flag_CF_ADD = new AtomicBoolean(false);
@@ -37,18 +35,21 @@ public class MasterSharedData {
     int flowFINCnt = 0;
 
     // handles coflow finish.
-    public synchronized boolean onFinishCoflow(String coflowID) {
-        logger.info("Master: trying to finish Coflow {}", coflowID);
-
+    public synchronized boolean onFinishSendingCoflow(String coflowID) {
 
         // use the get and set method, to make sure that:
         // 1. the value is false before we send COFLOW_FIN
         // 2. the value must be set to true, after whatever we do.
         if (coflowPool.containsKey(coflowID) && !coflowPool.get(coflowID).finish(true)) {
 
+            // Time elapsed since Coflow submission.
+            long elapsedTime = System.currentTimeMillis() - coflowPool.get(coflowID).getStartTime();
+            logger.info("Master: Sending stage of Coflow {} finished! elapsed time: {} ms", coflowID, elapsedTime);
+
             this.flag_CF_FIN = true;
 
-            coflowPool.remove(coflowID);
+            // We don't remove it right now, only remove when returning to YARN.
+//            coflowPool.remove(coflowID);
 
             return true;
         }
@@ -56,17 +57,24 @@ public class MasterSharedData {
         return false;
     }
 
-    public synchronized void addCoflow(String id, Coflow cf) { // trim the co-located flowgroup before adding!
+    /**
+     * submit Coflow to masterSharedData.coflowPool, so it will be scheduled
+     *
+     * @param id
+     * @param cf
+     */
+    public synchronized void onSubmitCoflow(String id, Coflow cf) { // trim the co-located flowgroup before adding!
         // first add index
         for (FlowGroup fg : cf.getFlowGroups().values()) {
             flowIDtoCoflow.put(fg.getId(), cf);
-
-            if (!fileNametoCoflow.containsKey(fg.getFilename())) {
-                fileNametoCoflow.put(fg.getFilename(), cf);
-            }
+//
+//            if (!fileNametoCoflow.containsKey(fg.getFilename())) {
+//                fileNametoCoflow.put(fg.getFilename(), cf);
+//            }
         }
         //  then add coflow
         coflowPool.put(id, cf);
+        this.flag_CF_ADD = true;
     }
 
 
@@ -78,14 +86,13 @@ public class MasterSharedData {
         }
     }
 
-    // TODO: set the concurrency level.
     public MasterSharedData() {
         this.coflowPool = new ConcurrentHashMap<>();
         this.flowIDtoCoflow = new ConcurrentHashMap<>();
-        this.fileNametoCoflow = new HashMap<>();
+//        this.fileNametoCoflow = new HashMap<>();
     }
 
-    public void onFinishFlowGroup(String fid, long timestamp) {
+    public void onFinishSendingFlowGroup(String fid, long timestamp) {
 
         flowFINCnt++;
 
@@ -95,7 +102,7 @@ public class MasterSharedData {
             return;
         }
         if (fg.getAndSetFinish(timestamp)) {
-            logger.warn("Finishing a flow that should have been finished {}", fg.getId());
+            logger.warn("Received FG_SENDING_FIN for a FG that should have been finished {}", fg.getId());
             return; // if already finished, do nothing.
         }
 
@@ -117,12 +124,13 @@ public class MasterSharedData {
         // if so set coflow status, send COFLOW_FIN
         if (flag) {
             String coflowID = fg.getOwningCoflowID();
-            if (onFinishCoflow(coflowID)) {
-                try {
-                    yarnEventQueue.put(new YARNMessages(coflowID));
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            if (onFinishSendingCoflow(coflowID)) {
+                // No need for YARNMsg now.
+//                try {
+//                    yarnEventQueue.put(new YARNMessages(coflowID));
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
             }
         }
     }
@@ -143,7 +151,7 @@ public class MasterSharedData {
         }
     }
 
-    public void onFileFIN(FlowGroup fg, Coflow cf) {
+    public void onFGFileFIN(FlowGroup fg, Coflow cf) {
         if (fg == null) {
             logger.error("FATAL: fg == null when file fin");
             return;
@@ -161,6 +169,17 @@ public class MasterSharedData {
 
         cf.isCoflowFileFinishedLatch.countDown();
         logger.info("Counting down for cf {} : {}", cf.getId(), cf.isCoflowFileFinishedLatch.getCount());
+
+    }
+
+    public void onCoflowTransmissionFinish(String cfID) {
+        // check if the owning coflow is finished
+        Coflow cf = coflowPool.get(cfID);
+        if (cf != null) {
+            coflowPool.remove(cfID);
+        } else {
+            logger.warn("Try to remove CF when it is not in cfPool");
+        }
 
     }
 }

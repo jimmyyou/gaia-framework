@@ -1,89 +1,130 @@
 package gaiaframework.gaiaagent;
 
-// This class tracks the FlowInformation for sending Agent.
-// worker looks up information from here
+/**
+ * Stores information of FlowGroup for Sending Agent. version 2.0
+ */
 
+import com.google.common.util.concurrent.AtomicDouble;
+import com.google.common.util.concurrent.RateLimiter;
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
-import gaiaframework.transmission.DataChunkMessage;
+import gaiaframework.gaiaprotos.GaiaMessageProtos;
+import gaiaframework.util.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FlowGroupInfo {
 
     private static final Logger logger = LogManager.getLogger();
+    final String fgID;
+    final String faID;
+    final int pathSize;
+    final long totalVolume;
+    final AgentSharedData agentSharedData;
 
-    String MapAttemptID;
-    String ReduceAttemptID;
-    String fileName;
+    // Because we create one chunk for each path, so we don't really need total rate. (we will sum up the rate on the fly)
+    //    HashMap<Integer, RateLimiter> rateLimiterHashMap = new HashMap<>();
+    final ArrayList<RateLimiter> rateLimiterArrayList;
+    final ArrayList<AtomicDouble> pathTokenRateArrayList;
 
-    // TODO pass in this information!
-    String srcHostIP;
-    String dstHostIP;
+    @Deprecated
+    LinkedList<ShuffleInfo.FlowInfo> flowInfos = new LinkedList<>();
 
-    AggFlowGroupInfo parentFlowInfo;
+    volatile long remainingVolume;
+//    volatile double rate;
 
-    volatile double rate;
+    // TODO(future) combine finished and isFinished.
+    volatile boolean finished = false;
+    AtomicBoolean isFinished = new AtomicBoolean(false);
 
-    AgentSharedData agentSharedData;
+//    Thread fetcher;
 
-    LinkedBlockingQueue<DataChunkMessage> dataQueue;
-    Thread fetcher;
+    public FlowGroupInfo(AgentSharedData agentSharedData, String forwardingAgentID, String fgID, GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fue) {
 
-    public FlowGroupInfo(AggFlowGroupInfo parent, ShuffleInfo.FlowInfo flowInfo, String srcIP, String dstIP) {
-        this.fileName = flowInfo.getDataFilename();
-        this.MapAttemptID = flowInfo.getMapAttemptID();
-        this.ReduceAttemptID = flowInfo.getReduceAttemptID();
-        this.parentFlowInfo = parent;
+        this.fgID = fgID;
+        this.faID = forwardingAgentID;
+        this.agentSharedData = agentSharedData;
+        this.pathSize = this.agentSharedData.netGraph.apap_.get(this.agentSharedData.saID).get(faID).size();
+        this.rateLimiterArrayList = new ArrayList<>(pathSize);
+        this.pathTokenRateArrayList = new ArrayList<>(pathSize);
 
-        this.srcHostIP = srcIP;
-        this.dstHostIP = dstIP;
-
-        this.agentSharedData = parent.agentSharedData;
-
-        this.dataQueue = new LinkedBlockingQueue<>();
-
-        fetcher = new Thread(new RemoteHTTPFetcher(this, flowInfo, dataQueue, srcHostIP, dstHostIP));
-
-        fetcher.start();
-
-    }
-
-    public LinkedBlockingQueue<DataChunkMessage> getDataQueue() {
-        return dataQueue;
-    }
-
-
-    public void transmit(long volume) {
-
-        ArrayList<AggFlowGroupInfo> to_remove = new ArrayList<>();
-
-        boolean done = parentFlowInfo.transmit(volume);
-
-        if (done) { // meaning parent AggFlowGroup is done.
-
-            logger.info("{} finished transmission", this.parentFlowInfo.getID());
-            //
-            // wait until GAIA told us to stop, then stop. (although might cause a problem here.)
-
-            to_remove.add(parentFlowInfo);
+        if (fue.getOp() != GaiaMessageProtos.FlowUpdate.FlowUpdateEntry.Operation.START) {
+            logger.error("FATAL: starting FG {}, but OP != START", fgID);
         }
 
-        for (AggFlowGroupInfo afgi : to_remove) {
+        logger.info("FlowGroupInfo: summing volume");
+        this.totalVolume = fue.getFlowInfosList().stream().mapToLong(ShuffleInfo.FlowInfo::getFlowSize).sum();
+        this.remainingVolume = totalVolume;
+//        logger.info("");
+//        this.remainingVolume = fue.getRemainingVolume();
+//        this.totalVolume = fue.getRemainingVolume();
+        logger.info("FlowGroupInfo: add flowInfos");
+        this.flowInfos.addAll(fue.getFlowInfosList());
 
-            String afgID = afgi.getID(); // fgID == fgiID
+        // init rateLimiterArrayList
 
-            // don't remove for now!
-//            agentSharedData.aggFlowGroups.remove(afgi.getID());
+        for (int i = 0; i < pathSize; i++) {
+            RateLimiter rateLimiter = RateLimiter.create(Constants.DEFAULT_TOKEN_RATE);
+            this.rateLimiterArrayList.add(rateLimiter);
+        }
+        // init pathTokenRateArrayList
+        setRateLimiters(fue.getPathIDToRateMapMap());
+    }
 
-            // maybe not needing to delete here?
-//            agentSharedData.subscriptionRateMaps.get(faID).get(pathID).remove(afgID);
+    /**
+     * Method to set the rates for this FlowGroup, must be synchronized.
+     *
+     * @param PathToRateMap
+     */
+    public synchronized void setRateLimiters(Map<Integer, Double> PathToRateMap) {
 
-            agentSharedData.finishFlow(afgID);
+        // Iterate through all rate limiters. set the rate.
+        for (int i = 0; i < pathSize; i++) {
+            pathTokenRateArrayList.add(new AtomicDouble(0));
 
+            // Search for rate in Entries
+            if (PathToRateMap.containsKey(i)) {
+                logger.info("setRateLimiters() set path {} to rate {}", i, PathToRateMap.get(i));
+                double tokenRate = PathToRateMap.get(i) / Constants.HTTP_CHUNKSIZE;
+                if (tokenRate > Constants.DOUBLE_EPSILON) {
+                    // TODO verify this: convert to token rate. also check if rate is zero
+                    logger.info("{} : {} token rate to {}", fgID, i, tokenRate);
+                    rateLimiterArrayList.get(i).setRate(tokenRate);
+                    pathTokenRateArrayList.get(i).set(tokenRate);
+                } else {
+                    // rate can't be zero
+                    rateLimiterArrayList.get(i).setRate(Constants.DEFAULT_TOKEN_RATE);
+                    pathTokenRateArrayList.get(i).set(0);
+                }
+            } else {
+                // This path has zero rate.
+                // rate can't be zero
+                rateLimiterArrayList.get(i).setRate(Constants.DEFAULT_TOKEN_RATE);
+                pathTokenRateArrayList.get(i).set(0);
+            }
+        }
+    }
 
+    public void setPauseFlowGroup() {
+        // pause Flow Group by setting rate limiter to 0
+        // Iterate through all rate limiters. set the rate.
+        for (int i = 0; i < pathSize; i++) {
+            // rate can't be zero
+            rateLimiterArrayList.get(i).setRate(Constants.DEFAULT_TOKEN_RATE);
+            pathTokenRateArrayList.get(i).set(0);
+        }
+    }
+
+    public synchronized void onTransmit(int length) {
+        remainingVolume -= length;
+        if (remainingVolume == 0) {
+            if (!isFinished.getAndSet(true)) {
+                // We are the first to observe the finish
+                finished = true;
+                agentSharedData.finishFlow(fgID);
+            }
         }
     }
 }

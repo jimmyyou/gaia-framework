@@ -19,21 +19,30 @@ service SendingAgentService {
     rpc ChangeFlow (stream FlowUpdate) returns (FUM_ACK) {}
     rpc ControlExperiment (Exp_CTRL) returns (Exp_CTRL_ACK) {}
     rpc FetchSmallFlow (SmallFlow) returns (SmallFlow_ACK) {}
+    rpc SetRecFlowInfoList (FlowGroupInfoBundle) returns (ACK) {}
+    rpc FinishFile (FileFinishMsg) returns (ACK) {}
     //    rpc GetShuffleSize(ShuffleInfoReq) returns (ShuffleFiles) {}
 }
+
+//service ForwardingAgentService {
+//    rpc SetFlowInfoList (FlowGroupInfoMsg) returns (GeneralACK) {}
+//    rpc FinishFile (FileFinishMsg) returns (FlowStatus_ACK) {}
+//}
 
 // service for reporting to Master
 service MasterService {
     rpc UpdateFlowStatus (stream FlowStatusReport) returns (FlowStatus_ACK) {}
     rpc UpdatePathStatus (PathStatusReport) returns (PathStatus_ACK) {}
-    rpc FinishFile( FileFinishMsg ) returns(FlowStatus_ACK) {}
+    // Borrow FlowStatusReport Msg here.
+    rpc FinishFGFile (FlowStatusReport) returns (ACK) {}
+//    rpc FinishFile (FileFinishMsg) returns (FlowStatus_ACK) {}
     //    rpc StreamUpdatePathStatus (stream PathStatusReport) returns (PathStatus_ACK) {}
 }
 
 message FlowStatusReport {
     message FlowStatus {
         string id = 1;
-        double transmitted = 2;
+        double transmitted = 2; // TODO change to long. Also change all rate related number to long etc.
         bool finished = 3;
     }
 
@@ -55,10 +64,10 @@ message PathStatusReport {
 // rates are grouped by [raID][flowID][pathID]
 message FlowUpdate {
 
-    message PathRateEntry {
-        int32 pathID = 1;
-        double rate = 2;
-    }
+//    message PathRateEntry {
+//        int32 pathID = 1;
+//        double rate = 2;
+//    }
 
     message FlowUpdateEntry {
         double remainingVolume = 1;
@@ -70,13 +79,15 @@ message FlowUpdate {
         }
         Operation op = 3;
         // path to rate mapping
-        repeated PathRateEntry pathToRate = 4;
+//        repeated PathRateEntry pathToRate = 4;
         //        map <int32, double> pathToRate = 3;
         //        string filename = 5;
+        map<int32, double> pathIDToRateMap = 4;
 
         repeated ShuffleInfo.FlowInfo flowInfos = 5;
-        repeated string srcIP = 6;
-        repeated string dstIP = 7;
+
+//        repeated string srcIP = 6;
+//        repeated string dstIP = 7;
     }
 
     message RAUpdateEntry {
@@ -88,6 +99,20 @@ message FlowUpdate {
     // Collectors.groupingBy() should enforce that multiple RAUEntry all have different raID
 }
 
+// Msg to change the rate of a FlowGroup
+//message FlowGroupRate {
+//
+//    enum Operation {
+//        START = 0;
+//        CHANGE = 1;
+//        PAUSE = 2;
+//    }
+//    Operation op = 1;
+//
+//
+//    repeated FlowGroupInfoMsg sendingFGIs = 5; // this is optional
+//
+//}
 
 message SmallFlow {
     string srcIP = 1;
@@ -101,6 +126,17 @@ message PAMessage {
     int32 port_no = 4;
 }
 
+message FlowGroupInfoMsg {
+    string fgID = 1;
+    string srcLoc = 2;
+    string dstLoc = 3;
+    repeated ShuffleInfo.FlowInfo flowInfos = 4;
+}
+
+message FlowGroupInfoBundle {
+    repeated FlowGroupInfoMsg fgimsg = 1;
+}
+
 message PAM_REQ {
     //    bool finished = 1;
 }
@@ -110,6 +146,8 @@ message FUM_ACK {}
 message FlowStatus_ACK {}
 
 message PathStatus_ACK {}
+
+message ACK {}
 
 message Exp_CTRL {
     enum CTRL_Operation {

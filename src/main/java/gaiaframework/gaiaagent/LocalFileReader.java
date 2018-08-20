@@ -2,6 +2,7 @@ package gaiaframework.gaiaagent;
 
 // A thread that reads the file into its blocking queue, until EOF
 
+import gaiaframework.transmission.DataChunk;
 import gaiaframework.util.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

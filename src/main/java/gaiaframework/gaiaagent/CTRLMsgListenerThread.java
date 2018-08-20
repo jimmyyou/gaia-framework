@@ -1,5 +1,8 @@
 package gaiaframework.gaiaagent;
 
+/**
+ * This is the Event loop to handle messages from Master. Version 2.0 still uses event loop here.
+ */
 // For coordinating the workers in the SA.
 // serialize the status report from workers.
 // decode messages from CTRL.
@@ -11,7 +14,6 @@ import org.apache.logging.log4j.Logger;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
-@SuppressWarnings("Duplicates")
 
 public class CTRLMsgListenerThread implements Runnable {
     private static final Logger logger = LogManager.getLogger();
@@ -43,7 +45,7 @@ public class CTRLMsgListenerThread implements Runnable {
 
                 int count_ChangeFailed = 0;
                 for (gaiaframework.gaiaprotos.GaiaMessageProtos.FlowUpdate.RAUpdateEntry rau : m.getRAUpdateList()) {
-                    String raID = rau.getRaID();
+                    String receivingAgentID = rau.getRaID();
 
                     for (gaiaframework.gaiaprotos.GaiaMessageProtos.FlowUpdate.FlowUpdateEntry fge : rau.getFgesList()) {
                         String fgID = fge.getFlowID();
@@ -51,19 +53,19 @@ public class CTRLMsgListenerThread implements Runnable {
                         switch (fge.getOp()) {
                             case START:
 
-                                agentSharedData.startFlow(raID, fgID, fge);
+                                agentSharedData.startFlowGroup(receivingAgentID, fgID, fge);
                                 break;
 
                             case CHANGE:
 
-                                boolean res = agentSharedData.changeFlow(raID, fgID, fge);
+                                boolean res = agentSharedData.changeFlowGroup(receivingAgentID, fgID, fge);
                                 if (!res) {
                                     count_ChangeFailed++;
                                 }
                                 break;
 
                             case PAUSE: // only pause the FG, no rate set
-                                agentSharedData.pauseFlow(raID, fgID, fge);
+                                agentSharedData.pauseFlowGroup(receivingAgentID, fgID, fge);
                                 break;
 
                             case UNRECOGNIZED:
@@ -96,7 +98,6 @@ public class CTRLMsgListenerThread implements Runnable {
                 } // end loop for raID
 
                 // notify all subscribed workers..? or maybe all workers?
-                // FIXME: notify all workers!!?
 /*                for( String raID : agentSharedData.subscriptionRateMaps.keySet()) {
                     ArrayList<ConcurrentHashMap<String , SubscriptionInfo> > al = agentSharedData.subscriptionRateMaps.get(raID);
                     for (int i = 0 ; i < al.size() ; i++){ // i = pathID..?

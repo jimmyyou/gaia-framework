@@ -2,17 +2,16 @@ package gaiaframework.receiver;
 
 // Receiving Agent, only used to receive data
 
-import gaiaframework.gaiaagent.DataChunk;
 import gaiaframework.transmission.DataChunkMessage;
-import gaiaframework.util.Configuration;
-import gaiaframework.util.Constants;
 import org.apache.commons.cli.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class ReceivingAgent {
@@ -27,10 +26,12 @@ public class ReceivingAgent {
     public static void main(String[] args) {
 
         int port = 33330;
+        String masterHostname = "localhost";
 
         Options options = new Options();
         options.addOption("p", "port", true, "port to listen on");
         options.addOption("n", "no-output-file", false, "do not write to file");
+        options.addOption("mh", "master-hostname", true, "hostname of master of this DC.");
 
         HelpFormatter formatter = new HelpFormatter();
 
@@ -54,16 +55,31 @@ public class ReceivingAgent {
                 logger.info("Using port {}", port);
             }
 
+            if (cmd.hasOption("mh")) {
+                masterHostname = cmd.getOptionValue("mh");
+                logger.info("Using master hostname: {}", masterHostname);
+            } else {
+                // try to infer from local
+                try {
+                    InetAddress myHost = InetAddress.getLocalHost();
+                    String localHostname = myHost.getHostName();
+                    masterHostname = "dc" + localHostname.substring(1, 2) + "master";
+                    logger.info("Inferring master hostname from {} : {}", localHostname, masterHostname);
+                } catch (UnknownHostException ex) {
+                    ex.printStackTrace();
+                }
+            }
+
         } catch (ParseException e) {
             e.printStackTrace();
         }
 
-        startNormalServer(port, isOutputEnabled);
+        startNormalServer(port, isOutputEnabled, masterHostname);
 
     }
 
 
-    private static void startNormalServer(int port, boolean isOutputEnabled) {
+    private static void startNormalServer(int port, boolean isOutputEnabled, String masterHostname) {
 
         ServerSocket sd;
         int conn_cnt = 0;
@@ -86,7 +102,7 @@ public class ReceivingAgent {
             });
 
             // start filewriter thread
-            fileWriterThread = new Thread(new FileWriter(dataQueue, isOutputEnabled));
+            fileWriterThread = new Thread(new FileWriter(dataQueue, isOutputEnabled, masterHostname));
             fileWriterThread.start();
 
             while (true) {

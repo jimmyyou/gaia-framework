@@ -1,5 +1,7 @@
 package gaiaframework.util;
 
+import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
+
 import java.util.HashMap;
 
 public class Constants {
@@ -29,7 +31,7 @@ public class Constants {
     // in milliseconds.
     public static final int SIMULATION_TIMESTEP_MILLI = 10;
 
-    public static final double SIMULATION_TIMESTEP_SEC = (double)SIMULATION_TIMESTEP_MILLI / (double)MILLI_IN_SECOND;
+    public static final double SIMULATION_TIMESTEP_SEC = (double) SIMULATION_TIMESTEP_MILLI / (double) MILLI_IN_SECOND;
 
     // The number of milliseconds in an epoch. An epoch is
     // a period during which jobs may be scheduled. By
@@ -45,7 +47,7 @@ public class Constants {
 
     public static final int BUFFER_SIZE = 64 * 1024 * 1024;
 
-    public static final int DEFAULT_TOKEN_RATE = 10;
+    public static final int DEFAULT_TOKEN_RATE = 100;
     public static final long EXPERIMENT_INTERVAL = 60000; // 60s between experiments
     public static final long SOCKET_RETRY_MILLIS = 5000;
     public static final int DEFAULT_SOCKET_TIMEOUT = 10000;
@@ -53,8 +55,11 @@ public class Constants {
     public static final int MAX_CHUNK_SIZE_Bytes = 64 * 1024;
     public static final int SENDER_QUEUE_LENGTH = 1000;
     public static final String SCHEDULER_NAME_GAIA = "gaia";
-    public static final int HTTP_CHUNKSIZE = 8192;
+//    public static final int HTTP_CHUNKSIZE = 8192;
+    public static final int HTTP_CHUNKSIZE = 32768;
     public static final int DEFAULT_HTTP_SERVER_PORT = 20020;
+    public static final int FETCHER_QUEUE_LENGTH = 100; // TODO: check other queue length
+    public static final int FETCHER_THREADS = 2;
 
     public static HashMap<String, String> node_id_to_trace_id;
 
@@ -70,5 +75,24 @@ public class Constants {
         // FlowGroup ids are of the form <job_id>:<coflow_id>:<flow_id>
         String[] splits = id.split(":");
         return splits[0] + ":" + splits[1];
+    }
+
+    /**
+     * A universal converter for converting to dstFilename.
+     * DstFileName = origfile-reduceAttemptID-stageID.data ; stageID =
+     *
+     * @param flowInfo
+     * @param fgID
+     * @return
+     */
+    public static String getDstFileName(ShuffleInfo.FlowInfo flowInfo, String fgID) {
+
+        int off0 = fgID.indexOf("_");
+        int off1 = fgID.indexOf("_", off0 + 1); // app-shuffle_stage:*
+        int off2 = fgID.indexOf(":");
+        String stageID = fgID.substring(off1 + 1, off2);
+
+        String srcFilename = flowInfo.getDataFilename();
+        return srcFilename.substring(0, srcFilename.lastIndexOf('.')) + "-" + flowInfo.getReduceAttemptID() + "-" + stageID + ".data";
     }
 }

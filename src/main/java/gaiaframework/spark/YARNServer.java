@@ -4,32 +4,31 @@ import edu.umich.gaialib.GaiaAbstractServer;
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.gaiamaster.Coflow;
 import gaiaframework.gaiamaster.FlowGroup;
+import gaiaframework.gaiamaster.Master;
+import gaiaframework.gaiamaster.MasterSharedData;
 import gaiaframework.util.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class YARNServer extends GaiaAbstractServer {
 
     private static final Logger logger = LogManager.getLogger();
     private final boolean isDebugMode;
-    LinkedBlockingQueue<Coflow> cfQueue;
+    MasterSharedData msData;
     Configuration configuration;
     BufferedWriter bwrt;
+    Master ms;
 
-    public YARNServer(Configuration config, int port, LinkedBlockingQueue<Coflow> coflowQueue, boolean isDebugMode) {
+    public YARNServer(Configuration config, int port, MasterSharedData masterSharedData, boolean isDebugMode, Master ms) {
         super(port);
-        this.cfQueue = coflowQueue;
+        this.msData = masterSharedData;
         this.configuration = config;
         this.isDebugMode = isDebugMode;
+        this.ms = ms;
 
         try {
             bwrt = new BufferedWriter(new java.io.FileWriter("/tmp/terra.txt"));
@@ -40,6 +39,13 @@ public class YARNServer extends GaiaAbstractServer {
         }
     }
 
+    /**
+     * A blocking method to generate and process Coflow requests, block until Coflow finish.
+     *
+     * @param username
+     * @param jobID
+     * @param flowsList
+     */
     @Override
     public void processReq(String username, String jobID, List<ShuffleInfo.FlowInfo> flowsList) {
 
@@ -48,56 +54,44 @@ public class YARNServer extends GaiaAbstractServer {
         // Create the CF and submit it.
         String cfID = username + "_" + jobID;
 
-        // Aggregate all the flows by their Data Center location
-        // Gaia only sees Data Centers
-        // How to deal with co-located flows?
+//        logger.info("Pruning req: {} \n{}", cfID, flowsList.toArray());
+        Map<String, Map<String, List<ShuffleInfo.FlowInfo>>> groupedFlowInfo = pruneAndGroupFlowInfos(flowsList);
 
-        HashMap<String, FlowGroup> coSiteFGs = new HashMap<>();
-        HashMap<String, FlowGroup> flowGroups = new HashMap<>();
-        HashMap<String, FlowGroup> indexFiles = new HashMap<>();
+        if (flowsList.size() > 0) {
+            Coflow cf = generateCoflow(cfID, groupedFlowInfo);
+            long cfGenTime = System.currentTimeMillis();
+            logger.info("YARN Server generated CF: {}, took {} ms", cf.getId(), (cfGenTime - cfStartTime));
+            cf.setStartTime(cfStartTime);
 
-        generateFlowGroups_noAgg(cfID, flowsList, coSiteFGs, flowGroups, indexFiles);
+            try {
+                // we first broadcast flowInfos
+                ms.broadcastFlowInfo(cf); // blocking!!
+                long cfBCTime = System.currentTimeMillis();
+                logger.info("Broadcast FlowInfo for CF: {}, took {} ms", cf.getId(), (cfBCTime - cfGenTime));
+                // submit coflow to scheduler, no need to broadcast flowInfos, only broadcast the first time we schedule
+                msData.onSubmitCoflow(cfID, cf);
 
-        logger.error("{} co-located FG received by Gaia", coSiteFGs.size());
-
-
-        try {
-
-            if (flowGroups.size() == 0) {
-                logger.error("FATAL: CF {} is empty, skipping and returning to YARN", cfID);
-                // TODO Check this in the future, should not happen.
-                SCPTransferFiles_Serial(indexFiles);
-//            SCPTransferFiles(indexFiles);
-                return;
-            } else {
-
-                if (indexFiles.size() != 0) {
-                    logger.warn("Received some index file, ignoring");
-                }
-
-                Coflow cf = new Coflow(cfID, flowGroups);
-                logger.info("YARN Server submitting CF: {}", cf.getId());
-
-                cfQueue.put(cf);
                 logger.info("Coflow {} submitted, total vol: {}", cf.getId(), (long) cf.getTotalVolume());
                 bwrt.write("Coflow " + cf.getId() + " submitted, total vol: " + (long) cf.getTotalVolume() + "\n");
                 bwrt.flush();
 
                 cf.blockTillFinish();
+                msData.onCoflowTransmissionFinish(cfID);
 
                 long cfEndTime = System.currentTimeMillis();
                 logger.info("Coflow {} finished in {} ms, returning to YARN", cfID, (cfEndTime - cfStartTime));
                 bwrt.write("Coflow " + cf.getId() + " finished in (ms) " + (cfEndTime - cfStartTime) + "\n");
                 bwrt.flush();
+            } catch (InterruptedException e) {
+                logger.error("ERROR occurred while submitting coflow");
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-
-        } catch (InterruptedException e) {
-            logger.error("ERROR occurred while submitting coflow");
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } else {
+            logger.error("FATAL: CF {} is empty, skipping and returning to YARN", cfID);
+            return;
         }
-
 
         if (isDebugMode) {
             System.out.println("Finished Shuffle, continue?");
@@ -110,332 +104,112 @@ public class YARNServer extends GaiaAbstractServer {
 
     }
 
-    private void SCPTransferFiles(HashMap<String, FlowGroup> fgsToSCP) {
+    /**
+     * Prune a list of flowInfo of {co-located, co-sited, index files, zero-volumed}. And group them by {srcLoc, dstLoc}
+     *
+     * @param flowList
+     * @return groupedFlowInfo
+     */
+    private Map<String, Map<String, List<ShuffleInfo.FlowInfo>>> pruneAndGroupFlowInfos(List<ShuffleInfo.FlowInfo> flowList) {
 
-        // Create a list of cmds;
-        List<String> cmds = new ArrayList<>();
-        for (FlowGroup fg : fgsToSCP.values()) {
+        int flowCounter = 0;
+        int beforePrune = flowList.size();
 
-            String filepath = fg.getFilename();
+        // iterate through the list and prune
+        Iterator<ShuffleInfo.FlowInfo> iter = flowList.iterator();
+        Map<String, Map<String, List<ShuffleInfo.FlowInfo>>> groupedFlowInfo = new HashMap<>();
 
-            if (fg.dstIPs.size() > 1) {
-                logger.error("indexFiles FG have multiple dstIP!");
-            }
-
-            String trimmedDirPath = filepath.substring(0, filepath.lastIndexOf("/"));
-            String cmd_mkdir = "ssh jimmyyou@" + fg.dstIPs.get(0) + " mkdir -p " + trimmedDirPath;
-            String cmd_scp = "scp " + fg.srcIPs.get(0) + ":" + filepath + " " + fg.dstIPs.get(0) + ":" + filepath;
-            String cmd = cmd_mkdir + " ; " + cmd_scp;
-
-            cmds.add(cmd);
-
-        }
-        // Then remove duplicate commands
-        List<String> dedupedCmds = cmds.stream().distinct().collect(Collectors.toList());
-        logger.info("Trimmed {} SCP commands", (cmds.size() - dedupedCmds.size()));
-
-        List<Process> pool = new ArrayList<>();
-        for (String cmd : cmds) {
-            Process p = null;
-            try {
-
-                p = Runtime.getRuntime().exec(cmd);
-                pool.add(p);
-                logger.info("Exec (submitted): {}", cmd);
-
-/*                String line;
-                BufferedReader bri = new BufferedReader(new InputStreamReader(p.getInputStream()));
-                while ((line = bri.readLine()) != null) {
-                    System.out.println(line);
-                }
-
-                bri = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-                while ((line = bri.readLine()) != null) {
-                    System.out.println(line);
-                }*/
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        // Wait for all cmd to finish
-        logger.info("Waiting for SCP file transfer");
-        for (Process p : pool) {
-            try {
-                p.waitFor();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        logger.info("SCP file transfer finished");
-    }
-
-    private void SCPTransferFiles_Serial(HashMap<String, FlowGroup> fgsToSCP) throws InterruptedException {
-
-        long startTime = System.currentTimeMillis();
-
-        // Create a list of cmds;
-        List<String> cmds = new ArrayList<>();
-        for (FlowGroup fg : fgsToSCP.values()) {
-
-            String filepath = fg.getFilename();
-
-            if (fg.dstIPs.size() > 1) {
-                logger.error("indexFiles FG have multiple dstIP!");
-            }
-
-            String trimmedDirPath = filepath.substring(0, filepath.lastIndexOf("/"));
-            String cmd_mkdir = "ssh jimmyyou@" + fg.dstIPs.get(0) + " mkdir -p " + trimmedDirPath;
-            String cmd_scp = "scp " + fg.srcIPs.get(0) + ":" + filepath + " " + fg.dstIPs.get(0) + ":" + filepath;
-            String cmd = cmd_mkdir + " ; " + cmd_scp;
-
-            cmds.add(cmd);
-
-        }
-
-        // Then remove duplicate commands
-        List<String> dedupedCmds = cmds.stream().distinct().collect(Collectors.toList());
-        logger.info("Trimmed {} SCP commands", (cmds.size() - dedupedCmds.size()));
-
-        for (String cmd : dedupedCmds) {
-            logger.info("Invoking {}", cmd);
-
-            Process p = null;
-            try {
-                p = Runtime.getRuntime().exec(cmd);
-                p.waitFor();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        logger.info("SCP file transfer finished, took {} ms", (System.currentTimeMillis() - startTime));
-
-        /*for (String cmd : cmds) {
-            Process p = null;
-            try {
-
-                p = Runtime.getRuntime().exec(cmd);
-                pool.add(p);
-                logger.info("Exec: {}", cmd);
-
-*//*                String line;
-                BufferedReader bri = new BufferedReader(new InputStreamReader(p.getInputStream()));
-                while ((line = bri.readLine()) != null) {
-                    System.out.println(line);
-                }
-
-                bri = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-                while ((line = bri.readLine()) != null) {
-                    System.out.println(line);
-                }*//*
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-*/
-
-
-    }
-
-    /*// generate aggFlowGroups from req using an IP to ID mapping
-    // this is the version with aggregation
-    // Location encoding starts from 0
-    // id - job_id:srcStage:dstStage:srcLoc-dstLoc // encoding task location info.
-    // src - srcLoc
-    // dst - dstLoc
-    // owningCoflowID - dstStage
-    // Volume - divided_data_size
-    private HashMap<String, FlowGroup> generateFlowGroups(String cfID, ShuffleInfo req, HashMap<String, FlowGroup> coLocatedFGs,
-                                                          HashMap<String, FlowGroup> aggFlowGroups, HashMap<String, FlowGroup> indexFileFGs) {
-
-        // first store all flows into aggFlowGroups, then move the co-located ones to coLocatedFGs
-
-        // for each FlowInfo, first find the fgID etc.
-        for (ShuffleInfo.FlowInfo flowInfo : req.getFlowsList()) {
-
-            String mapID = flowInfo.getMapAttemptID();
-            String redID = flowInfo.getReduceAttemptID();
+        while (iter.hasNext()) {
+            ShuffleInfo.FlowInfo flowInfo = iter.next();
 
 //            String srcIP = hardCodedURLResolver(flowInfo.getMapperIP());
 //            String dstIP = hardCodedURLResolver(flowInfo.getReducerIP());
             String srcIP = (flowInfo.getMapperIP());
             String dstIP = (flowInfo.getReducerIP());
 
-
             String srcLoc = getTaskLocationIDfromIP(srcIP);
             String dstLoc = getTaskLocationIDfromIP(dstIP);
-
-//            String srcLoc = getTaskLocationIDfromIP(srcIP);
-//            String dstLoc = getTaskLocationIDfromIP(dstIP);
-
-*//*            String srcLoc = getTaskLocationID(mapID, req);
-            String dstLoc = getTaskLocationID(redID, req);
-
-            String srcIP = getRawAddrfromTaskID(mapID, req).split(":")[0];
-            String dstIP = getRawAddrfromTaskID(redID, req).split(":")[0];*//*
-
-
-            String afgID = cfID + ":" + srcLoc + '-' + dstLoc;
-            String fgID = cfID + ":" + mapID + ":" + redID + ":" + srcLoc + '-' + dstLoc;
-
-            // Filter same location
-            if (srcLoc.equals(dstLoc)) continue;
-
-            // check if we already have this fg.
-            if (aggFlowGroups.containsKey(afgID)) {
-                FlowGroup fg = aggFlowGroups.get(afgID);
-
-                fg.flowInfos.add(flowInfo);
-                fg.srcIPs.add(srcIP);
-                fg.dstIPs.add(dstIP);
-                fg.addTotalVolume(flowInfo.getFlowSize());
-
-                logger.info("WARN: Add Flow {} to existing FG {}", flowInfo.getDataFilename(), afgID);
-
-            } else {
-
-                // Gaia now uses bytes as the volume
-                long flowVolume = flowInfo.getFlowSize();
-                if (flowVolume == 0) flowVolume = 1;
-                FlowGroup fg = new FlowGroup(afgID, srcLoc, dstLoc, cfID, flowVolume,
-                        flowInfo.getDataFilename(), mapID, redID);
-                fg.flowInfos.add(flowInfo);
-                fg.srcIPs.add(srcIP);
-                fg.dstIPs.add(dstIP);
-                aggFlowGroups.put(afgID, fg);
-
-                // Filter out all co-located flows
-                if (srcLoc.equals(dstLoc)) {
-                    coLocatedFGs.put(fgID, fg);
-                }
-
-                // Filter index files
-                if (flowInfo.getDataFilename().endsWith("index")) {
-                    logger.info("Got an index file {}", flowInfo.getDataFilename());
-                    indexFileFGs.put(fgID, fg);
-                }
-
-
-            }
-        }
-
-        for (String key : coLocatedFGs.keySet()) {
-            aggFlowGroups.remove(key);
-        }
-
-        return aggFlowGroups;
-    }
-*/
-
-    // generate aggFlowGroups from req using an IP to ID mapping
-    // this is the version without aggregation
-    // Location encoding starts from 0
-    // id - job_id:srcStage:dstStage:srcLoc-dstLoc // encoding task location info.
-    // src - srcLoc
-    // dst - dstLoc
-    // owningCoflowID - dstStage
-    // Volume - divided_data_size
-    private HashMap<String, FlowGroup> generateFlowGroups_noAgg(String cfID, List<ShuffleInfo.FlowInfo> flowList, HashMap<String, FlowGroup> coSiteFGs,
-                                                                HashMap<String, FlowGroup> outputFlowGroups, HashMap<String, FlowGroup> indexFileFGs) {
-
-        // first store all flows into aggFlowGroups, then move the co-located ones to coLocatedFGs
-
-        // for each FlowInfo, first find the fgID etc.
-        for (ShuffleInfo.FlowInfo flowInfo : flowList) {
-
-            String mapID = flowInfo.getMapAttemptID();
-            String redID = flowInfo.getReduceAttemptID();
-
-//            String srcIP = hardCodedURLResolver(flowInfo.getMapperIP());
-//            String dstIP = hardCodedURLResolver(flowInfo.getReducerIP());
-            String srcIP = (flowInfo.getMapperIP());
-            String dstIP = (flowInfo.getReducerIP());
-
-
-            String srcLoc = getTaskLocationIDfromIP(srcIP);
-            String dstLoc = getTaskLocationIDfromIP(dstIP);
-
-//            String srcLoc = getTaskLocationIDfromIP(srcIP);
-//            String dstLoc = getTaskLocationIDfromIP(dstIP);
-
-/*            String srcLoc = getTaskLocationID(mapID, req);
-            String dstLoc = getTaskLocationID(redID, req);
-
-            String srcIP = getRawAddrfromTaskID(mapID, req).split(":")[0];
-            String dstIP = getRawAddrfromTaskID(redID, req).split(":")[0];*/
-
-
-//            String afgID = cfID + ":" + srcLoc + '-' + dstLoc;
-            String fgID = cfID + ":" + mapID + ":" + redID + ":" + srcLoc + '-' + dstLoc;
 
             // Filter same host
             if (srcIP.equals(dstIP)) {
-                logger.warn("Ignoring Co-located {} {}", fgID, flowInfo.getDataFilename());
+                logger.warn("Ignoring Co-located {}:{} {}", srcIP, dstIP, flowInfo.getDataFilename());
+                iter.remove();
                 continue;
             }
 
-            // Gaia now uses bytes as the volume
+            // Filter same site
+            assert srcLoc != null;
+            if (srcLoc.equals(dstLoc)) {
+                logger.warn("Ignoring Co-sited {}:{} {}", srcIP, dstIP, flowInfo.getDataFilename());
+                iter.remove();
+                continue;
+            }
+
+            // Filter volume < 1 flow
             long flowVolume = flowInfo.getFlowSize();
-            if (flowVolume == 0) {
-                flowVolume = 1;
-                // FIXME Terra now ignores flowVol = 0 flows
-                logger.warn("Ignoring size=0 flow {} {} ", fgID, flowInfo.getDataFilename());
+            if (flowVolume <= 0) {
+                logger.warn("Ignoring size={} flow {}:{} {} ", flowVolume, srcIP, dstIP, flowInfo.getDataFilename());
+                iter.remove();
                 continue;
             }
-            FlowGroup fg = new FlowGroup(fgID, srcLoc, dstLoc, cfID, flowVolume,
-                    flowInfo.getDataFilename(), mapID, redID);
-            fg.flowInfos.add(flowInfo);
-            fg.srcIPs.add(srcIP);
-            fg.dstIPs.add(dstIP);
-
 
             // Filter index files
             if (flowInfo.getDataFilename().endsWith("index")) {
-                logger.info("Got an index file {}", flowInfo.getDataFilename());
-                indexFileFGs.put(fgID, fg);
-            } else if (!srcLoc.equals(dstLoc)) { // Not co-sited FGs
-                // Filter coSited flows
-                outputFlowGroups.put(fgID, fg);
-            } else { // co-sited FGs
-                logger.warn("Got an co-sited flow {} {}", fgID, fg.getFilename());
-                coSiteFGs.put(fgID, fg);
+                logger.warn("Ignoring index files {}:{} {}", srcIP, dstIP, flowInfo.getDataFilename());
+                iter.remove();
+                continue;
             }
 
-        }
+            flowCounter++;
 
-        // use this method to remove co-located
-        for (String key : coSiteFGs.keySet()) {
-            outputFlowGroups.remove(key);
-            logger.warn("Removing co-sited FG {}", key);
-        }
-
-        return outputFlowGroups;
-    }
-
-
-    // TODO need to change this mechanism in the future // if same mapID and same dstLoc -> redundant
-    private HashMap<String, FlowGroup> removeRedundantFlowGroups(HashMap<String, FlowGroup> inFlowGroups) {
-        HashMap<String, FlowGroup> ret = new HashMap<>();
-
-        for (Map.Entry<String, FlowGroup> fe : inFlowGroups.entrySet()) {
-
-            boolean reduandant = false;
-            for (Map.Entry<String, FlowGroup> rete : ret.entrySet()) {
-                if (rete.getValue().getDstLocation().equals(fe.getValue().getDstLocation()) &&
-                        rete.getValue().getMapID().equals(fe.getValue().getMapID())) {
-                    reduandant = true;
+            // Group the flowInfos
+            if (groupedFlowInfo.containsKey(srcLoc)) {
+                if (groupedFlowInfo.get(srcLoc).containsKey(dstLoc)) {
+                    groupedFlowInfo.get(srcLoc).get(dstLoc).add(flowInfo);
+                } else {
+                    LinkedList<ShuffleInfo.FlowInfo> tmpList = new LinkedList<>();
+                    tmpList.add(flowInfo);
+                    groupedFlowInfo.get(srcLoc).put(dstLoc, tmpList);
                 }
-            }
-            // check if this fe needs to be put in ret
-
-            if (!reduandant) {
-                ret.put(fe.getKey(), fe.getValue());
+            } else {
+                HashMap<String, List<ShuffleInfo.FlowInfo>> tmpMap = new HashMap<String, List<ShuffleInfo.FlowInfo>>();
+                LinkedList<ShuffleInfo.FlowInfo> tmpList = new LinkedList<>();
+                tmpList.add(flowInfo);
+                tmpMap.put(dstLoc, tmpList);
+                groupedFlowInfo.put(srcLoc, tmpMap);
             }
         }
 
-        return ret;
+        logger.info("Prune {} flowInfos to {}", beforePrune, flowCounter);
+        return groupedFlowInfo;
     }
+
+    /**
+     * Generate Coflow from a List of ShuffleInfo.FlowInfo
+     *
+     * @param cfID
+     * @param groupedFlowInfos
+     * @return
+     */
+    private Coflow generateCoflow(String cfID, Map<String, Map<String, List<ShuffleInfo.FlowInfo>>> groupedFlowInfos) {
+
+        HashMap<String, FlowGroup> fgMap = new HashMap<>();
+
+        for (Map.Entry<String, Map<String, List<ShuffleInfo.FlowInfo>>> srcEntry : groupedFlowInfos.entrySet()) {
+            String srcLoc = srcEntry.getKey();
+            for (Map.Entry<String, List<ShuffleInfo.FlowInfo>> dstEntry : srcEntry.getValue().entrySet()) {
+                String dstLoc = dstEntry.getKey();
+                List<ShuffleInfo.FlowInfo> flowInfos = dstEntry.getValue();
+
+                // Create FG after extracted info, and add to coflow
+                FlowGroup flowGroup = new FlowGroup(cfID, srcLoc, dstLoc, flowInfos);
+                fgMap.put(flowGroup.getId(), flowGroup);
+            }
+        }
+
+        return new Coflow(cfID, fgMap);
+    }
+
 
     // 1. find the IP for this task using ShuffleInfo (first look in MapIP, then in ReduceIP)
     // 2. find the DCID for this IP?
@@ -487,63 +261,5 @@ public class YARNServer extends GaiaAbstractServer {
         return null;
     }*/
 
-    private String hardCodedURLResolver(String url) {
-        // New version on "new3" experiment
-        if (url.equals("clnode075.clemson.cloudlab.us:8042")) {
-            return "10.0.1.1";
-        }
-        if (url.equals("clnode049.clemson.cloudlab.us:8042")) {
-            return "10.0.1.2";
-        }
-        if (url.equals("clnode053.clemson.cloudlab.us:8042")) {
-            return "10.0.1.3";
-        }
 
-        if (url.equals("clnode048.clemson.cloudlab.us:8042")) {
-            return "10.0.2.1";
-        }
-        if (url.equals("clnode052.clemson.cloudlab.us:8042")) {
-            return "10.0.2.2";
-        }
-        if (url.equals("clnode096.clemson.cloudlab.us:8042")) {
-            return "10.0.2.3";
-        }
-
-
-        if (url.equals("clnode058.clemson.cloudlab.us:8042")) {
-            return "10.0.3.1";
-        }
-        if (url.equals("clnode067.clemson.cloudlab.us:8042")) {
-            return "10.0.3.2";
-        }
-        if (url.equals("clnode055.clemson.cloudlab.us:8042")) {
-            return "10.0.3.3";
-        }
-
-/*        if(url.equals("clnode045.clemson.cloudlab.us:8042")){
-            return "10.0.1.1";
-        }
-
-        if(url.equals("clnode072.clemson.cloudlab.us:8042")){
-            return "10.0.1.2";
-        }
-
-        if(url.equals("clnode062.clemson.cloudlab.us:8042")){
-            return "10.0.1.3";
-        }
-
-        if(url.equals("clnode093.clemson.cloudlab.us:8042")){
-            return "10.0.2.3";
-        }
-
-        if(url.equals("clnode056.clemson.cloudlab.us:8042")){
-            return "10.0.2.1";
-        }
-
-        if(url.equals("clnode088.clemson.cloudlab.us:8042")){
-            return "10.0.2.2";
-        }*/
-
-        return url;
-    }
 }

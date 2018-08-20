@@ -1,6 +1,5 @@
 package gaiaframework.receiver;
 
-import gaiaframework.gaiaagent.DataChunk;
 import gaiaframework.transmission.DataChunkMessage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

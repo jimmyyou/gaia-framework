@@ -6,6 +6,7 @@ package gaiaframework.gaiaagent;
  3. ready
 */
 
+import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.gaiaprotos.GaiaMessageProtos;
 import gaiaframework.gaiaprotos.SendingAgentServiceGrpc;
 import gaiaframework.network.NetGraph;
@@ -17,7 +18,6 @@ import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -41,7 +41,7 @@ public class AgentRPCServer {
 
     // data structures from the SAAPI
     AgentSharedData sharedData;
-    private int fumaxsize = 0;
+    private int fumaxsize = 0; // Max bytes that this agentRPCServer has received.
 
     public AgentRPCServer(String id, NetGraph net_graph, Configuration config, AgentSharedData sharedData) {
         this.config = config;
@@ -67,10 +67,6 @@ public class AgentRPCServer {
                 System.err.println("*** server shut down");
             }
         }); // end of Shutdown Hook
-
-
-        // TODO forward the FUM message
-
     }
 
     public void stop() {
@@ -97,8 +93,7 @@ public class AgentRPCServer {
 
             if (sharedData.saState != AgentSharedData.SAState.IDLE) {
                 logger.error("Received Prepare Connection message when not IDLE");
-                // TODO error handling
-//                    responseObserver.onError();
+                responseObserver.onError(new RuntimeException("Received Prepare Connection message when not IDLE"));
             }
 
             sharedData.saState = AgentSharedData.SAState.CONNECTING;
@@ -132,7 +127,8 @@ public class AgentRPCServer {
                         GaiaMessageProtos.PAMessage reply = GaiaMessageProtos.PAMessage.newBuilder().setSaId(saID).setRaId(ra_id).setPathId(i).setPortNo(port).build();
                         responseObserver.onNext(reply);
 
-                        // Start the worker Thread TODO: handle thread failure/PConn failure
+                        // Start the worker Thread
+                        // TODO(future) handle thread failure/PConn failure
 /*                        Thread wt = new Thread( new WorkerThread_New(conn_id, ra_id , i , queues[i] , sharedData,
                                 config.getFAIP(raID) , config.getFAPort(raID), port ) );*/
 
@@ -220,7 +216,7 @@ public class AgentRPCServer {
                 }
             }
 
-            // TODO: add bwm-ng command
+            // TODO(future) add bwm-ng command
             if (expName != null) {
                 logger.info("Agent start working for experiment {}", expName);
             }
@@ -250,12 +246,76 @@ public class AgentRPCServer {
                                    io.grpc.stub.StreamObserver<gaiaframework.gaiaprotos.GaiaMessageProtos.SmallFlow_ACK> responseObserver) {
 
             fetchFile(request.getFilename(), request.getSrcIP());
+            responseObserver.onNext(GaiaMessageProtos.SmallFlow_ACK.getDefaultInstance());
+            responseObserver.onCompleted();
+        }
+
+        /**
+         * RPC handler for FILEFIN msg, sent from RA to Agent(SA)
+         *
+         * @param request
+         * @param responseObserver
+         */
+        @Override
+        public void finishFile(gaiaframework.gaiaprotos.GaiaMessageProtos.FileFinishMsg request,
+                               io.grpc.stub.StreamObserver<gaiaframework.gaiaprotos.GaiaMessageProtos.ACK> responseObserver) {
+
+            logger.info("Received FILEFIN msg for {}", request);
+            sharedData.onSingleFILEFIN(request.getFilename());
+
+            responseObserver.onNext(GaiaMessageProtos.ACK.getDefaultInstance());
+            responseObserver.onCompleted();
+        }
+
+        /**
+         * Process FlowGroupInfoBundle msg. store the mapping of filename to fg, into shared state.
+         *
+         * @param request
+         * @param responseObserver
+         */
+        @Override
+        public void setRecFlowInfoList(gaiaframework.gaiaprotos.GaiaMessageProtos.FlowGroupInfoBundle request,
+                                       io.grpc.stub.StreamObserver<gaiaframework.gaiaprotos.GaiaMessageProtos.ACK> responseObserver) {
+            for (GaiaMessageProtos.FlowGroupInfoMsg fgimsg : request.getFgimsgList()) {
+                // Check if we are the receiving side of the FG.
+                if (fgimsg.getDstLoc().equals(saID)) {
+
+                    // Upon every File_FIN, we will count down, and after counting down to 0, we send a FG_FILE_FIN to master.
+                    CountDownLatch fgFilesCountLatch = new CountDownLatch(fgimsg.getFlowInfosCount());
+
+                    // create a fileName to FG(latch) mapping, we only need a fileName to Latch mapping right?
+                    for (ShuffleInfo.FlowInfo flowInfo : fgimsg.getFlowInfosList()) {
+                        String dstFileName = Constants.getDstFileName(flowInfo, fgimsg.getFgID());
+
+                        sharedData.dstFilenameToLatchMap.put(dstFileName, fgFilesCountLatch);
+                    }
+
+                    // A listener for the latch
+                    Runnable latchListener = () -> {
+                        try {
+                            fgFilesCountLatch.await();
+                            // Then send out msg.
+                            logger.info("Received all File_FIN msg for {}", fgimsg.getFgID());
+                            sharedData.pushFGFileAllFinished(fgimsg.getFgID());
+
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    };
+                    (new Thread(latchListener)).start();
+
+                } else {
+                    logger.error("ERROR: received {} \n but expected dstLoc = {}", fgimsg, saID);
+                }
+            }
+
+            responseObserver.onNext(GaiaMessageProtos.ACK.getDefaultInstance());
             responseObserver.onCompleted();
         }
 
         // non-stream version
 /*        @Override
-        public void changeFlow(gaiaframework.gaiaprotos.GaiaMessageProtos.FlowUpdate request,
+        public void changeFlowGroup(gaiaframework.gaiaprotos.GaiaMessageProtos.FlowUpdate request,
                                io.grpc.stub.StreamObserver<gaiaframework.gaiaprotos.GaiaMessageProtos.FUM_ACK> responseObserver) {
             if (saState != SAState.READY) {
                 logger.error("Received changeFLow when not READY");
@@ -330,7 +390,6 @@ public class AgentRPCServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
 
     }
 }

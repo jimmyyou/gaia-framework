@@ -2,10 +2,7 @@ package gaiaframework.gaiamaster;
 
 // The new coflow definition. used by GAIA master, YARN emulator etc.
 
-import com.google.errorprone.annotations.DoNotCall;
-import gaiaframework.network.Coflow_Old_Compressed;
-import gaiaframework.network.FlowGroup_Old_Compressed;
-import gaiaframework.util.Constants;
+
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -20,13 +17,10 @@ public class Coflow {
     private final String id;
     private final double totalVolume;
     CountDownLatch isDoneLatch;
-    public CountDownLatch isSmallFlowDoneLatch;
     CountDownLatch isCoflowFileFinishedLatch;
 
     // list of flowgroups: final? ArrayList or ConcurrentHashMap?
     private HashMap<String, FlowGroup> flowGroups;
-
-    HashMap<String, FlowGroup> smallFlows;
 
     // multiple FGs may finish concurrently leading to the finish of Coflow.
     private AtomicBoolean finished = new AtomicBoolean(false);
@@ -45,23 +39,6 @@ public class Coflow {
         this.totalVolume = flowGroups.values().stream().mapToDouble(FlowGroup::getTotalVolume).sum();
     }
 
-    /**
-
-     * Create a Coflow with FlowGroups, and small flows (flows that are sent directly, without scheduling)
-     *
-     * @param id
-     * @param flowGroups
-     * @param smallFlows
-     */
-    @Deprecated
-    public Coflow(String id, HashMap<String, FlowGroup> flowGroups, HashMap<String, FlowGroup> smallFlows) {
-        this.id = id;
-        this.flowGroups = flowGroups;
-        this.smallFlows = smallFlows;
-        this.isDoneLatch = new CountDownLatch(1);
-        this.isSmallFlowDoneLatch = new CountDownLatch(smallFlows.size());
-        this.totalVolume = flowGroups.values().stream().mapToDouble(FlowGroup::getTotalVolume).sum() + smallFlows.values().stream().mapToDouble(FlowGroup::getTotalVolume).sum();
-    }
 
     public String getId() {
         return id;
@@ -76,9 +53,9 @@ public class Coflow {
         return flowGroups.get(fgid);
     }
 
-    // TODO verify the two converters
-    // converter between Old Coflow and new coflow, for use by Scheduler.
+/*    // converter between Old Coflow and new coflow, for use by Scheduler.
     // scheduler takes in ID, flowgroups (with IntID, srcLoc, dstLoc, volume remain.)
+    @Deprecated
     public static Coflow_Old_Compressed toCoflow_Old_Compressed_with_Trimming(Coflow cf) {
         Coflow_Old_Compressed ret = new Coflow_Old_Compressed(cf.getId(), new String[]{"null"}); // location not specified here.
 
@@ -131,7 +108,7 @@ public class Coflow {
 
         return ret;
     }
-/*    public Coflow (Coflow_Old_Compressed cfo){
+*//*    public Coflow (Coflow_Old_Compressed cfo){
         this.id = cfo.id;
         this.aggFlowGroups = new HashMap<String , FlowGroup>();
         for(Map.Entry<String, FlowGroup_Old_Compressed> entry : cfo.flows.entrySet()){
@@ -156,15 +133,6 @@ public class Coflow {
         return this.finished.getAndSet(newValue);
     }
 
-
-
-
-    @Deprecated @DoNotCall
-    public void finishSF() {
-        if (isSmallFlowDoneLatch.getCount() != 0) {
-            isSmallFlowDoneLatch.countDown();
-        }
-    }
 
     public void blockTillFinish() throws InterruptedException {
         isDoneLatch.await();
@@ -202,7 +170,7 @@ public class Coflow {
 
             sb.append("\nFGID: ").append(fg.getId()).append(' ');
             sb.append("\nVolume: ").append(fg.getTotalVolume()).append(' ');
-            sb.append("\nFile: ").append(fg.getFilename()).append('\n');
+//            sb.append("\nFile: ").append(fg.getFilename()).append('\n');
         }
 
         return sb.toString();

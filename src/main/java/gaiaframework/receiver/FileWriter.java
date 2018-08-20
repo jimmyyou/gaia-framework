@@ -3,11 +3,12 @@ package gaiaframework.receiver;
 // A thread that writes the received data into files
 // maintains a pool of RandomAccessFile to write into
 
-// TODO use multiple threads to parallelly handle I/O
+// TODO(future) use multiple threads to parallelly handle I/O
 
 import com.google.common.util.concurrent.Uninterruptibles;
 import gaiaframework.gaiaprotos.GaiaMessageProtos;
 import gaiaframework.gaiaprotos.MasterServiceGrpc;
+import gaiaframework.gaiaprotos.SendingAgentServiceGrpc;
 import gaiaframework.transmission.DataChunkMessage;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -23,40 +24,46 @@ import java.util.concurrent.TimeUnit;
 
 public class FileWriter implements Runnable {
     private static final Logger logger = LogManager.getLogger();
+    private final String masterHostname;
 
     LinkedBlockingQueue<DataChunkMessage> dataChunkQueue;
 
-    HashMap<String, FileBlockHandler> activeFileBlocks = new HashMap<String, FileBlockHandler>();
+    HashMap<String, FileBlockHandler> activeFileBlocks = new HashMap<>();
 
     boolean isOutputEnabled = true;
     private ManagedChannel grpcChannel;
 
-    public FileWriter(LinkedBlockingQueue<DataChunkMessage> dataChunkQueue, boolean isOutputEnabled) {
+    public FileWriter(LinkedBlockingQueue<DataChunkMessage> dataChunkQueue, boolean isOutputEnabled, String masterHostname) {
         this.dataChunkQueue = dataChunkQueue;
         this.isOutputEnabled = isOutputEnabled;
+        this.masterHostname = masterHostname;
     }
 
     @Override
     public void run() {
 
-        // FIXME not use hardcoded in the future
-        grpcChannel = ManagedChannelBuilder.forAddress("dc1master", 8888).usePlaintext().build();
+        // TODO(future) load master port from config
+        grpcChannel = ManagedChannelBuilder.forAddress(masterHostname, 23330).usePlaintext().build();
 
         logger.info("Filewriter Thread started, and grpcChannel established");
 
         DataChunkMessage dataChunk;
         while (true) {
             try {
+
                 dataChunk = dataChunkQueue.take();
 
-                processData(dataChunk);
+                long startTime = System.currentTimeMillis();
+
+                processData(dataChunk); // TODO, use multiple thread to write data, throw this into a threadpool
+
+                long deltaTime = System.currentTimeMillis() - startTime;
+                logger.info("ProcessData took {} ms", deltaTime);
 
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
         }
-
     }
 
     /**
@@ -105,14 +112,19 @@ public class FileWriter implements Runnable {
             if (!finished) {
                 activeFileBlocks.put(handlerId, fileBlockHandler);
             } else {
-                // TODO Send out TRANSFER_FIN
+                // Send out TRANSFER_FIN
                 sendFileFIN_WithRetry(filename);
             }
         }
 
     }
 
-    void sendFileFIN_WithRetry(String filename){
+    /** Send FILE_FIN message, retry when failed. We must fork a thread here so that we can unblock
+     *
+     * @param filename
+     */
+    void sendFileFIN_WithRetry(String filename) {
+//        long startTime = System.nanoTime();
         boolean retry = true;
         while (retry) {
             try {
@@ -125,22 +137,30 @@ public class FileWriter implements Runnable {
                 retry = false;
             }
         }
+//        long deltaTime = System.nanoTime() - startTime;
     }
 
-    void sendFileFIN(String filename) throws RuntimeException{
-        MasterServiceGrpc.MasterServiceStub stub = MasterServiceGrpc.newStub(grpcChannel);
+    /**
+     * Async send FileFIN. Don't need to explicitly wait for time out exception here.
+     * @param filename
+     * @throws RuntimeException
+     */
+    void sendFileFIN(String filename) throws RuntimeException {
+
+        SendingAgentServiceGrpc.SendingAgentServiceStub stub = SendingAgentServiceGrpc.newStub(grpcChannel);
         GaiaMessageProtos.FileFinishMsg request = GaiaMessageProtos.FileFinishMsg.newBuilder().setFilename(filename).build();
 
-        final CountDownLatch latch = new CountDownLatch(1);
-        StreamObserver<GaiaMessageProtos.FlowStatus_ACK> responseObserver = new StreamObserver<GaiaMessageProtos.FlowStatus_ACK>() {
+//        final CountDownLatch latch = new CountDownLatch(1);
+        StreamObserver<GaiaMessageProtos.ACK> responseObserver = new StreamObserver<GaiaMessageProtos.ACK>() {
 
             @Override
-            public void onNext(GaiaMessageProtos.FlowStatus_ACK flowStatus_ack) {
-                latch.countDown();
+            public void onNext(GaiaMessageProtos.ACK flowStatus_ack) {
+//                latch.countDown();
             }
 
             @Override
             public void onError(Throwable t) {
+                throw new RuntimeException("error!");
             }
 
             @Override
@@ -149,10 +169,8 @@ public class FileWriter implements Runnable {
         };
 
         stub.finishFile(request, responseObserver);
+//        stub.withDeadlineAfter(100, TimeUnit.MILLISECONDS).finishFile(request, responseObserver);
 
-        if (!Uninterruptibles.awaitUninterruptibly(latch, 3, TimeUnit.SECONDS)) {
-            throw new RuntimeException("timeout!");
-        }
     }
 
 
@@ -178,66 +196,5 @@ public class FileWriter implements Runnable {
             return true;
         }
     }
-
-/*    private void NaiveCreateFile(DataChunkMessage dataChunk) {
-        String filename = dataChunk.getFilename();
-        File datafile = new File(filename);
-
-        if (datafile.exists()) {
-            logger.error("File {} exists", filename);
-            return;
-        }
-
-        // continue to create the File, and put into the map
-        logger.info("Creating file and index for {}", filename);
-
-        FileBlockHandler fileBlockHandler = new FileBlockHandler(filename, dataChunk.getTotalBlockLength());
-
-        activeFileBlocks.put(filename, fileBlockHandler);
-
-    }*/
-
-    // upon receiving the first chunk, create and write to index file, also create data file.
-/*    private void createFileandIndex(DataChunkMessage dataChunk) {
-        // first check if file exists
-        String filename = dataChunk.getFilename();
-        File datafile = new File(filename);
-        File indexfile = new File(filename + ".index");
-
-        if (datafile.exists()) {
-            logger.error("File {} exists", filename);
-            return;
-        }
-
-        if (indexfile.exists()) {
-            logger.error("Index file of {} exists", filename);
-            return;
-        }
-
-        // continue to create the File, and put into the map
-        logger.info("Creating file and index for {}", filename);
-
-
-        // TODO WRONG ChunkLength
-        FileBlockHandler fileBlockHandler = new FileBlockHandler(filename, dataChunk.getTotalBlockLength());
-
-        activeFileBlocks.put(filename, fileBlockHandler);
-
-        // create and write to the index file
-
-        try {
-            FileOutputStream fos = new FileOutputStream(filename + ".index");
-
-            fos.write(dataChunk.getData());
-            fos.flush();
-            fos.close();
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }*/
 
 }

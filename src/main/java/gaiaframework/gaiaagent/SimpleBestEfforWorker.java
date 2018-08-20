@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.net.BindException;
 import java.net.Socket;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -82,7 +83,7 @@ public class SimpleBestEfforWorker implements Runnable {
 
                 if (m.getType() == CTRL_to_WorkerMsg.MsgType.DATA) {
 
-                    // TODO send data
+                    // send data
                     oos.writeObject(m.dataChunkMessage);
 //                    logger.info("Worker written data {} to {}", m.dataChunkMessage.getStartIndex(), dataSocket.getLocalSocketAddress());
 
@@ -109,6 +110,18 @@ public class SimpleBestEfforWorker implements Runnable {
                 dataSocket.setKeepAlive(true);
 
                 logger.info("Worker {} connected to {} : {} from {}, keepAlive {}", connID, faIP, faPort, dataSocket.getLocalSocketAddress(), dataSocket.getKeepAlive());
+            } catch (BindException e) {
+                logger.warn("Bind failed, addr may be in use, retry in {} seconds", 5);
+
+                // sleep for some time
+                try {
+//                    logger.error("Retry-connection in {} seconds", 5);
+                    Thread.sleep(5000);
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
+
+                continue;
             } catch (IOException e) {
                 logger.error("Error while connecting to {} {} from port {}", faIP, faPort, localPort);
                 e.printStackTrace();
