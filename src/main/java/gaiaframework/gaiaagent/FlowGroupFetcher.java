@@ -115,7 +115,7 @@ public class FlowGroupFetcher {
 //                        logger.info("peek return: {}", dmp);
 
                         if (total_bytes_sent >= totalBlockLength) {
-                            logger.info("Fetcher finished fetching for {}", dstFilename);
+//                            logger.info("Fetcher finished fetching for {}", dstFilename);
                             break;
                         }
 

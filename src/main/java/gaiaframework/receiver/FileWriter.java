@@ -56,6 +56,8 @@ public class FileWriter implements Runnable {
                 long startTime = System.currentTimeMillis();
 
                 processData(dataChunk); // TODO, use multiple thread to write data, throw this into a threadpool
+                // TODO we need to synchronize on file handler though, so for each file, the incoming blocks are queued on fileHandler
+
 
                 long deltaTime = System.currentTimeMillis() - startTime;
                 logger.info("ProcessData took {} ms", deltaTime);
