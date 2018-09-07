@@ -139,8 +139,8 @@ public class FileBlockHandler {
 //        logger.info("Writing data to {}, [{}:{}]", filename, startIndex, chunkLength);
 
         try {
-            dataFile.seek(startIndex);
-            dataFile.write(dataChunk.getData());
+//            dataFile.seek(startIndex);
+//            dataFile.write(dataChunk.getData());
 //            dataFile.write(dataChunk.getData(), (int) startIndex, (int) chunkLength);
 
             // check the overall progress for this file.
@@ -182,7 +182,7 @@ public class FileBlockHandler {
 
         if (currentLength < reqLength) {
             currentLength = reqLength;
-            dataFile.setLength(currentLength);
+//            dataFile.setLength(currentLength);
         }
     }
 
