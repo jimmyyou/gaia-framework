@@ -102,8 +102,11 @@ public class ReceivingAgent {
             });
 
             // start filewriter thread
-            fileWriterThread = new Thread(new FileWriter(dataQueue, isOutputEnabled, masterHostname));
-            fileWriterThread.start();
+//            fileWriterThread = new Thread(new FileWriter(dataQueue, isOutputEnabled, masterHostname));
+//            fileWriterThread.start();
+
+            // FIXME currently all states etc. are stored in fileWriterThread internally.
+            ReceivingAgentSharedData rasd = new ReceivingAgentSharedData(masterHostname);
 
             while (true) {
                 Socket dataSocket = sd.accept();
@@ -115,7 +118,8 @@ public class ReceivingAgent {
 //                dataSocket.setSoTimeout(0);
 //                dataSocket.setKeepAlive(true);
                 logger.info("{} Got a connection from {}", conn_cnt, dataSocket.getRemoteSocketAddress().toString());
-                (new Thread(new Receiver(dataSocket, dataQueue))).start();
+                // Each Receiver serves a path. read from socket and put dataBlock in queue.
+                (new Thread(new Receiver(dataSocket, dataQueue, rasd))).start();
             }
         } catch (java.io.IOException e) {
             e.printStackTrace();

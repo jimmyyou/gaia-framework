@@ -15,11 +15,13 @@ public class Receiver implements Runnable {
     public ObjectInputStream in_;
 
     LinkedBlockingQueue<DataChunkMessage> dataQueue;
+    ReceivingAgentSharedData rasd;
 
-    public Receiver(Socket client_sd, LinkedBlockingQueue<DataChunkMessage> dataQueue) throws java.io.IOException {
+    public Receiver(Socket client_sd, LinkedBlockingQueue<DataChunkMessage> dataQueue, ReceivingAgentSharedData rasd) throws java.io.IOException {
         sd_ = client_sd;
         in_ = new ObjectInputStream(client_sd.getInputStream());
         this.dataQueue = dataQueue;
+        this.rasd = rasd;
     }
 
     public void run() {
@@ -35,7 +37,18 @@ public class Receiver implements Runnable {
 //                        dataChunk.getTotalBlockLength(), (int) dataChunk.getData()[0], (int) dataChunk.getData()[1]);
 
                 if (dataChunk != null) {
-                    dataQueue.put(dataChunk);
+
+                    // dataQueue.put(dataChunk);
+                    // don't put in queue, process the chunk immediately by forking a thread
+                    long startTime = System.currentTimeMillis();
+
+                    rasd.processData(dataChunk);
+                    // TODO we may need to synchronize on file handler though, so for each file, the incoming blocks are queued on fileHandler
+
+                    long deltaTime = System.currentTimeMillis() - startTime;
+                    logger.info("ProcessData took {} ms", deltaTime);
+
+
                 } else {
                     logger.error("dataChunk == null");
                 }
@@ -50,8 +63,6 @@ public class Receiver implements Runnable {
                 e.printStackTrace();
                 break;
             } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
