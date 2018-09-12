@@ -82,6 +82,7 @@ public class ReceivingAgentSharedData {
             // TODO new logic here
             // First create the handler if not existent
             long totalBlockLength = dataChunk.getTotalBlockLength();
+            logger.info("putIfAbsent for handlerID= {} and file = {}", handlerId, filename);
             activeFileBlocks.putIfAbsent(handlerId, new FileBlockHandler(filename, totalBlockLength));
 
             // Then write data and check state
