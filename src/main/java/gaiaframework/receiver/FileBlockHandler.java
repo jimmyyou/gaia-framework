@@ -5,11 +5,17 @@ package gaiaframework.receiver;
 
 // VER 1.0 we copy the whole map output file over the net, but only copy once for co-located Reducers (i.e. combine the flowgroups)
 
+/**
+ * Version 2.0 this class is used to write to file from chunks.
+ *
+ */
+
 import gaiaframework.transmission.DataChunkMessage;
 import gaiaframework.util.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -32,20 +38,38 @@ public class FileBlockHandler {
     long currentLength = 0;
 
     // Change to fitting not necessarily the first chunk of the block
-    public FileBlockHandler(DataChunkMessage dataChunk) {
-        this.filename = dataChunk.getFilename();
-        this.totalSize_bytes = dataChunk.getTotalBlockLength();
+    public FileBlockHandler(String fileName, long totalBytes) {
+        this.filename = fileName;
+        this.totalSize_bytes = totalBytes;
 
         logger.info("Created FileBlockHandler for {}, temporary size: {}, chunks: {}", filename, totalSize_bytes, totalChunks);
 
         try {
 
+            File datafile = new File(filename);
+
+            if (datafile.exists()) {
+                logger.info("FATAL: File {} exists", filename);
+//                return false;
+            } else {
+
+                // create the dir
+                logger.info("Creating dir for {}", filename);
+                File dir = datafile.getParentFile();
+                if (!dir.exists()) {
+                    logger.info("Creating dir {}, success = {}", dir, dir.mkdirs());
+                } else {
+                    logger.info("Dir {} exists", dir);
+                }
+
+//                return true;
+            }
+
             // first try to detect and create the folder, taken care of in FileWriter.java
             dataFile = new RandomAccessFile(filename, "rw");
 
             fileState = FileState.WRITING;
-            logger.info("Created RAF {}", filename);
-
+            logger.info("Created RAF for {}", filename);
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -93,7 +117,7 @@ public class FileBlockHandler {
      * @param dataChunk
      * @return true if this is the last chunk
      */
-    public boolean writeDataAndCheck(DataChunkMessage dataChunk) {
+    public synchronized boolean writeDataAndCheck(DataChunkMessage dataChunk) {
 
         // first write the data, then check if it is finished
         long startTime = System.nanoTime();
@@ -139,8 +163,8 @@ public class FileBlockHandler {
 //        logger.info("Writing data to {}, [{}:{}]", filename, startIndex, chunkLength);
 
         try {
-//            dataFile.seek(startIndex);
-//            dataFile.write(dataChunk.getData());
+            dataFile.seek(startIndex);
+            dataFile.write(dataChunk.getData());
 //            dataFile.write(dataChunk.getData(), (int) startIndex, (int) chunkLength);
 
             // check the overall progress for this file.
@@ -182,7 +206,7 @@ public class FileBlockHandler {
 
         if (currentLength < reqLength) {
             currentLength = reqLength;
-//            dataFile.setLength(currentLength);
+            dataFile.setLength(currentLength);
         }
     }
 

@@ -58,6 +58,8 @@ public class ReceivingAgentSharedData {
          * In this version we don't care about whether the chunk is the first chunk.
          * Given a chunk, first check the size of the file buffer, then write to the file.
          *
+         * First check if it is the first chunk of block, by check concurrentHashMap
+         *
          */
         @Override
         public void run() {
@@ -77,34 +79,23 @@ public class ReceivingAgentSharedData {
             String filename = dataChunk.getFilename();
             String handlerId = filename + "-" + dataChunk.getBlockId();
 
-            // TODO thread safety
-            if (activeFileBlocks.containsKey(handlerId)) {
-                FileBlockHandler fileBlockHandler = activeFileBlocks.get(handlerId);
+            // TODO new logic here
+            // First create the handler if not existent
+            long totalBlockLength = dataChunk.getTotalBlockLength();
+            activeFileBlocks.putIfAbsent(handlerId, new FileBlockHandler(filename, totalBlockLength));
 
-                if (fileBlockHandler != null) {
-                    boolean isFinished = fileBlockHandler.writeDataAndCheck(dataChunk);
-                    if (isFinished) {
-                        activeFileBlocks.remove(handlerId);
-                        sendFileFIN_WithRetry(filename);
-                    }
-
-                } else {
-                    logger.error("Received dataChunk for file {}, but FileBlockHandler == null", dataChunk.getFilename());
-                }
-            } else { // We don't have the handler, so we check whether the file exists
-                boolean created = CreateOrOpenFile_Spec(handlerId, dataChunk);
-                logger.info("dataChunk file created = {}, start={}, blen={}, flen={}", created, dataChunk.getStartIndex(), dataChunk.getTotalBlockLength(), dataChunk.getTotalFileLength());
-
-                // And then creat the handler
-                FileBlockHandler fileBlockHandler = new FileBlockHandler(dataChunk);
-                boolean finished = fileBlockHandler.writeDataAndCheck(dataChunk);
-                if (!finished) {
-                    activeFileBlocks.put(handlerId, fileBlockHandler);
-                } else {
-                    // Send out TRANSFER_FIN
+            // Then write data and check state
+            FileBlockHandler fileBlockHandler = activeFileBlocks.get(handlerId);
+            if (fileBlockHandler != null) {
+                boolean isFinished = fileBlockHandler.writeDataAndCheck(dataChunk);
+                if (isFinished) {
+                    activeFileBlocks.remove(handlerId);
                     sendFileFIN_WithRetry(filename);
                 }
+            } else {
+                logger.error("Received dataChunk for file {}, but FileBlockHandler == null", dataChunk.getFilename());
             }
+
 
         }
 
@@ -162,29 +153,6 @@ public class ReceivingAgentSharedData {
 
         }
 
-
-        // Try to create/open the file and write data and put handler into HashMap
-        private boolean CreateOrOpenFile_Spec(String handlerId, DataChunkMessage dataChunk) {
-            String filename = dataChunk.getFilename();
-            File datafile = new File(filename);
-
-            if (datafile.exists()) {
-                logger.debug("File {} exists", filename);
-                return false;
-            } else {
-
-                // create the File, and put into the map
-                logger.info("Creating file and dir for {}", filename);
-                File dir = datafile.getParentFile();
-                if (!dir.exists()) {
-                    logger.info("Creating dir {}, success = {}", dir, dir.mkdirs());
-                } else {
-                    logger.info("Dir {} exists", dir);
-                }
-
-                return true;
-            }
-        }
     }
 
 }

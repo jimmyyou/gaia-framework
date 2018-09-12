@@ -29,6 +29,7 @@ public class DataChunkMessage implements Serializable {
 
     public long getTotalBlockLength() { return header.getTotalBlockLength(); }
 
+    @Deprecated
     public long getTotalFileLength() { return header.totalFileLength; }
 
     public byte[] getData() {

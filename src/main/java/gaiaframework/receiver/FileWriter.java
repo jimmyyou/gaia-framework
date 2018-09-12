@@ -1,3 +1,4 @@
+/*
 package gaiaframework.receiver;
 
 // A thread that writes the received data into files
@@ -68,13 +69,15 @@ public class FileWriter implements Runnable {
         }
     }
 
-    /**
+    */
+/**
      * process the dataChunk,
      * In this version we don't care about whether the chunk is the first chunk.
      * Given a chunk, first check the size of the file buffer, then write to the file.
      *
      * @param dataChunk
-     */
+     *//*
+
     private void processData(DataChunkMessage dataChunk) {
 
 //        logger.info("Processing data {} {} {}\n{} {}", dataChunk.getFilename(), dataChunk.getChunkStartIndex(),
@@ -121,10 +124,12 @@ public class FileWriter implements Runnable {
 
     }
 
-    /** Send FILE_FIN message, retry when failed. We must fork a thread here so that we can unblock
+    */
+/** Send FILE_FIN message, retry when failed. We must fork a thread here so that we can unblock
      *
      * @param filename
-     */
+     *//*
+
     void sendFileFIN_WithRetry(String filename) {
 //        long startTime = System.nanoTime();
         boolean retry = true;
@@ -142,11 +147,13 @@ public class FileWriter implements Runnable {
 //        long deltaTime = System.nanoTime() - startTime;
     }
 
-    /**
+    */
+/**
      * Async send FileFIN. Don't need to explicitly wait for time out exception here.
      * @param filename
      * @throws RuntimeException
-     */
+     *//*
+
     void sendFileFIN(String filename) throws RuntimeException {
 
         SendingAgentServiceGrpc.SendingAgentServiceStub stub = SendingAgentServiceGrpc.newStub(grpcChannel);
@@ -200,3 +207,4 @@ public class FileWriter implements Runnable {
     }
 
 }
+*/
