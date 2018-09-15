@@ -304,6 +304,8 @@ public class Master {
      * @param scheduledFGOs
      */
     // TODO(future) when rates don't change, dont send them. i.e. speculatively send change message
+    // TODO record scheduled rate and compare with actual reported rate.
+
     private void generateAndSendCtrlMsg(HashMap<String, ScheduleOutputFG> scheduledFGOs) {
 
         // traverse all FGs in CFPool, and modify the scheduledFGOs

@@ -81,6 +81,7 @@ public class FlowGroupFetcher {
                 connection.setRequestProperty("Keep-Alive", "header");
 
                 connection.connect();
+                logger.info("Request file by URL {}", str_url);
 
                 // then set up the connection, and convert the stream into queue
                 DataInputStream input = new DataInputStream(connection.getInputStream());
@@ -122,6 +123,7 @@ public class FlowGroupFetcher {
                         //                        agentSharedData.workerQueues.get(faID)[pathID].put(new CTRL_to_WorkerMsg(dm));
                     } catch (EOFException e) {
                         logger.error("ERROR: Reading EOF from {}, NOP", srcFilename);
+                        // Assuming the requested size is alway valid, we do nothing here.
 
                     }
                 }

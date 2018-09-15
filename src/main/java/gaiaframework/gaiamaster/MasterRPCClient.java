@@ -124,8 +124,8 @@ public class MasterRPCClient {
             }
         };
 
-        logger.info("Sending FlowInfoBundle to {}", targetIP);
         asyncStub.setRecFlowInfoList(fgibBuilder.build(), observer);
+        logger.info("Called (async) sending FlowInfoBundle to {}", targetIP);
     }
 
     /**
