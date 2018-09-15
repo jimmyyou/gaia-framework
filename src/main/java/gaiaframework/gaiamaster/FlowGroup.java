@@ -10,11 +10,15 @@ package gaiaframework.gaiamaster;
 
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
 import gaiaframework.util.Constants;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.LinkedList;
 import java.util.List;
 
 public class FlowGroup {
+
+    private static final Logger logger = LogManager.getLogger();
 
     public List<ShuffleInfo.FlowInfo> flowInfos = new LinkedList<>();
 
@@ -28,10 +32,24 @@ public class FlowGroup {
     // non-final fields
     private long startTime = -1;
     private long endTime = -1;
+    private long updatedTime = -1;
 
     private volatile double transmitted;
 
     private boolean isSendingFinished = false; // set true along with setting endTime.
+
+    public synchronized void onTransmitted(double transmitted) {
+
+        double delta = transmitted - this.transmitted;
+
+        if (updatedTime != -1) {
+            double rate = delta / (double) (System.currentTimeMillis() - updatedTime);
+            logger.info("FG {} rate = {}", id, rate);
+        }
+
+        updatedTime = System.currentTimeMillis();
+        this.setTransmitted(transmitted);
+    }
 
     // the state of this flow
     public enum FlowGroupState {

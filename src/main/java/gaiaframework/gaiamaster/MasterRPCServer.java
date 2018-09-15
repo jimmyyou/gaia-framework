@@ -171,7 +171,7 @@ public class MasterRPCServer {
                 // set the transmitted.
                 FlowGroup fg = masterSharedData.getFlowGroup(fid);
                 if (fg != null) {
-                    fg.setTransmitted(status.getTransmitted());
+                    fg.onTransmitted(status.getTransmitted());
                 } else {
                     logger.warn("Received status report but the FlowGroup {} does not exist", fid);
                 }
