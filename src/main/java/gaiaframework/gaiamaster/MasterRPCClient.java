@@ -124,8 +124,9 @@ public class MasterRPCClient {
             }
         };
 
-        asyncStub.setRecFlowInfoList(fgibBuilder.build(), observer);
-        logger.info("Called (async) sending FlowInfoBundle to {}", targetIP);
+        GaiaMessageProtos.FlowGroupInfoBundle fgiBundle = fgibBuilder.build();
+        asyncStub.setRecFlowInfoList(fgiBundle, observer);
+        logger.info("Called (async) sending FlowInfoBundle to {} , size {}", targetIP, fgiBundle.getSerializedSize());
     }
 
     /**
