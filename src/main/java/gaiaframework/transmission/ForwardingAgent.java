@@ -128,7 +128,7 @@ public class ForwardingAgent {
 //                dataSocket.setSoTimeout(0);
 //                dataSocket.setKeepAlive(true);
                 logger.info("{} Got a connection from {}", conn_cnt, dataSocket.getRemoteSocketAddress().toString());
-                (new Thread(new ForwardingServer(config.getHostIPbyDCID(faid), dataSocket, forwardingQueues))).start();
+                (new Thread(new ForwardingServer(config.getHostIPListbyDCID(faid), dataSocket, forwardingQueues))).start();
             }
         } catch (java.io.IOException e) {
             e.printStackTrace();
@@ -148,7 +148,7 @@ public class ForwardingAgent {
 
             forwardingQueues.add(queue);
 
-            (new Thread(new BestEffortForwardingThread(queue, config.getHostIPbyDCID(faid).get(i), config.getHostPortbyDCID(faid).get(i)))).start();
+            (new Thread(new BestEffortForwardingThread(queue, config.getHostIPListbyDCID(faid).get(i), config.getHostPortListbyDCID(faid).get(i)))).start();
 
         }
     }

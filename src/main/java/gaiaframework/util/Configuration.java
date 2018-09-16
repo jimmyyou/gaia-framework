@@ -1,6 +1,10 @@
 package gaiaframework.util;
 
 // Create a configuration, either from config file, or from default value
+/**
+ * Version 2.1: Isolate RPC configuration from transmission configuration.
+ * Terra internally use RPCHostname for gprc connections (when not specified, make it equal to IP)
+ */
 
 //  # Format: (# for comment) // Comment line must start with # (blank not allowed)
 //  MasterIP port
@@ -18,28 +22,32 @@ import java.util.List;
 
 public class Configuration {
 
-    protected String masterIP;
-    protected int masterPort;
+    private String masterIP;
+    private String masterRPCHostname = null;
+    private int masterPort;
 
-    int numDC;
+    private int numDC;
 
-    protected String configFilePath;
+    private String configFilePath;
 
     class DataCenter {
 
+        int numHosts;
+
         String saIP;
+        String saRPCHostname = null;
         String faIP;
+        String faRPCHostname = null;
         int saPort;
         int faPort;
 
-        int numHosts;
-
         List<String> hostIPs;
+        List<String> hostRPCHostnames;
         List<Integer> hostPorts;
 
     }
 
-    List<DataCenter> dataCenters;
+    private List<DataCenter> dataCenters;
 
 //    protected String[] SAIPs;
 //    protected String[] RAIPs;
@@ -115,8 +123,16 @@ public class Configuration {
 
             String[] splits = line.split(" ");
             masterIP = splits[0];
-            masterPort = Integer.parseInt(splits[1]);
-            System.out.println("MS " + masterIP + ":" + masterPort);
+
+            // Check if we want to use another hostname for RPC
+            if (splits.length <= 2) {
+                masterPort = Integer.parseInt(splits[1]);
+                System.out.println("MS " + masterIP + ":" + masterPort);
+            } else {
+                masterRPCHostname = splits[1];
+                masterPort = Integer.parseInt(splits[2]);
+                System.out.println("MS " + masterIP + ":" + masterPort + " RPCHostname: " + masterRPCHostname);
+            }
 
             // second line
             line = br.readLine();
@@ -144,19 +160,34 @@ public class Configuration {
                 splits = line.split(" ");
 
                 dc.saIP = splits[0];
-                dc.saPort = Integer.parseInt(splits[1]);
-                System.out.println("SA " + dc.saIP + ":" + dc.saPort);
+
+                if (splits.length <= 2) {
+                    dc.saPort = Integer.parseInt(splits[1]);
+                    System.out.println("SA " + dc.saIP + ":" + dc.saPort);
+                } else {
+                    dc.saRPCHostname = splits[1];
+                    dc.saPort = Integer.parseInt(splits[2]);
+                    System.out.println("SA " + dc.saIP + ":" + dc.saPort + " RPC: " + dc.saRPCHostname);
+                }
 
                 // read FA
                 line = br.readLine();
                 splits = line.split(" ");
 
                 dc.faIP = splits[0];
-                dc.faPort = Integer.parseInt(splits[1]);
-                System.out.println("FA " + dc.faIP + ":" + dc.faPort);
+
+                if (splits.length <= 2) {
+                    dc.faPort = Integer.parseInt(splits[1]);
+                    System.out.println("FA " + dc.faIP + ":" + dc.faPort);
+                } else {
+                    dc.faRPCHostname = splits[1];
+                    dc.faPort = Integer.parseInt(splits[2]);
+                    System.out.println("FA " + dc.faIP + ":" + dc.faPort + " RPC: " + dc.faRPCHostname);
+                }
 
                 dc.hostIPs = new ArrayList<>(dc.numHosts);
                 dc.hostPorts = new ArrayList<>(dc.numHosts);
+                dc.hostRPCHostnames = new ArrayList<>(dc.numHosts);
 
 
                 // read hosts
@@ -165,8 +196,16 @@ public class Configuration {
                     splits = line.split(" ");
 
                     dc.hostIPs.add(splits[0]);
-                    dc.hostPorts.add(Integer.parseInt(splits[1]));
-                    System.out.println("RA " + dc.hostIPs.get(j) + ":" + dc.hostPorts.get(j));
+
+                    if (splits.length <= 2) {
+                        dc.hostPorts.add(Integer.parseInt(splits[1]));
+                        System.out.println("RA " + dc.hostIPs.get(j) + ":" + dc.hostPorts.get(j));
+//                        dc.hostRPCHostnames.add(null);
+                    } else {
+                        dc.hostRPCHostnames.add(splits[1]);
+                        dc.hostPorts.add(Integer.parseInt(splits[2]));
+                        System.out.println("RA " + dc.hostIPs.get(j) + ":" + dc.hostPorts.get(j) + " RPC: " + dc.hostRPCHostnames.get(j));
+                    }
 
                 }
 
@@ -273,35 +312,44 @@ public class Configuration {
     public String getSAIP(int i) {
         assert (i >= 0 && i < numDC);
         return dataCenters.get(i).saIP;
-//        return SAIPs[i];
+    }
+
+    public String getSARPCHostname(int i) {
+        assert (i >= 0 && i < numDC);
+        if (dataCenters.get(i).saRPCHostname != null) return dataCenters.get(i).saRPCHostname;
+        else return getSAIP(i);
     }
 
     public int getNumDC() {
         return numDC;
     }
 
-    public List<String> getHostIPbyDCID(int i) {
+    public List<String> getHostIPListbyDCID(int i) {
         return dataCenters.get(i).hostIPs;
     }
 
-    public List<Integer> getHostPortbyDCID (int i) {
+    public List<Integer> getHostPortListbyDCID(int i) {
         return dataCenters.get(i).hostPorts;
     }
 
-    public int getNumHostbyDCID (int i) {
+    public int getNumHostbyDCID(int i) {
         return dataCenters.get(i).numHosts;
     }
 
     public int getSAPort(int i) {
         assert (i >= 0 && i < numDC);
         return dataCenters.get(i).saPort;
-//        return SAPorts[i];
     }
 
     public String getFAIP(int i) {
         assert (i >= 0 && i < numDC);
         return dataCenters.get(i).faIP;
-//        return RAIPs[i];
+    }
+
+    public String getFARPCHostname(int i) {
+        assert (i >= 0 && i < numDC);
+        if (dataCenters.get(i).faRPCHostname != null) return dataCenters.get(i).faRPCHostname;
+        else return getFAIP(i);
     }
 
     public int getFAPort(int i) {
@@ -318,7 +366,17 @@ public class Configuration {
         return masterIP;
     }
 
-    //
+    public String getMasterRPCHostname() {
+        if (masterRPCHostname != null) return masterRPCHostname;
+        else return getMasterIP();
+    }
+
+    /**
+     * Called in YARNServer. Find locationID for given IP addr. (Spark use IP addr)
+     *
+     * @param addr
+     * @return
+     */
     public String findDCIDbyHostAddr(String addr) {
 
         // version 2, we only compare IP

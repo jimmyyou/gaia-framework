@@ -108,7 +108,7 @@ public class SendingAgent {
 
         logger.info("agent now READY, starting agent RPC client");
         // start the client first? no! start the client after the server
-        sharedData.rpcClient = new AgentRPCClient(config.getMasterIP(), config.getMasterPort(), sharedData);
+        sharedData.rpcClient = new AgentRPCClient(config.getMasterRPCHostname(), config.getMasterPort(), sharedData);
 
         statusReportExec = Executors.newScheduledThreadPool(1);
 

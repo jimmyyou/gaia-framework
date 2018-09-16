@@ -108,7 +108,7 @@ public class Master {
         // we have netGraph.nodes_.size() SAs
         for (String sa_id : netGraph.nodes_) {
             int id = Integer.parseInt(sa_id); // id is from 0 to n, IP from 1 to (n+1)
-            MasterRPCClient client = new MasterRPCClient(config.getSAIP(id), config.getSAPort(id));
+            MasterRPCClient client = new MasterRPCClient(config.getSARPCHostname(id), config.getSAPort(id));
             rpcClientHashMap.put(sa_id, client);
             Iterator<GaiaMessageProtos.PAMessage> it = client.preparePConn();
             while (it.hasNext()) {
@@ -305,7 +305,6 @@ public class Master {
      */
     // TODO(future) when rates don't change, dont send them. i.e. speculatively send change message
     // TODO record scheduled rate and compare with actual reported rate.
-
     private void generateAndSendCtrlMsg(HashMap<String, ScheduleOutputFG> scheduledFGOs) {
 
         // traverse all FGs in CFPool, and modify the scheduledFGOs
