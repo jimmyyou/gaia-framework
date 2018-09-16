@@ -11,23 +11,21 @@ public class DataChunkMessage implements Serializable {
 //    DataChunkHeader header;
 
     // Field previously from header
-    String filename;
-    String destURL;
-    String blockID;
-    long chunkStartIndex;
-    long totalBlockLength;
-    long totalFileLength;
+    private String filename;
+    private String destURL;
+    private String blockID;
+    private long chunkStartIndex;
+    private long totalBlockLength;
 
     byte[] data;
 
-    public DataChunkMessage(String filename, String destIP, String blockID, long startIndex, long totalBlockLength, long totalFileLength, byte[] data) {
+    public DataChunkMessage(String filename, String destIP, String blockID, long startIndex, long totalBlockLength, byte[] data) {
 //        header = new DataChunkHeader(filename, destIP, blockID, startIndex, totalBlockLength, totalFileLength);
         this.filename = filename;
         this.destURL = destIP;
         this.blockID = blockID;
         this.chunkStartIndex = startIndex;
         this.totalBlockLength = totalBlockLength;
-        this.totalFileLength = totalFileLength;
 
         this.data = data;
     }
@@ -41,9 +39,6 @@ public class DataChunkMessage implements Serializable {
     public long getStartIndex() { return this.chunkStartIndex; }
 
     public long getTotalBlockLength() { return this.totalBlockLength; }
-
-    @Deprecated
-    public long getTotalFileLength() { return this.totalFileLength; }
 
     public byte[] getData() {
         return data;

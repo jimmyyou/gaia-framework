@@ -106,7 +106,7 @@ public class FlowGroupFetcher {
                     try {
 //                        logger.info("Fetcher: fetch {} off: {}", data_length, total_bytes_sent);
                         input.readFully(buf, 0, data_length);
-                        DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, blockId, (total_bytes_sent), totalBlockLength, 0, buf);
+                        DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, blockId, (total_bytes_sent), totalBlockLength, buf);
                         total_bytes_sent += data_length;
 
 //                        logger.info("Put dm into queue");

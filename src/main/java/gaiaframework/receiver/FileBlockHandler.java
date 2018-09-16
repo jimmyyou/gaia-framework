@@ -199,10 +199,6 @@ public class FileBlockHandler {
         // current file length
         long reqLength = dataChunk.getStartIndex() + dataChunk.getData().length;
 
-        // guarantee that the output file size is the same
-        if (reqLength < dataChunk.getTotalFileLength()) {
-            reqLength = dataChunk.getTotalFileLength();
-        }
 
         if (currentLength < reqLength) {
             currentLength = reqLength;
