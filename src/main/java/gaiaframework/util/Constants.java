@@ -8,7 +8,7 @@ public class Constants {
 
     // Min interval between schedule and Min STATUS interval
     public static final int SCHEDULE_INTERVAL_MS = 500;
-    public static final int STATUS_MESSAGE_INTERVAL_MS = 100;
+    public static final int STATUS_MESSAGE_INTERVAL_MS = 200;
 
     public static final int COLOCATED_FG_COMPLETION_TIME = 0;
 
