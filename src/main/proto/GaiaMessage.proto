@@ -167,6 +167,16 @@ message FileFinishMsg {
     string filename = 1;
 }
 
+message TerraDataChunk {
+    string filename = 1;
+    string destURL = 2;
+    string blockID = 3;
+    int64 chunkStartIndex = 4;
+    int64 totalBlockLength = 5;
+
+    bytes data = 6;
+}
+
 /*message ShuffleInfoReq{
 
     message ReducerInfo {

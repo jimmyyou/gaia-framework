@@ -2,7 +2,9 @@ package gaiaframework.gaiaagent;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import com.google.common.util.concurrent.RateLimiter;
+import com.google.protobuf.ByteString;
 import edu.umich.gaialib.gaiaprotos.ShuffleInfo;
+import gaiaframework.gaiaprotos.GaiaMessageProtos;
 import gaiaframework.transmission.DataChunkMessage;
 import gaiaframework.util.Constants;
 import org.apache.logging.log4j.LogManager;
@@ -107,13 +109,20 @@ public class FlowGroupFetcher {
 //                        logger.info("Fetcher: fetch {} off: {}", data_length, total_bytes_sent);
                         input.readFully(buf, 0, data_length);
                         DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, blockId, (total_bytes_sent), totalBlockLength, buf);
+
+                        GaiaMessageProtos.TerraDataChunk dataChunk = GaiaMessageProtos.TerraDataChunk.newBuilder()
+                                .setFilename(dstFilename).setDestURL(dstIP).setBlockID(blockId)
+                                .setChunkStartIndex(total_bytes_sent).setTotalBlockLength(totalBlockLength)
+                                .setData(ByteString.copyFrom(buf))
+                                .build();
+
+                        logger.info("PB Serialized size {}/{}", dataChunk.getSerializedSize(), buf.length);
+
                         total_bytes_sent += data_length;
 
 //                        logger.info("Put dm into queue");
 //                        dataQueue.put(dm);
                         dataChunkBufferQueue.put(dm);
-                        DataChunkMessage dmp = dataChunkBufferQueue.peek();
-//                        logger.info("peek return: {}", dmp);
 
                         if (total_bytes_sent >= totalBlockLength) {
 //                            logger.info("Fetcher finished fetching for {}", dstFilename);
