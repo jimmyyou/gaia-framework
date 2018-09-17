@@ -42,9 +42,7 @@ public class BestEffortForwardingThread implements Runnable {
                 DataChunkMessage data = inputQueue.take();
 
                 oos.writeObject(data);
-
-                logger.info("Forwared chunk, size: {}", data.getSerializedSize());
-
+                
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (IOException e) {

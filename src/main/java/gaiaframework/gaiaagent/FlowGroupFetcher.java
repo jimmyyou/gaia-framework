@@ -109,15 +109,6 @@ public class FlowGroupFetcher {
 //                        logger.info("Fetcher: fetch {} off: {}", data_length, total_bytes_sent);
                         input.readFully(buf, 0, data_length);
                         DataChunkMessage dm = new DataChunkMessage(dstFilename, dstIP, blockId, (total_bytes_sent), totalBlockLength, buf);
-
-                        GaiaMessageProtos.TerraDataChunk dataChunk = GaiaMessageProtos.TerraDataChunk.newBuilder()
-                                .setFilename(dstFilename).setDestURL(dstIP).setBlockID(blockId)
-                                .setChunkStartIndex(total_bytes_sent).setTotalBlockLength(totalBlockLength)
-                                .setData(ByteString.copyFrom(buf))
-                                .build();
-
-                        logger.info("PB Serialized size {}/{}", dataChunk.getSerializedSize(), buf.length);
-
                         total_bytes_sent += data_length;
 
 //                        logger.info("Put dm into queue");
