@@ -2,6 +2,9 @@ package gaiaframework.transmission;
 
 // The new DataChunk to replace the old one
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 public class DataChunkMessage implements Serializable {
@@ -59,5 +62,17 @@ public class DataChunkMessage implements Serializable {
                 ", totalBlockLength=" + totalBlockLength +
                 ", data size=" + data.length +
                 '}';
+    }
+
+    public int getSerializedSize() throws IOException {
+
+        ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteOutputStream);
+
+        objectOutputStream.writeObject(this);
+        objectOutputStream.flush();
+        objectOutputStream.close();
+
+        return byteOutputStream.toByteArray().length;
     }
 }

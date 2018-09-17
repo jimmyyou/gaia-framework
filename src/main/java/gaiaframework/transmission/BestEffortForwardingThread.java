@@ -43,6 +43,8 @@ public class BestEffortForwardingThread implements Runnable {
 
                 oos.writeObject(data);
 
+                logger.info("Forwared chunk, size: {}", data.getSerializedSize());
+
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (IOException e) {
