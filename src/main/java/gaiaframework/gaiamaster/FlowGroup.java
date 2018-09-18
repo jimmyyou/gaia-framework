@@ -46,7 +46,11 @@ public class FlowGroup {
 
         if (updatedTime != -1) {
             double rate = delta / (double) (System.currentTimeMillis() - updatedTime);
-            logger.info("FG {} rate = {} , ratio = {}", id, rate, (rate / totalRate));
+            double ratio = -1;
+            if(totalRate >= Constants.DOUBLE_EPSILON){
+                ratio = (rate / totalRate);
+            }
+            logger.info("FG {} rate = {} , ratio = {}", id, rate, ratio);
         }
 
         updatedTime = System.currentTimeMillis();
