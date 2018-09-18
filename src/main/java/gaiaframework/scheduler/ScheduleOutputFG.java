@@ -11,7 +11,15 @@ public class ScheduleOutputFG {
     private String coflow_id; // id of owning coflow
     private String src_loc;
     private String dst_loc;
-    public LinkedList<Pathway> paths = new LinkedList<Pathway>();
+
+    private double totalRate = -1;
+    private LinkedList<Pathway> paths = new LinkedList<Pathway>();
+
+    void setAllPathRates(LinkedList<Pathway> completed_paths) {
+        paths.clear();
+        paths = completed_paths;
+        totalRate = completed_paths.stream().mapToDouble(Pathway::getBandwidth).sum();
+    }
 
     // the state of this flow
     public enum FGOState{
@@ -31,7 +39,7 @@ public class ScheduleOutputFG {
         this.fgoState = fgoState;
     }
 
-    public ScheduleOutputFG(CoflowScheduler.CoflowSchedulerEntry.FlowGroupSchedulerEntry fgse){
+    ScheduleOutputFG(CoflowScheduler.CoflowSchedulerEntry.FlowGroupSchedulerEntry fgse){
         this.id = fgse.fgID;
         this.src_loc = fgse.srcLoc;
         this.dst_loc = fgse.dstLoc;
@@ -64,4 +72,8 @@ public class ScheduleOutputFG {
     public String getCoflow_id() {
         return coflow_id;
     }
+
+    public LinkedList<Pathway> getPaths() { return paths; }
+
+    public double getTotalRate() { return totalRate; }
 }

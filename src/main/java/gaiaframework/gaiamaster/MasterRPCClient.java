@@ -193,7 +193,7 @@ public class MasterRPCClient {
                         // FIXME: this message field is deprecated? We can tell after implementing agent.
                         fueBuilder.setRemainingVolume(masterSharedData.coflowPool.get(sofg.getCoflow_id()).getFlowGroup(sofg.getId()).getRemainingVolume());
 
-                        for (Pathway p : sofg.paths) {
+                        for (Pathway p : sofg.getPaths()) {
                             int pathID = netGraph.get_path_id(p);
                             if (pathID != -1) {
                                 fueBuilder.putPathIDToRateMap(pathID, p.getBandwidth() * 1000000);

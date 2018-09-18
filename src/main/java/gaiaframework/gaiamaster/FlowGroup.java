@@ -38,19 +38,24 @@ public class FlowGroup {
 
     private boolean isSendingFinished = false; // set true along with setting endTime.
 
+    private double totalRate = -1;
+
     public synchronized void onTransmitted(double transmitted) {
 
         double delta = transmitted - this.transmitted;
 
         if (updatedTime != -1) {
             double rate = delta / (double) (System.currentTimeMillis() - updatedTime);
-            logger.info("FG {} rate = {}", id, rate);
+            logger.info("FG {} rate = {} , ratio = {}", id, rate, (rate / totalRate));
         }
 
         updatedTime = System.currentTimeMillis();
         this.setTransmitted(transmitted);
     }
 
+    public void setTotalRate(double totalRate) { this.totalRate = totalRate; }
+
+    public double getTotalRate() { return totalRate; }
     // the state of this flow
     public enum FlowGroupState {
         NEW,

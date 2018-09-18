@@ -374,8 +374,9 @@ public class CoflowScheduler extends Scheduler {
                 break;
             }
         } // while link_vals
-        f.paths.clear();
-        f.paths = completed_paths;
+        f.setAllPathRates(completed_paths);
+//        f.paths.clear();
+//        f.paths = completed_paths;
     }
 
 //    public void progress_flow(FlowGroup_Old_Compressed f) {
@@ -623,7 +624,7 @@ public class CoflowScheduler extends Scheduler {
                 make_paths(f, link_vals);
 
                 // Subscribe the flow's paths to the links it uses
-                for (Pathway p : f.paths) {
+                for (Pathway p : f.getPaths()) {
                     for (int i = 0; i < p.node_list.size() - 1; i++) {
                         int src = Integer.parseInt(p.node_list.get(i));
                         int dst = Integer.parseInt(p.node_list.get(i + 1));

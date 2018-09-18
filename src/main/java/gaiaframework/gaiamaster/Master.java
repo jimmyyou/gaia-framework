@@ -290,7 +290,7 @@ public class Master {
         StringBuilder fgoContent = new StringBuilder("\n");
         for (Map.Entry<String, ScheduleOutputFG> fgoe : scheduledFGOs.entrySet()) {
             ScheduleOutputFG fgo = fgoe.getValue();
-            fgoContent.append(fgo.getId()).append(' ').append(fgo.paths).append(' ').append(fgo.getFgoState()).append('\n');
+            fgoContent.append(fgo.getId()).append(' ').append(fgo.getPaths()).append(' ').append(fgo.getFgoState()).append('\n');
         }
         logger.info("FG content: {}", fgoContent);
         logger.info("schedule(): took {} ms. Active CF: {} Scheduled FG: {}", deltaTime, masterSharedData.coflowPool.size(), scheduledFGOs.size());
@@ -304,7 +304,6 @@ public class Master {
      * @param scheduledFGOs
      */
     // TODO(future) when rates don't change, dont send them. i.e. speculatively send change message
-    // TODO record scheduled rate and compare with actual reported rate.
     private void generateAndSendCtrlMsg(HashMap<String, ScheduleOutputFG> scheduledFGOs) {
 
         // traverse all FGs in CFPool, and modify the scheduledFGOs
@@ -322,9 +321,12 @@ public class Master {
                 } else if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.RUNNING) { // may pause/change the running flow
                     if (scheduledFGOs.containsKey(fgID)) { // we may need to change, if the path/rate are different
                         scheduledFGOs.get(fgID).setFgoState(ScheduleOutputFG.FGOState.CHANGING);
+                        fg.setTotalRate(scheduledFGOs.get(fgID).getTotalRate());
+                        // TODO we can check here to see if we indeed need to send out the updated rate.
 //                        fgoToSend.add(fgoHashMap.get(fg.getId()).setFlowState(FlowGroup_Old_Compressed.FlowState.CHANGING)); // running flow needs to change
                     } else { // we need to pause, because there is no scheduled FG in scheduledFGOs
                         fg.setFlowGroupState(FlowGroup.FlowGroupState.PAUSED);
+                        fg.setTotalRate(0);
                         // Here we need to create a fake scheduledFGO to send the PAUSE msg.
                         ScheduleOutputFG tmpFGO = new ScheduleOutputFG(fgID, fg.getSrcLocation(), fg.getDstLocation(),
                                 ScheduleOutputFG.FGOState.PAUSING, fg.getOwningCoflowID());
@@ -337,12 +339,14 @@ public class Master {
                     if (scheduledFGOs.containsKey(fgID)) { // we take action only if the flow get (re)scheduled
                         if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.NEW) { // start the flow
                             fg.setFlowGroupState(FlowGroup.FlowGroupState.RUNNING);
+                            fg.setTotalRate(scheduledFGOs.get(fgID).getTotalRate());
                             scheduledFGOs.get(fgID).setFgoState(ScheduleOutputFG.FGOState.STARTING);
 //                            logger.info("DEBUG: set fgo {} state to {}", fgID, scheduledFGOs.get(fgID).getFgoState());
 //                            fgoToSend.add(fgoHashMap.get(fg.getId()).setFlowState(FlowGroup_Old_Compressed.FlowState.STARTING));
                             masterSharedData.flowStartCnt++; // Simply for stats
                         } else if (fg.getFlowGroupState() == FlowGroup.FlowGroupState.PAUSED) { // RESUME the flow
                             fg.setFlowGroupState(FlowGroup.FlowGroupState.RUNNING);
+                            fg.setTotalRate(scheduledFGOs.get(fgID).getTotalRate());
                             scheduledFGOs.get(fgID).setFgoState(ScheduleOutputFG.FGOState.CHANGING);
 //                            fgoToSend.add(fgoHashMap.get(fgID).setFlowState(FlowGroup_Old_Compressed.FlowState.CHANGING));
                         }
