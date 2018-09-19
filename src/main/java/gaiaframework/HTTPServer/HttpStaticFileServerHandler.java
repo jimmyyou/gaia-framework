@@ -21,13 +21,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.activation.MimetypesFileTypeMap;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URLDecoder;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 import static io.netty.handler.codec.http.HttpMethod.*;
@@ -88,6 +87,8 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
     public static final String HTTP_DATE_GMT_TIMEZONE = "GMT";
     public static final int HTTP_CACHE_SECONDS = 60;
 
+    private ConcurrentHashMap<String, String> filenameMap = new ConcurrentHashMap<>();
+
     @Override
     public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
         if (!request.decoderResult().isSuccess()) {
@@ -95,11 +96,49 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
             return;
         }
 
-        if (request.method() != GET) {
+        // TODO: add HTTP POST request handler to support shortFileName to realFileName renaming.
+
+
+        if (request.method() == GET) {
+            handleRequestGET(ctx, request);
+        } else if (request.method() == POST) {
+            handleRequestPOST(ctx, request);
+        } else {
             sendError(ctx, METHOD_NOT_ALLOWED);
             return;
         }
 
+
+    }
+
+    /**
+     * Handle HTTP POST request to update Map(shortFileName -> realFileName)
+     *
+     * @param ctx
+     * @param request
+     */
+    private void handleRequestPOST(ChannelHandlerContext ctx, FullHttpRequest request) {
+
+        final String uri_raw = request.uri();
+        QueryStringDecoder decoder = new QueryStringDecoder(uri_raw);
+
+        logger.info("Received HTTP POST. URI_RAW {}", uri_raw);
+
+        for (Map.Entry<String, List<String>> e : decoder.parameters().entrySet()){
+            logger.info("key: {} value: {}", e.getKey(), e.getValue());
+        }
+
+    }
+
+    /**
+     * Handle HTTP GET request for remotely reading file
+     *
+     * @param ctx
+     * @param request
+     * @throws IOException
+     * @throws ParseException
+     */
+    private void handleRequestGET(ChannelHandlerContext ctx, FullHttpRequest request) throws IOException, ParseException {
         final String uri_raw = request.uri();
         QueryStringDecoder decoder = new QueryStringDecoder(uri_raw);
 
