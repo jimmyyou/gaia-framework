@@ -45,7 +45,7 @@ public class FlowGroup {
         double delta = transmitted - this.transmitted;
 
         if (updatedTime != -1) {
-            double rate = delta / (double) (System.currentTimeMillis() - updatedTime);
+            double rate = delta / (double) (System.currentTimeMillis() - updatedTime) / 1000;
             double ratio = -1;
             if(totalRate >= Constants.DOUBLE_EPSILON){
                 ratio = (rate / totalRate);
