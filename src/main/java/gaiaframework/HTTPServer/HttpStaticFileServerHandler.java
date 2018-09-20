@@ -126,7 +126,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         final String uri_raw = request.uri();
 //        QueryStringDecoder decoder = new QueryStringDecoder(uri_raw);
 
-        logger.info("Received HTTP POST. URI_RAW {}", uri_raw);
+        logger.info("Received HTTP POST.");
 
         HttpPostRequestDecoder decoder = new HttpPostRequestDecoder(
                 new DefaultHttpDataFactory(false), request);
@@ -137,11 +137,11 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         for (InterfaceHttpData data : postData) {
             if (data.getHttpDataType() == InterfaceHttpData.HttpDataType.Attribute) {
                 MemoryAttribute attribute = (MemoryAttribute) data;
-                logger.info("Request attribute: {} : {}", attribute.getName(), attribute.getValue());
+//                logger.info("Request attribute: {} : {}", attribute.getName(), attribute.getValue());
                 if (attribute.getName().equals("shortName")) {
                     shortName = attribute.getValue();
                 }
-                if (attribute.getName().equals("fullName")) {
+                if (attribute.getName().equals("longName")) {
                     fullName = attribute.getValue();
                 }
             }
@@ -149,6 +149,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 
         if (shortName != null && fullName != null) {
             filenameMap.put(shortName, fullName);
+            logger.info("Put shortName: {} longName: {} into Map", shortName, fullName);
         }
 
     }
