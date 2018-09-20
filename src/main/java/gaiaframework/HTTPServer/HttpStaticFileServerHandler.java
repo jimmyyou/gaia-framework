@@ -132,11 +132,23 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
                 new DefaultHttpDataFactory(false), request);
 
         List<InterfaceHttpData> postData = decoder.getBodyHttpDatas(); //
-        for(InterfaceHttpData data:postData){
+        String shortName = null;
+        String fullName = null;
+        for (InterfaceHttpData data : postData) {
             if (data.getHttpDataType() == InterfaceHttpData.HttpDataType.Attribute) {
                 MemoryAttribute attribute = (MemoryAttribute) data;
                 logger.info("Request attribute: {} : {}", attribute.getName(), attribute.getValue());
+                if (attribute.getName().equals("shortName")) {
+                    shortName = attribute.getValue();
+                }
+                if (attribute.getName().equals("fullName")) {
+                    fullName = attribute.getValue();
+                }
             }
+        }
+
+        if (shortName != null && fullName != null) {
+            filenameMap.put(shortName, fullName);
         }
 
     }
@@ -177,11 +189,20 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 
         logger.info("Query has path = {}, off = {}, len = {}", path_raw, startOffset, length);
 
-        final String path = sanitizeUri(path_raw);
-        if (path == null) {
+        final String path_sanitized = sanitizeUri(path_raw);
+        if (path_sanitized == null) {
             sendError(ctx, FORBIDDEN);
             return;
         }
+
+        // Added filename translation here
+        String path;
+        if (filenameMap.containsKey(path_sanitized)) {
+            path = filenameMap.get(path_sanitized);
+        } else {
+            path = path_sanitized;
+        }
+        logger.info("Query orig_path: {} , translated path: {}", path_sanitized, path);
 
         File file = new File(path);
         if (file.isHidden() || !file.exists()) {
