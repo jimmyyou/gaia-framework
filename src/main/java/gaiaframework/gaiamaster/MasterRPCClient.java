@@ -70,7 +70,7 @@ public class MasterRPCClient {
                 channel.shutdown();
             }
         };
-        fumStreamObserver = asyncStub.withCompression("gzip").changeFlow(FUMresponseObserver);
+        fumStreamObserver = asyncStub.changeFlow(FUMresponseObserver);
 
         isStreamReady = true;
     }
@@ -125,7 +125,7 @@ public class MasterRPCClient {
         };
 
         GaiaMessageProtos.FlowGroupInfoBundle fgiBundle = fgibBuilder.build();
-        asyncStub.withCompression("gzip").setRecFlowInfoList(fgiBundle, observer);
+        asyncStub.setRecFlowInfoList(fgiBundle, observer);
         logger.info("Called (async) sending FlowInfoBundle to {} , size {}", targetIP, fgiBundle.getSerializedSize());
     }
 

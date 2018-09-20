@@ -52,13 +52,15 @@ public class YARNServer extends GaiaAbstractServer {
         long cfStartTime = System.currentTimeMillis();
 
         // Create the CF and submit it.
+        // Username = appID in Spark; jobID = coflowID in Spark-Terra
         String cfID = username + "_" + jobID;
+        String appID = username;
 
 //        logger.info("Pruning req: {} \n{}", cfID, flowsList.toArray());
         Map<String, Map<String, List<ShuffleInfo.FlowInfo>>> groupedFlowInfo = pruneAndGroupFlowInfos(flowsList);
 
         if (flowsList.size() > 0) {
-            Coflow cf = generateCoflow(cfID, groupedFlowInfo);
+            Coflow cf = generateCoflow(cfID, appID, groupedFlowInfo);
             long cfGenTime = System.currentTimeMillis();
             logger.info("YARN Server generated CF: {}, took {} ms", cf.getId(), (cfGenTime - cfStartTime));
             cf.setStartTime(cfStartTime);
@@ -188,10 +190,11 @@ public class YARNServer extends GaiaAbstractServer {
      * Generate Coflow from a List of ShuffleInfo.FlowInfo
      *
      * @param cfID
+     * @param appID
      * @param groupedFlowInfos
      * @return
      */
-    private Coflow generateCoflow(String cfID, Map<String, Map<String, List<ShuffleInfo.FlowInfo>>> groupedFlowInfos) {
+    private Coflow generateCoflow(String cfID, String appID, Map<String, Map<String, List<ShuffleInfo.FlowInfo>>> groupedFlowInfos) {
 
         HashMap<String, FlowGroup> fgMap = new HashMap<>();
 
@@ -207,7 +210,7 @@ public class YARNServer extends GaiaAbstractServer {
             }
         }
 
-        return new Coflow(cfID, fgMap);
+        return new Coflow(cfID, appID, fgMap);
     }
 
 

@@ -16,6 +16,8 @@ public class Coflow {
     // final fields
     private final String id;
     private final double totalVolume;
+
+    private final String appID;
     CountDownLatch isDoneLatch;
     CountDownLatch isCoflowFileFinishedLatch;
 
@@ -31,8 +33,9 @@ public class Coflow {
 
     public int ddl_Millis = -1;
 
-    public Coflow(String id, HashMap<String, FlowGroup> flowGroups) {
+    public Coflow(String id, String appID, HashMap<String, FlowGroup> flowGroups) {
         this.id = id;
+        this.appID = appID;
         this.flowGroups = flowGroups;
         this.isDoneLatch = new CountDownLatch(1);
         this.isCoflowFileFinishedLatch = new CountDownLatch(flowGroups.size());
@@ -44,6 +47,7 @@ public class Coflow {
         return id;
     }
 
+    public String getAppID() { return appID; }
 
     public HashMap<String, FlowGroup> getFlowGroups() {
         return flowGroups;
