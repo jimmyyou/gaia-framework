@@ -63,7 +63,7 @@ public class FlowGroupFetcher {
             this.srcFilename = flowInfo.getDataFilename();
             this.blockId = flowInfo.getReduceAttemptID();
 
-            this.dstFilename = Constants.getDstFileName(flowInfo, fgID);
+            this.dstFilename = Constants.getDstFilenameNew(flowInfo, fgID);
         }
 
         @Override

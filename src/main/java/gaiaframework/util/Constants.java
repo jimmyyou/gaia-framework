@@ -80,7 +80,7 @@ public class Constants {
 
     /**
      * A universal converter for converting to dstFilename.
-     * DstFileName = origfile-reduceAttemptID-stageID.data ; stageID =
+     * DstFileName = origfile-reduceAttemptID-stageID.data ;
      *
      * @param flowInfo
      * @param fgID
@@ -95,5 +95,22 @@ public class Constants {
 
         String srcFilename = flowInfo.getDataFilename();
         return srcFilename.substring(0, srcFilename.lastIndexOf('.')) + "-" + flowInfo.getReduceAttemptID() + "-" + stageID + ".data";
+    }
+
+    /**
+     * A universal converter for converting to dstFilename, converting from shortName to longName.
+     * DstFileName = /mnt/tmp/Sol/appID/srcFileName.data
+     * = /mnt/tmp/Sol/appID/shuffle-shuffleID-mapID-redID-XXX-reduceAttemptID-stageID.data ;
+     *
+     * @param flowInfo
+     * @param fgID
+     * @return
+     */
+    public static String getDstFilenameNew(ShuffleInfo.FlowInfo flowInfo, String fgID){
+        int off0 = fgID.indexOf("-");
+        String appID = flowInfo.getDataFilename().substring(0, off0);
+        String prefix = "/mnt/tmp/Sol/" + appID;
+
+        return prefix + "/" + flowInfo.getDataFilename();
     }
 }
