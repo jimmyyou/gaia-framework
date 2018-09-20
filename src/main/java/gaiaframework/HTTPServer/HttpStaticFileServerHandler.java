@@ -152,6 +152,15 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
             logger.info("Put shortName: {} longName: {} into Map", shortName, fullName);
         }
 
+        // HTTP Response
+        HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
+        setResponseHeader(response);
+
+        // Write the response and close.
+        ctx.write(response);
+        ctx.flush();
+        ctx.close();
+
     }
 
     /**
