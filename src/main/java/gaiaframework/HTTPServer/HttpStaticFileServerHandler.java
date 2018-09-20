@@ -13,6 +13,10 @@ import io.netty.channel.ChannelProgressiveFutureListener;
 import io.netty.channel.DefaultFileRegion;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
+import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
+import io.netty.handler.codec.http.multipart.InterfaceHttpData;
+import io.netty.handler.codec.http.multipart.MemoryAttribute;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedFile;
 import io.netty.util.CharsetUtil;
@@ -120,12 +124,19 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
     private void handleRequestPOST(ChannelHandlerContext ctx, FullHttpRequest request) {
 
         final String uri_raw = request.uri();
-        QueryStringDecoder decoder = new QueryStringDecoder(uri_raw);
+//        QueryStringDecoder decoder = new QueryStringDecoder(uri_raw);
 
         logger.info("Received HTTP POST. URI_RAW {}", uri_raw);
 
-        for (Map.Entry<String, List<String>> e : decoder.parameters().entrySet()){
-            logger.info("key: {} value: {}", e.getKey(), e.getValue());
+        HttpPostRequestDecoder decoder = new HttpPostRequestDecoder(
+                new DefaultHttpDataFactory(false), request);
+
+        List<InterfaceHttpData> postData = decoder.getBodyHttpDatas(); //
+        for(InterfaceHttpData data:postData){
+            if (data.getHttpDataType() == InterfaceHttpData.HttpDataType.Attribute) {
+                MemoryAttribute attribute = (MemoryAttribute) data;
+                logger.info("Request attribute: {} : {}", attribute.getName(), attribute.getValue());
+            }
         }
 
     }
