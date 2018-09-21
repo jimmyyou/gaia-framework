@@ -42,7 +42,7 @@ public class MasterRPCClient {
     public MasterRPCClient(ManagedChannel channel) {
         this.channel = channel;
         blockingStub = SendingAgentServiceGrpc.newBlockingStub(channel);
-        asyncStub = SendingAgentServiceGrpc.newStub(channel);
+        asyncStub = SendingAgentServiceGrpc.newStub(channel).withCompression("gzip");
 
 
     }
