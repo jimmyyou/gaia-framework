@@ -55,7 +55,7 @@ public class Constants {
     public static final int MAX_CHUNK_SIZE_Bytes = 64 * 1024;
     public static final int SENDER_QUEUE_LENGTH = 1000;
     public static final String SCHEDULER_NAME_GAIA = "gaia";
-//    public static final int HTTP_CHUNKSIZE = 8192;
+    //    public static final int HTTP_CHUNKSIZE = 8192;
     public static final int HTTP_CHUNKSIZE = 32768;
     public static final int DEFAULT_HTTP_SERVER_PORT = 20020;
     public static final int FETCHER_QUEUE_LENGTH = 100; // TODO: check other queue length
@@ -106,7 +106,7 @@ public class Constants {
      * @param fgID
      * @return
      */
-    public static String getDstFileNameNew(ShuffleInfo.FlowInfo flowInfo, String fgID){
+    public static String getDstFileNameNew(ShuffleInfo.FlowInfo flowInfo, String fgID) {
         int off = fgID.indexOf("_");
         String appID = fgID.substring(0, off);
         int off0 = fgID.indexOf("_");
@@ -118,6 +118,6 @@ public class Constants {
         String srcFilename = flowInfo.getDataFilename();
 
         return prefix + "/" + srcFilename.substring(0, srcFilename.lastIndexOf('.'))
-                + "-" + flowInfo.getReduceAttemptID() + "-" + stageID + ".data";
+                + "-" + stageID + "-" + flowInfo.getReduceAttemptID() + ".data";
     }
 }
