@@ -107,8 +107,8 @@ public class Constants {
      * @return
      */
     public static String getDstFileNameNew(ShuffleInfo.FlowInfo flowInfo, String fgID){
-        int off = fgID.indexOf("-");
-        String appID = flowInfo.getDataFilename().substring(0, off);
+        int off = fgID.indexOf("_");
+        String appID = fgID.substring(0, off);
         int off0 = fgID.indexOf("_");
         int off1 = fgID.indexOf("_", off0 + 1); // app-shuffle_stage:*
         int off2 = fgID.indexOf(":");
