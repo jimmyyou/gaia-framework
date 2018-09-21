@@ -64,11 +64,11 @@ public class FlowGroupFetcher {
             this.blockId = flowInfo.getReduceAttemptID();
 
             this.dstFilename = Constants.getDstFileNameNew(flowInfo, fgID);
+            logger.info("Creating FileFetcherThread for dstFile: {}, fInfoFile {}, fgID {}", dstFilename, flowInfo.getDataFilename(), fgID);
         }
 
         @Override
         public void run() {
-            logger.info("Starting FileFetcherThread for {}", dstFilename);
 
             StringBuilder str_url = new StringBuilder("http://").append(srcIP).append(':').append(Constants.DEFAULT_HTTP_SERVER_PORT)
                     .append("/").append("?name=").append(srcFilename)
