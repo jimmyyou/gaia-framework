@@ -106,7 +106,7 @@ public class Constants {
      * @param fgID
      * @return
      */
-    public static String getDstFilenameNew(ShuffleInfo.FlowInfo flowInfo, String fgID){
+    public static String getDstFileNameNew(ShuffleInfo.FlowInfo flowInfo, String fgID){
         int off0 = fgID.indexOf("-");
         String appID = flowInfo.getDataFilename().substring(0, off0);
         String prefix = "/mnt/tmp/Sol/" + appID;
