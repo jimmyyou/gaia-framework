@@ -71,7 +71,8 @@ public class FlowGroupFetcher {
             logger.info("Starting FileFetcherThread for {}", dstFilename);
 
             StringBuilder str_url = new StringBuilder("http://").append(srcIP).append(':').append(Constants.DEFAULT_HTTP_SERVER_PORT)
-                    .append(srcFilename).append("?start=").append(startOffset).append("&len=").append(totalBlockLength);
+                    .append("/").append("?name=").append(srcFilename)
+                    .append("&start=").append(startOffset).append("&len=").append(totalBlockLength);
 
             try {
                 URL url = new URL(str_url.toString());

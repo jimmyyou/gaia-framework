@@ -91,7 +91,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
     public static final String HTTP_DATE_GMT_TIMEZONE = "GMT";
     public static final int HTTP_CACHE_SECONDS = 60;
 
-    private ConcurrentHashMap<String, String> filenameMap = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<String, String> filenameMap = new ConcurrentHashMap<>();
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
@@ -150,6 +150,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
         if (shortName != null && fullName != null) {
             filenameMap.put(shortName, fullName);
             logger.info("Put shortName: {} longName: {} into Map", shortName, fullName);
+//            logger.info("size of map: {}", filenameMap.size());
         }
 
         // HTTP Response
@@ -182,14 +183,18 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 
         List<String> startParams = decoder.parameters().get("start");
         if (startParams != null && startParams.size() > 0) {
-
             startOffset = Long.parseLong(startParams.get(0));
         }
 
         List<String> lenParams = decoder.parameters().get("len");
         if (lenParams != null && lenParams.size() > 0) {
-
             length = Long.parseLong(lenParams.get(0));
+        }
+
+        String shortName = "/dev/null";
+        List<String> fileParams = decoder.parameters().get("name");
+        if (fileParams != null && fileParams.size() > 0) {
+            shortName = fileParams.get(0);
         }
 
         if (length < 0 || startOffset < 0) {
@@ -197,22 +202,24 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
             return;
         }
 
-        logger.info("Query has path = {}, off = {}, len = {}", path_raw, startOffset, length);
+        logger.info("Query has shortName = {}, off = {}, len = {}", shortName, startOffset, length);
 
-        final String path_sanitized = sanitizeUri(path_raw);
-        if (path_sanitized == null) {
-            sendError(ctx, FORBIDDEN);
-            return;
-        }
+//        final String path_sanitized = sanitizeUri(path_raw);
+//        if (path_sanitized == null) {
+//            sendError(ctx, FORBIDDEN);
+//            return;
+//        }
 
         // Added filename translation here
         String path;
-        if (filenameMap.containsKey(path_sanitized)) {
-            path = filenameMap.get(path_sanitized);
+        if (filenameMap.containsKey(shortName)) {
+//            logger.info("Found key {}", shortName);
+            path = filenameMap.get(shortName);
         } else {
-            path = path_sanitized;
+            path = shortName;
+//            logger.info("Key not found {}", filenameMap.size());
         }
-        logger.info("Query orig_path: {} , translated path: {}", path_sanitized, path);
+        logger.info("Query shortName: {} , translated path: {}", shortName, path);
 
         File file = new File(path);
         if (file.isHidden() || !file.exists()) {
