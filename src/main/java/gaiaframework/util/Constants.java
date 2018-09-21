@@ -107,10 +107,17 @@ public class Constants {
      * @return
      */
     public static String getDstFileNameNew(ShuffleInfo.FlowInfo flowInfo, String fgID){
-        int off0 = fgID.indexOf("-");
-        String appID = flowInfo.getDataFilename().substring(0, off0);
-        String prefix = "/mnt/tmp/Sol/" + appID;
+        int off = fgID.indexOf("-");
+        String appID = flowInfo.getDataFilename().substring(0, off);
+        int off0 = fgID.indexOf("_");
+        int off1 = fgID.indexOf("_", off0 + 1); // app-shuffle_stage:*
+        int off2 = fgID.indexOf(":");
 
-        return prefix + "/" + flowInfo.getDataFilename();
+        String stageID = fgID.substring(off1 + 1, off2);
+        String prefix = "/mnt/tmp/Sol/" + appID;
+        String srcFilename = flowInfo.getDataFilename();
+
+        return prefix + "/" + srcFilename.substring(0, srcFilename.lastIndexOf('.'))
+                + "-" + flowInfo.getReduceAttemptID() + "-" + stageID + ".data";
     }
 }
