@@ -111,6 +111,7 @@ public class AgentRPCServer {
                         // ID of connection is SA_id-RA_id.path_id
                         String conn_id = trace_id_ + "-" + Constants.node_id_to_trace_id.get(ra_id) + "." + Integer.toString(i);
                         int raID = Integer.parseInt(ra_id);
+                        logger.info("Creating PConn from saID: {} to raID: {} , conn_id: {}", saID, raID, conn_id);
 
 
 //                            // Create the socket that the PersistentConnection object will use
