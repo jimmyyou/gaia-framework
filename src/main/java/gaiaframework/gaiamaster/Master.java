@@ -41,7 +41,7 @@ public class Master {
     //    protected Thread agentController; // This is similar to the Manager eventloop in old version. // maybe multiple threads?
     protected final ScheduledExecutorService mainExec; // For periodic call of schedule()
 
-    protected final ExecutorService saControlExec;
+//    protected final ExecutorService saControlExec;
 
     protected YARNServer yarnServer;
 
@@ -87,7 +87,7 @@ public class Master {
             System.exit(1);
         }
 
-        saControlExec = Executors.newFixedThreadPool(netGraph.nodes_.size());
+//        saControlExec = Executors.newFixedThreadPool(netGraph.nodes_.size());
     }
 
 
@@ -150,7 +150,8 @@ public class Master {
 
         // start sending heartbeat
         logger.info("start heartbeat");
-        for (String sa_id : netGraph.nodes_) {
+        for (int id = 0; id < config.getNumDC(); id++) {
+            String sa_id = Integer.toString(id);
             rpcClientHashMap.get(sa_id).startExp();
         }
 
