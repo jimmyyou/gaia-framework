@@ -57,9 +57,11 @@ public class Master {
 
         printPaths(netGraph);
         if (configFile == null) {
-            this.config = new Configuration(netGraph.nodes_.size());
+            logger.error("Can't run without config file");
+            this.config = null;
+            System.exit(-1);
         } else {
-            this.config = new Configuration(netGraph.nodes_.size(), configFile);
+            this.config = new Configuration(configFile);
         }
 
         this.rpcServer = new MasterRPCServer(this.config, this.masterSharedData);
@@ -106,8 +108,11 @@ public class Master {
         logger.info("Starting master RPC Client");
 
         // we have netGraph.nodes_.size() SAs
-        for (String sa_id : netGraph.nodes_) {
-            int id = Integer.parseInt(sa_id); // id is from 0 to n, IP from 1 to (n+1)
+        // Do not use netGraph to determine agents, there may be redundant nodes.
+        for (int id = 0; id < config.getNumDC(); id++) {
+            // id is from 0 to n, IP from 1 to (n+1)
+            String sa_id = Integer.toString(id);
+
             MasterRPCClient client = new MasterRPCClient(config.getSARPCHostname(id), config.getSAPort(id));
             rpcClientHashMap.put(sa_id, client);
             Iterator<GaiaMessageProtos.PAMessage> it = client.preparePConn();

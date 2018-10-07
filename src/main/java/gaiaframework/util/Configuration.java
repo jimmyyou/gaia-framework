@@ -83,6 +83,7 @@ public class Configuration {
     }
 
     // create config according to default rules for maxAgents
+    @Deprecated
     public Configuration(int maxAgents) {
         this.numDC = maxAgents;
         // default configuration
