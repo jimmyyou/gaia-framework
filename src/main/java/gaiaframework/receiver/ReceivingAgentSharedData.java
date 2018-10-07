@@ -32,8 +32,9 @@ public class ReceivingAgentSharedData {
 
     public ReceivingAgentSharedData(String masterHostname) {
         // TODO(future) load master port from config
-        grpcChannel = ManagedChannelBuilder.forAddress(masterHostname, 23330).usePlaintext().build();
-        logger.info("Init RASD, created GPRC channel");
+        int port = 23330;
+        grpcChannel = ManagedChannelBuilder.forAddress(masterHostname, port).usePlaintext().build();
+        logger.info("Init RASD, created GPRC channel, sending FILE_FIN to {}:{}", masterHostname, port);
 
     }
 
