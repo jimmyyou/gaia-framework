@@ -100,7 +100,9 @@ public class AgentRPCServer {
 
             int workerCnt = 0;
             // set up Persistent Connections and send PA Messages.
-            for (String ra_id : netGraph.nodes_) {
+            // Do not use NetGraph node here, instead use conf.DC
+            for (int DCID = 0; DCID < config.getNumDC(); DCID++) {
+                String ra_id = Integer.toString(DCID);
 
                 if (!saID.equals(ra_id)) { // don't consider path to SA itself.
 
