@@ -31,6 +31,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class AgentRPCServer {
     private static final Logger logger = LogManager.getLogger();
+    private final boolean useFreePort;
 
     private Server server;
     int port = 23000; // default port number
@@ -43,13 +44,14 @@ public class AgentRPCServer {
     AgentSharedData sharedData;
     private int fumaxsize = 0; // Max bytes that this agentRPCServer has received.
 
-    public AgentRPCServer(String id, NetGraph net_graph, Configuration config, AgentSharedData sharedData) {
+    public AgentRPCServer(String id, NetGraph net_graph, Configuration config, AgentSharedData sharedData, boolean useFreePort) {
         this.config = config;
         this.saID = id;
         this.netGraph = net_graph;
         this.port = config.getSAPort(Integer.parseInt(id));
         this.trace_id_ = Constants.node_id_to_trace_id.get(id);
         this.sharedData = sharedData;
+        this.useFreePort = useFreePort;
     }
 
     public void start() throws IOException {
@@ -122,7 +124,10 @@ public class AgentRPCServer {
 //                            socketToRA.setKeepAlive(true);
 
                         workerCnt++;
-                        int port = 40000 + Integer.parseInt(saID) * 100 + workerCnt;
+                        int port = 0;
+                        if (!useFreePort) {
+                            port = 40000 + Integer.parseInt(saID) * 100 + workerCnt;
+                        }
 
                         queues[i] = new LinkedBlockingQueue<CTRL_to_WorkerMsg>();
 
@@ -136,6 +141,7 @@ public class AgentRPCServer {
                                 config.getFAIP(raID) , config.getFAPort(raID), port ) );*/
 
                         // New simple workerThread
+                        //TODO add new option here.
                         Thread wt = new Thread(new SimpleBestEfforWorker(conn_id, ra_id, i, queues[i], sharedData,
                                 config.getFAIP(raID), config.getFAPort(raID), port));
 

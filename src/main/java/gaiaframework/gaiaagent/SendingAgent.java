@@ -22,6 +22,7 @@ public class SendingAgent {
     private static final Logger logger = LogManager.getLogger();
     protected static Configuration config;
     private static ScheduledExecutorService statusReportExec;
+    private static boolean useFreePort = false;
 
     public static void main(String[] args) {
         Options options = new Options();
@@ -29,6 +30,7 @@ public class SendingAgent {
         options.addRequiredOption("i", "id" ,true, "ID of this sending agent");
         options.addOption("c", "config",true, "path to config file");
         options.addOption("n" , "total-number" , true , "total number of agents");
+        options.addOption("fp" , "free-port" , false , "use random free ports");
 
         String said = null;
         String configfilePath;
@@ -72,6 +74,12 @@ public class SendingAgent {
                 logger.info("using gml from file: " + gmlFilePath);
             }
 
+            if (cmd.hasOption("fp")){
+                useFreePort = true;
+            } else {
+                useFreePort = false;
+            }
+
         } catch (ParseException e) {
             e.printStackTrace();
         }
@@ -86,7 +94,7 @@ public class SendingAgent {
         AgentSharedData sharedData;
         sharedData = new AgentSharedData(said, net_graph);
 
-        final AgentRPCServer server = new AgentRPCServer(said, net_graph, config, sharedData);
+        final AgentRPCServer server = new AgentRPCServer(said, net_graph, config, sharedData, useFreePort);
 
         Thread fumListener = new Thread( new CTRLMsgListenerThread(sharedData.fumQueue, sharedData));
         fumListener.start();
