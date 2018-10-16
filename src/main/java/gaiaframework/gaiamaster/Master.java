@@ -273,6 +273,7 @@ public class Master {
             return; // no need to print out the execution time.
         }
 
+        logger.info("Finished manipulating CFList, now scheduling");
         // Schedule and send CTRL Msg.
         try {
             scheduledFGOs = scheduler.scheduleRRF(currentTime);

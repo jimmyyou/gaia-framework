@@ -562,6 +562,7 @@ public class CoflowScheduler extends Scheduler {
 
             // first fast check, we need to check every CF, even if we only have small BW left.
             if (!fastCheckCF(cfse)) {
+                logger.info("CF {} failed fast check", cfse.cfID);
                 unscheduled_coflows.add(cfse);
                 continue;
             }
@@ -571,6 +572,7 @@ public class CoflowScheduler extends Scheduler {
             }
 //            bwrt.write(c.getId() + " " + e.cct + "\n");
 
+            logger.info("Scheduling CF {}", cfse.cfID);
             // schedule this CF
             MMCFOptimizer.MMCFOutput mmcf_out = MMCFOptimizer.glpk_optimizeNew(cfse, net_graph_, links_); // This is the recursive part.
 
