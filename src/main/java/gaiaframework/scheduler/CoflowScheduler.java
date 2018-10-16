@@ -868,6 +868,7 @@ public class CoflowScheduler extends Scheduler {
             }
         }
 
+        logger.info("Sorting CFSE list, size: {}", cfseList.size());
         sortCFList();
     }
 
