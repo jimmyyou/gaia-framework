@@ -851,9 +851,11 @@ public class CoflowScheduler extends Scheduler {
             MMCFOptimizer.MMCFOutput mmcf_out = null;
             try {
 
+                logger.info("Init CF {}", cfse.cfID);
                 mmcf_out = MMCFOptimizer.glpk_optimizeNew(cfse, net_graph_, linksAtStart); // LP when links are empty
                 if (mmcf_out.completion_time_ != -1.0) { // If this Coflow is valid, add the results
 
+                    logger.info("Init CF {} CCT = {}", cfse.cfID, mmcf_out.completion_time_);
 //                    cfseList.add(new CoflowSchedulerEntry(cf, mmcf_out));
                 } else {
                     logger.error("Unable to init CF {}, completion time = {}, fg_size {} ", cfse.getCoflow().toPrintableString(),
