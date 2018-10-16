@@ -134,6 +134,7 @@ public class MMCFOptimizer {
         // Read the output
         MMCFOutput mmcf_out = new MMCFOutput();
         boolean missing_pieces = false;
+        logger.info("Reading LP output from {}", out_file_name);
         FileReader fr = new FileReader(out_file_name);
         BufferedReader br = new BufferedReader(fr);
         String line;
@@ -192,6 +193,7 @@ public class MMCFOptimizer {
                 missing_pieces = false;
             }
         }
+        logger.info("Finished reading LP output from {}", out_file_name);
         br.close();
         return mmcf_out;
     }
