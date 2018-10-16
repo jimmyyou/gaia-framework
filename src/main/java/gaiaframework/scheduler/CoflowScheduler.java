@@ -793,6 +793,7 @@ public class CoflowScheduler extends Scheduler {
         return scheduleRRF(timestamp);
     }*/
 
+    // FIXME: It hangs with null element?
     public void sortCFList() {
         cfseList.sort(smallCCTFirst);
     }
@@ -858,6 +859,7 @@ public class CoflowScheduler extends Scheduler {
                 if (mmcf_out.completion_time_ != -1.0) { // If this Coflow is valid, add the results
 
                     logger.info("Init CF {} CCT = {}", cfse.cfID, mmcf_out.completion_time_);
+                    cfse.setLastLPOutput(mmcf_out);
 //                    cfseList.add(new CoflowSchedulerEntry(cf, mmcf_out));
                 } else {
                     logger.error("Unable to init CF {}, completion time = {}, fg_size {} ", cfse.getCoflow().toPrintableString(),
