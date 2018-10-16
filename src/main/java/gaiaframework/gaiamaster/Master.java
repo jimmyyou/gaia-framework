@@ -249,6 +249,7 @@ public class Master {
 
             // update the CF_Status in scheduler
             scheduler.resetCFList(masterSharedData.coflowPool);
+            logger.info("Reset CFList because of CF_ADD");
 
 //            scheduler.printCFList();
 
@@ -257,6 +258,7 @@ public class Master {
             masterSharedData.flag_FG_FIN = false;
 
             scheduler.updateCFList(masterSharedData.coflowPool);
+            logger.info("Update CFList because of CF_FIN");
 //            scheduler.handleCoflowFIN(outcf);
 
 //            scheduler.printCFList();
@@ -265,6 +267,7 @@ public class Master {
             masterSharedData.flag_FG_FIN = false;
 
             scheduler.updateCFList(masterSharedData.coflowPool);
+            logger.info("Update CFList because of FG_FIN");
 //            scheduler.handleFlowGroupFIN(outcf);
 
 //            scheduler.printCFList();
