@@ -69,51 +69,51 @@ graph [
     edge [
         source      10
         target      0
-        bandwidth   800
+        bandwidth   950
     ]
     edge [
         source      10
         target      1
-        bandwidth   800
+        bandwidth   950
     ]
     edge [
         source      10
         target      2
-        bandwidth   800
+        bandwidth   950
     ]
     edge [
         source      10
         target      3
-        bandwidth   800
+        bandwidth   950
     ]
     edge [
         source      10
         target      4
-        bandwidth   800
+        bandwidth   950
     ]
     edge [
         source      10
         target      5
-        bandwidth   800
+        bandwidth   950
     ]
     edge [
         source      10
         target      6
-        bandwidth   800
+        bandwidth   950
     ]
     edge [
         source      10
         target      7
-        bandwidth   800
+        bandwidth   950
     ]
     edge [
         source      10
         target      8
-        bandwidth   800
+        bandwidth   950
     ]
     edge [
         source      10
         target      9
-        bandwidth   800
+        bandwidth   950
     ]
 ]
