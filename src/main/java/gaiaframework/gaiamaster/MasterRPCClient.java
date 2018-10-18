@@ -172,7 +172,7 @@ public class MasterRPCClient {
 
                 switch (sofg.getFgoState()) {
                     case SCHEDULED:
-                        logger.error("ERROR: FUM message contains flows that have not be make_path()");
+                        logger.error("ERROR: SOFG {} is in SCHEDULED state, paths = {}", sofg.getId(), sofg.getPaths().size());
                         continue; // skip this sofg.
 //                        break;
 
