@@ -163,6 +163,7 @@ public class YARNServer extends GaiaAbstractServer {
             }
 
             flowCounter++;
+            logger.info("Add FlowInfo: {}", flowInfo);
 
             // Group the flowInfos
             if (groupedFlowInfo.containsKey(srcLoc)) {
