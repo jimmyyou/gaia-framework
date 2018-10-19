@@ -587,7 +587,7 @@ public class CoflowScheduler extends Scheduler {
                 CoflowSchedulerEntry.FlowGroupSchedulerEntry fgse = fgseE.getValue();
                 if (mmcf_out.flow_link_bw_map_.get(fgse.intID) == null) {
                     all_flows_scheduled = false;
-                    logger.warn("FG {} {}-{} / {}not being scheduled", fgse.fgID, fgse.srcLoc, fgse.dstLoc, fgse.remainingVol);
+                    logger.warn("FG {} {}-{} / {} not being scheduled", fgse.fgID, fgse.srcLoc, fgse.dstLoc, fgse.remainingVol);
                 }
             }
 //            for (String k : c.flows.keySet()) {

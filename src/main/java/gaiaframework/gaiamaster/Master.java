@@ -241,6 +241,8 @@ public class Master {
 
 //        printCFList(outcf);
 
+        boolean msgToSend = false;
+
         // Process the events and update the scheduler state.
         if (masterSharedData.flag_CF_ADD) { // redo sorting, may result in preemption
             masterSharedData.flag_CF_ADD = false;
@@ -250,6 +252,8 @@ public class Master {
             // update the CF_Status in scheduler
             scheduler.resetCFList(masterSharedData.coflowPool);
             logger.info("Reset CFList because of CF_ADD");
+
+            msgToSend = true;
 
 //            scheduler.printCFList();
 
@@ -277,22 +281,26 @@ public class Master {
         }
 
         logger.info("Finished manipulating CFList, now scheduling");
-        // Schedule and send CTRL Msg.
-        try {
-            scheduledFGOs = scheduler.scheduleRRF(currentTime);
+
+        if(msgToSend) {
+            logger.info("sending because msgToSend = {}", msgToSend);
+            // Schedule and send CTRL Msg.
+            try {
+                scheduledFGOs = scheduler.scheduleRRF(currentTime);
 
 //            for (Map.Entry<String, ScheduleOutputFG> fgoE : scheduledFGOs.entrySet()) {
 //                ScheduleOutputFG fgo = fgoE.getValue();
 //                logger.info("FGOID: {}, {} / {} : {}", fgoE.getKey(), fgo.getId(), fgo.getCoflow_id(), fgo.getFgoState());
 //            }
 
-            // generate and send rpc msgs. 1. parse FGState 2. gen msg 3. send msg
-            generateAndSendCtrlMsg(scheduledFGOs);
+                // generate and send rpc msgs. 1. parse FGState 2. gen msg 3. send msg
+                generateAndSendCtrlMsg(scheduledFGOs);
 //                decompressedFGOsToSend = parseFlowState_DeCompress(masterSharedData, scheduledFGOs);
 //                sendControlMessages_Async(decompressedFGOsToSend);
 
-        } catch (Exception e) {
-            e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         long deltaTime = System.currentTimeMillis() - currentTime;

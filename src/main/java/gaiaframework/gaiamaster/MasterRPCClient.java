@@ -172,6 +172,7 @@ public class MasterRPCClient {
 
                 switch (sofg.getFgoState()) {
                     case SCHEDULED:
+                        // FIXME What's the cause of this? Maybe due to too small rates?
                         logger.error("ERROR: SOFG {} is in SCHEDULED state, paths = {}", sofg.getId(), sofg.getPaths().size());
                         continue; // skip this sofg.
 //                        break;
