@@ -39,6 +39,7 @@ public class FlowGroup {
     private boolean isSendingFinished = false; // set true along with setting endTime.
 
     private double totalRate = -1;
+    private int counter = 0;
 
     public synchronized void onTransmitted(double transmitted) {
 
@@ -50,7 +51,8 @@ public class FlowGroup {
             if(totalRate >= Constants.DOUBLE_EPSILON){
                 ratio = (rate / totalRate);
             }
-//            logger.info("FG {} rate = {} , ratio = {}", id, rate, ratio);
+            counter = (counter + 1) % 1000;
+            if (counter == 0) logger.info("FG {} rate = {} , ratio = {}", id, rate, ratio);
         }
 
         updatedTime = System.currentTimeMillis();
