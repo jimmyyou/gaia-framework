@@ -50,7 +50,7 @@ public class FlowGroup {
             if(totalRate >= Constants.DOUBLE_EPSILON){
                 ratio = (rate / totalRate);
             }
-            logger.info("FG {} rate = {} , ratio = {}", id, rate, ratio);
+//            logger.info("FG {} rate = {} , ratio = {}", id, rate, ratio);
         }
 
         updatedTime = System.currentTimeMillis();
