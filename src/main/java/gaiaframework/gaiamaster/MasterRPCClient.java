@@ -140,7 +140,7 @@ public class MasterRPCClient {
     public void setFlowNew(List<ScheduleOutputFG> outputFGList, NetGraph netGraph, String saID, MasterSharedData masterSharedData) {
 
         GaiaMessageProtos.FlowUpdate fum = buildFUMNew(outputFGList, netGraph, saID, masterSharedData);
-//        logger.info("Built the FUM\n {}", fum);
+        logger.info("Built the FUM\n {}", fum);
 
         if (!isStreamReady) {
             initStream();
