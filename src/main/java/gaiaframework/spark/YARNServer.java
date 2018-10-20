@@ -81,7 +81,7 @@ public class YARNServer extends GaiaAbstractServer {
                 msData.onCoflowTransmissionFinish(cfID);
 
                 long cfEndTime = System.currentTimeMillis();
-                logger.info("Coflow {} finished in {} ms, returning to YARN", cfID, (cfEndTime - cfStartTime));
+                logger.info("Coflow {} finished in {} ms, returning to SPARK", cfID, (cfEndTime - cfStartTime));
                 bwrt.write("Coflow " + cf.getId() + " finished in (ms) " + (cfEndTime - cfStartTime) + "\n");
                 bwrt.flush();
             } catch (InterruptedException e) {
