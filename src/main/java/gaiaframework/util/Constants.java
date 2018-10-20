@@ -59,8 +59,8 @@ public class Constants {
     public static final int HTTP_CHUNKSIZE = 327680;
     public static final int DEFAULT_HTTP_SERVER_PORT = 20020;
     public static final int FETCHER_QUEUE_LENGTH = 100; // TODO: check other queue length
-    public static final int FETCHER_THREADS = 20;
-    public static final int WRITER_THREADS = 20;
+    public static final int FETCHER_THREADS = 2;
+    public static final int WRITER_THREADS = 2;
 
     public static HashMap<String, String> node_id_to_trace_id;
 
