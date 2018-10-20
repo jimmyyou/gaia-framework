@@ -288,10 +288,10 @@ public class Master {
             try {
                 scheduledFGOs = scheduler.scheduleRRF(currentTime);
 
-//            for (Map.Entry<String, ScheduleOutputFG> fgoE : scheduledFGOs.entrySet()) {
-//                ScheduleOutputFG fgo = fgoE.getValue();
-//                logger.info("FGOID: {}, {} / {} : {}", fgoE.getKey(), fgo.getId(), fgo.getCoflow_id(), fgo.getFgoState());
-//            }
+            for (Map.Entry<String, ScheduleOutputFG> fgoE : scheduledFGOs.entrySet()) {
+                ScheduleOutputFG fgo = fgoE.getValue();
+                logger.info("FGOID: {}, {} / {} : {}", fgoE.getKey(), fgo.getId(), fgo.getCoflow_id(), fgo.getFgoState());
+            }
 
                 // generate and send rpc msgs. 1. parse FGState 2. gen msg 3. send msg
                 generateAndSendCtrlMsg(scheduledFGOs);
@@ -384,6 +384,12 @@ public class Master {
      * @param scheduledFGOs
      */
     private void sendControlMessages_Async(HashMap<String, ScheduleOutputFG> scheduledFGOs) {
+
+        logger.info("IN SEND MSG ASYNC");
+        for (Map.Entry<String, ScheduleOutputFG> fgoE : scheduledFGOs.entrySet()) {
+            ScheduleOutputFG fgo = fgoE.getValue();
+            logger.info("FGOID: {}, {} / {} : {}", fgoE.getKey(), fgo.getId(), fgo.getCoflow_id(), fgo.getFgoState());
+        }
 
         // First, group msgs by sending agent.
         Map<String, List<ScheduleOutputFG>> fgobySA = scheduledFGOs.entrySet().stream().map(Map.Entry::getValue)
