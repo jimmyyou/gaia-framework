@@ -290,7 +290,7 @@ public class Master {
 
             for (Map.Entry<String, ScheduleOutputFG> fgoE : scheduledFGOs.entrySet()) {
                 ScheduleOutputFG fgo = fgoE.getValue();
-                logger.info("FGOID: {}, {} / {} : {}", fgoE.getKey(), fgo.getId(), fgo.getCoflow_id(), fgo.getFgoState());
+                logger.info("AFTER_SCHEDULE FGO: {}, {}, first_path {}",  fgo.getId(), fgo.getFgoState(), fgo.getPaths().get(0));
             }
 
                 // generate and send rpc msgs. 1. parse FGState 2. gen msg 3. send msg
