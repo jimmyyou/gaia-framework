@@ -172,7 +172,8 @@ public class MasterRPCClient {
 
                 switch (sofg.getFgoState()) {
                     case SCHEDULED:
-                        // FIXME What's the cause of this? Maybe due to too small rates?
+                        // TODO The reason for this is after we snapshot and scheduled, FG_FIN is received.
+                        // We should not see this for the same FG more than twice.
                         logger.error("WARN: SOFG {} is in SCHEDULED state (finished), paths = {}", sofg.getId(), sofg.getPaths().size());
                         if (sofg.getPaths().size() > 0) {
                             logger.info("SOFG {} not sent but paths[0] = {}",sofg.getId() ,sofg.getPaths().get(0));
