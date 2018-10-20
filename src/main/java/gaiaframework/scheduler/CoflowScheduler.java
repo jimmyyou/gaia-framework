@@ -79,6 +79,19 @@ public class CoflowScheduler extends Scheduler {
             public String fgID;
             public String srcLoc;
             public String dstLoc;
+
+            @Override
+            public String toString() {
+                return "FlowGroupSchedulerEntry{" +
+                        "fgID='" + fgID + '\'' +
+                        ", srcLoc='" + srcLoc + '\'' +
+                        ", dstLoc='" + dstLoc + '\'' +
+//                        ", coflowID='" + coflowID + '\'' +
+//                        ", intID=" + intID +
+                        ", remainingVol=" + remainingVol +
+                        '}';
+            }
+
             public String coflowID;
             public int intID;
             public double remainingVol;
@@ -97,6 +110,23 @@ public class CoflowScheduler extends Scheduler {
         Coflow coflow;
         HashMap<String, FlowGroupSchedulerEntry> flowgroups;
         MMCFOptimizer.MMCFOutput lastLPOutput = null;
+
+        @Override
+        public String toString() {
+            StringBuilder strb = new StringBuilder();
+
+            for (Map.Entry<String, FlowGroupSchedulerEntry> fge: this.flowgroups.entrySet()){
+                FlowGroupSchedulerEntry fgse = fge.getValue();
+                strb.append(fgse).append('\n');
+            }
+
+            return "CoflowSchedulerEntry{" +
+                    "cfID='" + cfID + '\'' +
+                    ", coflow=" + coflow +
+                    ", flowgroups=" + strb +
+                    ", lastLPOutput=" + lastLPOutput +
+                    '}';
+        }
 
         public CoflowSchedulerEntry(Coflow cf) {
 
@@ -129,6 +159,8 @@ public class CoflowScheduler extends Scheduler {
                 FlowGroup fg = fge.getValue();
                 String fgID = fge.getKey();
                 if (fg.getRemainingVolume() < Constants.DOUBLE_EPSILON) {
+                    logger.info("Removing FG {} from cfse, vol = {}", fg.getId(), fg.getRemainingVolume());
+                    // FIXME check whether it is really removed or not.
                     this.flowgroups.remove(fgID);
                 } else {
                     if (this.flowgroups.containsKey(fgID)) {
@@ -488,6 +520,7 @@ public class CoflowScheduler extends Scheduler {
         while (iter.hasNext()) {
             CoflowSchedulerEntry cfse = iter.next();
             if (!coflowPool.containsKey(cfse.getCfID())) {
+                logger.info("Removing CFSE {} from list when updating", cfse.getCfID());
                 iter.remove();
             } else {
                 // if CF still exists in cfPool, then update the volume
@@ -572,7 +605,7 @@ public class CoflowScheduler extends Scheduler {
             }
 //            bwrt.write(c.getId() + " " + e.cct + "\n");
 
-            logger.info("Scheduling CF {}", cfse.cfID);
+            logger.info("Scheduling CF {} \n content: {}", cfse.cfID, cfse.toString());
             // schedule this CF
             MMCFOptimizer.MMCFOutput mmcf_out = MMCFOptimizer.glpk_optimizeNew(cfse, net_graph_, links_); // This is the recursive part.
 
