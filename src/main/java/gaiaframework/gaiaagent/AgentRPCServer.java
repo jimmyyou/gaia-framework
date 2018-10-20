@@ -57,7 +57,7 @@ public class AgentRPCServer {
     public void start() throws IOException {
         server = ServerBuilder.forPort(port)
                 .addService(new SAServiceImpl())
-                .maxInboundMessageSize(16000000) // Use 16M max msg size instead of 4M
+                .maxInboundMessageSize(64000000) // Use 64M max msg size instead of 4M
                 .build()
                 .start();
         logger.info("gRPC Server started, listening on " + port);

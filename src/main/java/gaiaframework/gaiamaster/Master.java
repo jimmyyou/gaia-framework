@@ -282,7 +282,7 @@ public class Master {
 
         logger.info("Finished manipulating CFList, now scheduling");
 
-        if(msgToSend) {
+        if(true) {
             logger.info("sending because msgToSend = {}", msgToSend);
             // Schedule and send CTRL Msg.
             try {
