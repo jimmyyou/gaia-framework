@@ -1,7 +1,7 @@
 # Terra
 This is the Terra/Gaia framework for making scheduling decisions and transferring the data using multipath.
 
-This framework is dependent on gaia-lib.
+This framework is dependent on `gaia-lib` (https://github.com/SymbioticLab/gaia-lib).
 
 ## Requirements
 
