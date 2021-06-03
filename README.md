@@ -3,6 +3,17 @@ This is the Terra/Gaia framework for making scheduling decisions and transferrin
 
 This framework is dependent on gaia-lib.
 
+## Requirements
+
+`gaia-framework` needs to be built in Ubuntu 16.04 with Java version 8.
+
+## How to build gaia-framework
+
+To build `gaia-framework`, you need to first install `gaia-lib`. After that, run:
+
+``mvn clean package``
+
+
 ## How to run gaia-framework
 
 To start *Forwarding Agents*:
